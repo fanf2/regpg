@@ -66,17 +66,20 @@ sub verbose {
 	print STDERR "@_\n" if $opt{v};
 }
 
-sub vexec {
+sub vsystem {
 	verbose "running @_";
-	exit if $opt{n};
-	exec @_;
+	return if $opt{n};
+	return if 0 == system @_;
+	die "failed: @_\n";
+}
+
+sub vexec {
+	vsystem @_;
+	exit $?;
 }
 
 sub vsystem_warn {
-	verbose "running @_";
-	return if $opt{n};
-	system @_;
-	warn "failed: @_\n" if $?;
+	eval { vsystem @_ };
 }
 
 sub pipeslurp {
@@ -114,6 +117,12 @@ sub recipients {
 	return map { ('--recipient' => $_) } @keys;
 }
 
+sub find_all {
+	return pipeslurp
+	    q(find . -type f |
+		xargs grep -l '^-----BEGIN PGP MESSAGE-----$');
+}
+
 # save stdout once
 open my $stdout, '>&STDOUT' or die "dup: $!\n";
 
@@ -136,6 +145,15 @@ sub recrypt_one {
 	    or die "rename $tn => $fn: $!\n";
 }
 
+sub recrypt_some {
+	my @recipients = recipients;
+	recrypt_one $_, @recipients for @_;
+}
+
+sub recrypt_all {
+	recrypt_some find_all;
+}
+
 # subcommands
 
 sub addkey {
@@ -149,6 +167,7 @@ sub addkey {
 			     @ARGV;
 	# Import to this local keyring
 	pipespew $keys, @gpg, '--import';
+	recrypt_all if $opt{a};
 	return 0;
 }
 
@@ -156,7 +175,9 @@ sub delkey {
 	getargs 1;
 	# --expert persuades gpg to delete the key even if the secret
 	# key is available, when deleting one of the user's own keys
-	vexec @gpg, '--expert', '--delete-key', @ARGV;
+	vsystem @gpg, '--expert', '--delete-key', @ARGV;
+	recrypt_all if $opt{a};
+	return 0;
 }
 
 sub lskeys {
@@ -189,9 +210,14 @@ sub decrypt {
 }
 
 sub recrypt {
-	getargs 1;
-	my @recipients = recipients;
-	recrypt_one $_, @recipients for @ARGV;
+	getargs 0;
+	if ($opt{a}) {
+		usage unless @ARGV == 0;
+		recrypt_all;
+	} else {
+		usage unless @ARGV > 0;
+		recrypt_some @ARGV;
+	}
 	return 0;
 }
 
@@ -205,7 +231,8 @@ sub lscrypt {
 
 sub find {
 	getargs 0;
-	vexec 'find . -type f | xargs grep -l "^-----BEGIN PGP MESSAGE-----$"';
+	print "$_\n" for find_all;
+	return 0;
 }
 
 usage unless @ARGV;
@@ -299,12 +326,18 @@ and import them into the B<regpg> keyring.
 A I<keyname> can be a key fingerprint or ID
 or a person's email address.
 
+If the B<-a> option is given,
+all files are recrypted after the key is added.
+
 =item B<regpg> B<delkey> <I<keyname>>...
 
 Delete keys from the B<regpg> keyring.
 
 A I<keyname> can be a key fingerprint or ID
 or a person's email address.
+
+If the B<-a> option is given,
+all files are recrypted after the key is added.
 
 =item B<regpg> B<lskeys>
 
@@ -338,8 +371,11 @@ to gain access to your private key for decryption.
 =item B<regpg> B<recrypt> <I<cryptfile>>...
 
 Re-encrypt I<cryptfile>s.
+If the B<-a> option is given,
+all files are re-encrypted.
 
-You should use this after using B<addkey> or B<delkey>.
+You should use this after using B<addkey> or B<delkey>,
+if you did not pass the B<-a> option.
 
 =item B<regpg> B<lscrypt> <I<cryptfile>>
 
@@ -347,7 +383,8 @@ List the keys which are able to decrypt I<cryptfile>.
 
 =item B<regpg> B<find>
 
-Find and list encrypted files.
+Find and list all encrypted files.
+These are the files that are recryped by the B<-a> option.
 
 =back
 
