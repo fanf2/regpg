@@ -2,11 +2,11 @@ import subprocess
 
 from ansible import errors
 
-def gpg_de(file, pubring=None):
+def gpg_d(file, pubring=None):
     if pubring:
-        argv = [ 'regpg', 'decrypt', '-k', pubring, file, '-' ]
+        argv = [ 'regpg', 'decrypt', '-k', pubring, file ]
     else:
-        argv = [ 'regpg', 'decrypt', file, '-' ]
+        argv = [ 'regpg', 'decrypt', file ]
     try:
         output = subprocess.check_output(argv)
     except CalledProcessError as e:
@@ -18,5 +18,5 @@ def gpg_de(file, pubring=None):
 class FilterModule(object):
     def filters(self):
         return {
-            'gpg_de': gpg_de
+            'gpg_d': gpg_d
         }
