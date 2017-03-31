@@ -16,6 +16,7 @@ usage:	regpg help
 	regpg decrypt [options] <cryptfile> <clearfile>
 	regpg recrypt [options] <cryptfile>
 	regpg lscrypt [options] <cryptfile>
+	regpg find [options]
 options:
 	-k pubring.gpg		recipient keyring
 	-v			verbose mode
@@ -147,6 +148,11 @@ sub lscrypt {
 	return 0;
 }
 
+sub find {
+	getargs 0;
+	vexec 'find . -type f | xargs grep -l "^-----BEGIN PGP MESSAGE-----$"';
+}
+
 usage unless @ARGV;
 my $subcommand = shift;
 if (exists $::{$subcommand}) {
@@ -178,6 +184,8 @@ B<regpg> B<decrypt> [I<options>] <I<cryptfile>> <I<clearfile>>
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>
 
 B<regpg> B<lscrypt> [I<options>] <I<cryptfile>>
+
+B<regpg> B<find>
 
 =head1 DESCRIPTION
 
@@ -264,6 +272,10 @@ You should use this after using B<addkey> or B<delkey>.
 =item B<regpg> B<lscrypt> <I<cryptfile>>
 
 List the keys which are able to decrypt I<cryptfile>.
+
+=item B<regpg> B<find>
+
+Find and list encrypted files.
 
 =back
 
