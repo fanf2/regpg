@@ -21,6 +21,7 @@ usage:	regpg help
 	regpg find [options]
 options:
 	-k pubring.gpg		recipient keyring
+	-n			no changes (implies -v)
 	-v			verbose mode
 Either or both file arguments to `encrypt` and `decrypt`
 can be '-' meaning stdin or stdout.
@@ -39,28 +40,36 @@ our @gpg_en;
 
 sub getargs {
 	my $argc = shift;
-	usage unless getopts '-hvk:', \%opt;
+	usage unless getopts '-hak:nv', \%opt;
 	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
+	$opt{v} = 1 if $opt{n};
 	usage unless $argc == @ARGV;
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
 	@gpg_de = (@gpg, qw(--decrypt --use-agent --batch --quiet));
 	@gpg_en = (@gpg, qw(--encrypt --armor --trust-model=always));
 }
 
+sub verbose {
+	print STDERR "@_\n" if $opt{v};
+}
+
 sub vexec {
-	print STDERR "running @_\n" if $opt{v};
+	verbose "running @_";
+	exit if $opt{n};
 	exec @_;
 }
 
 sub vsystem_warn {
-	print STDERR "running @_\n" if $opt{v};
+	verbose "running @_";
+	return if $opt{n};
 	system @_;
 	warn "failed: @_\n" if $?;
 }
 
 sub pipeslurp {
-	print STDERR "pipe from @_\n" if $opt{v};
+	verbose "pipe from @_";
+	return if $opt{n};
 	open my $pipe, '-|', @_
 	    or die "open pipe from $_[0]: $!\n";
 	my @out = <$pipe>;
@@ -73,7 +82,8 @@ sub pipeslurp {
 
 sub pipespew {
 	my $data = shift;
-	print STDERR "pipe to @_\n" if $opt{v};
+	verbose "pipe to @_";
+	return if $opt{n};
 	open my $pipe, '|-', @_
 	    or die "open pipe to $_[0]: $!\n";
 	print $pipe $data;
@@ -84,9 +94,11 @@ sub pipespew {
 }
 
 sub recipients {
+	my $save = $opt{n}; undef $opt{n};
 	my @keys = map m{^(?:[^:]*:){4}([^:]*):},
 	    grep m{^pub:},
 	    pipeslurp @gpg, qw(--list-keys --with-colons);
+	$opt{n} = $save;
 	return map { ('--recipient' => $_) } @keys;
 }
 
@@ -147,10 +159,18 @@ sub decrypt {
 
 sub recrypt {
 	getargs 1;
-	my ($fh,$fn) = tempfile $ARGV[0].".XXXXXXXX";
+	my @recipients = recipients;
 	my $cleartext = join '', pipeslurp @gpg_de, $ARGV[0];
+	if ($opt{n}) {
+		verbose "pipe to", @gpg_en, @recipients,
+		    '--output', $ARGV[0];
+		return 0;
+	}
+	my ($fh,$fn) = tempfile $ARGV[0].".XXXXXXXX";
+	verbose "tempfile $fn";
 	open STDOUT, '>&', $fh or die "dup: $!\n";
-	pipespew $cleartext, @gpg_en, recipients;
+	pipespew $cleartext, @gpg_en, @recipients;
+	verbose "rename $fn => $ARGV[0]";
 	rename $fn => $ARGV[0]
 	    or die "rename $fn => $ARGV[0]: $!\n";
 	return 0;
@@ -228,6 +248,10 @@ The B<regpg> subcommands all take the same options.
 
 Specify the name of the public key ring file,
 to override the default F<./pubring.gpg>.
+
+=item B<-n>
+
+Do nothing, but show what would have been done.
 
 =item B<-v>
 
