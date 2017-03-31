@@ -5,13 +5,15 @@ use strict;
 
 use File::Temp qw(tempfile);
 use Getopt::Std;
+use MIME::Base64;
 
 sub usage {
 	print STDERR <<EOF;
 usage:	regpg help
 	regpg addkey [options] <keyname>
 	regpg delkey [options] <keyname>
-	regpg lskeys  [options]
+	regpg lskeys [options]
+	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] <clearfile> <cryptfile>
 	regpg decrypt [options] <cryptfile> <clearfile>
 	regpg recrypt [options] <cryptfile>
@@ -26,6 +28,10 @@ EOF
 	exit 1;
 }
 
+sub help {
+	exec "perldoc -F $0";
+}
+
 our %opt;
 our @gpg;
 our @gpg_de;
@@ -34,6 +40,7 @@ our @gpg_en;
 sub getargs {
 	my $argc = shift;
 	usage unless getopts '-hvk:', \%opt;
+	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
 	usage unless $argc == @ARGV;
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
@@ -85,10 +92,6 @@ sub recipients {
 
 # subcommands
 
-sub help {
-	exec "perldoc -F $0";
-}
-
 sub addkey {
 	getargs 1;
 	# Export from the user's normal gpg setup. export-minimal
@@ -113,6 +116,19 @@ sub delkey {
 sub lskeys {
 	getargs 0;
 	vexec @gpg, '--fingerprint';
+}
+
+sub genpwd {
+	getargs 1;
+	open my $fh, '<', '/dev/urandom'
+	    or die "open /dev/urandom: $!\n";
+	my $len = 15;
+	$len == sysread $fh, my $bytes, $len
+	    or die "read /dev/urandom: $!\n";
+	my $chars = encode_base64 $bytes;
+	my @output = ('--output', $ARGV[0]) if $ARGV[0] ne '-';
+	pipespew $chars, @gpg_en, recipients, @output;
+	return 0;
 }
 
 sub encrypt {
@@ -176,6 +192,8 @@ B<regpg> B<addkey> [I<options>] <I<keyname>>
 B<regpg> B<delkey> [I<options>] <I<keyname>>
 
 B<regpg> B<lskeys> [I<options>]
+
+B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
 B<regpg> B<encrypt> [I<options>] <I<clearfile>> <I<cryptfile>>
 
@@ -244,6 +262,12 @@ or the owner's email address.
 
 List the keys in the B<regpg> keyring.
 
+=item B<regpg> B<genpwd> <I<cryptfile>>
+
+Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
+
+If I<cryptfile> is C<-> then it is written to stdout.
+
 =item B<regpg> B<encrypt> <I<clearfile>> <I<cryptfile>>
 
 Encrypt I<clearfile> to produce I<cryptfile>.
@@ -279,7 +303,28 @@ Find and list encrypted files.
 
 =back
 
-=head1 ANSIBLE
+=head1 ANSIBLE VAULT
+
+You can use B<regpg> to manage your B<ansible-vault> password.
+
+Create a vault password:
+
+	$ regpg genpwd vault.pwd
+
+Create a decryption script:
+
+	$ cat >vault.sh
+	#!/bin/sh
+	regpg decrypt vault.pwd -
+	^D
+	$ chmod +x vault.sh
+
+To set up automatic decryption, edit F<ansible.cfg> to add
+
+	[default]
+	vault_password_file = ./vault.sh
+
+=head1 ANSIBLE WITHOUT VAULT
 
 Accompanying B<regpg> is an Ansible Jinja2 filter plugin called
 B<gpg_de> that decrypts secrets for deployment on servers.
