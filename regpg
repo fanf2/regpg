@@ -25,7 +25,8 @@ options:
 	-n			no changes (implies -v)
 	-v			verbose mode
 Either or both file arguments to `encrypt` and `decrypt`
-can be '-' meaning stdin or stdout.
+can be '-' meaning stdin or stdout. Omitted clearfile
+arguments are equivalent to '-'.
 EOF
 	exit 1;
 }
@@ -400,23 +401,23 @@ Create a vault password:
 
 Create a decryption script:
 
-	$ cat >vault.sh
+	$ cat >vault.open
 	#!/bin/sh
-	regpg decrypt vault.pwd -
+	regpg decrypt vault.pwd
 	^D
-	$ chmod +x vault.sh
+	$ chmod +x vault.open
 
 To set up automatic decryption, edit F<ansible.cfg> to add
 
 	[default]
-	vault_password_file = ./vault.sh
+	vault_password_file = ./vault.open
 
 =head1 ANSIBLE WITHOUT VAULT
 
 Accompanying B<regpg> is an Ansible Jinja2 filter plugin called
-B<gpg_de> that decrypts secrets for deployment on servers.
+B<gpg_d> that decrypts secrets for deployment on servers.
 
-To set up the B<gpg_de> filter plugin, copy it into a F<plugins/filter>
+To set up the B<gpg_d> filter plugin, copy it into a F<plugins/filter>
 subdirectory, next to your B<roles> subdirectory.
 Edit F<ansible.cfg> to add
 
@@ -428,7 +429,7 @@ Ansible filter plugins work in Jinja2 templates. For example,
 	- name: install ssh host keys
 	  copy:
 	    dest: /etc/ssh/{{item}}
-	    content: "{{ item+'.asc' | gpg_de }}"
+	    content: "{{ item | gpg_d }}"
 	  with_items
 	    - ssh_host_dsa_key
 	    - ssh_host_ecdsa_key
