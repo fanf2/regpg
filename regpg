@@ -1,0 +1,298 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use File::Temp qw(tempfile);
+use Getopt::Std;
+
+sub usage {
+	print STDERR <<EOF;
+usage:	regpg help
+	regpg addkey [options] <keyname>
+	regpg delkey [options] <keyname>
+	regpg lskeys  [options]
+	regpg encrypt [options] <clearfile> <cryptfile>
+	regpg decrypt [options] <cryptfile> <clearfile>
+	regpg recrypt [options] <cryptfile>
+	regpg lscrypt [options] <cryptfile>
+options:
+	-k pubring.gpg		recipient keyring
+	-v			verbose mode
+Either or both file arguments to `encrypt` and `decrypt`
+can be '-' meaning stdin or stdout.
+EOF
+	exit 1;
+}
+
+our %opt;
+our @gpg;
+our @gpg_de;
+our @gpg_en;
+
+sub getargs {
+	my $argc = shift;
+	usage unless getopts '-hvk:', \%opt;
+	$opt{k} //= './pubring.gpg';
+	usage unless $argc == @ARGV;
+	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
+	@gpg_de = (@gpg, qw(--decrypt --use-agent --batch --quiet));
+	@gpg_en = (@gpg, qw(--encrypt --armor --trust-model=always));
+}
+
+sub vexec {
+	print STDERR "running @_\n" if $opt{v};
+	exec @_;
+}
+
+sub vsystem_warn {
+	print STDERR "running @_\n" if $opt{v};
+	system @_;
+	warn "failed: @_\n" if $?;
+}
+
+sub pipeslurp {
+	print STDERR "pipe from @_\n" if $opt{v};
+	open my $pipe, '-|', @_
+	    or die "open pipe from $_[0]: $!\n";
+	my @out = <$pipe>;
+	unless (close $pipe) {
+		die "read pipe from $_[0]: $!\n" if $!;
+		die "pipe from $_[0] failed\n";
+	}
+	return @out;
+}
+
+sub pipespew {
+	my $data = shift;
+	print STDERR "pipe to @_\n" if $opt{v};
+	open my $pipe, '|-', @_
+	    or die "open pipe to $_[0]: $!\n";
+	print $pipe $data;
+	unless (close $pipe) {
+		die "write pipe to $_[0]: $!\n" if $!;
+		die "pipe to $_[0] failed\n";
+	}
+}
+
+sub recipients {
+	my @keys = map m{^(?:[^:]*:){4}([^:]*):},
+	    grep m{^pub:},
+	    pipeslurp @gpg, qw(--list-keys --with-colons);
+	return map { ('--recipient' => $_) } @keys;
+}
+
+# subcommands
+
+sub help {
+	exec "perldoc -F $0";
+}
+
+sub addkey {
+	getargs 1;
+	# Export from the user's normal gpg setup. export-minimal
+	# removes extraneous signatures from the key, which avoids
+	# complaints about unavailable public keys when it is imported
+	my $keys = join '',
+	    pipeslurp qw(gpg --export --armor
+			 --export-options export-minimal),
+			     @ARGV;
+	# Import to this local keyring
+	pipespew $keys, @gpg, '--import';
+	return 0;
+}
+
+sub delkey {
+	getargs 1;
+	# --expert persuades gpg to delete the key even if the secret
+	# key is available, when deleting one of the user's own keys
+	vexec @gpg, '--expert', '--delete-key', @ARGV;
+}
+
+sub lskeys {
+	getargs 0;
+	vexec @gpg, '--fingerprint';
+}
+
+sub encrypt {
+	getargs 2;
+	my @input = ($ARGV[0]) if $ARGV[0] ne '-';
+	my @output = ('--output', $ARGV[1]) if $ARGV[1] ne '-';
+	vexec @gpg_en, recipients, @output, @input;
+}
+
+sub decrypt {
+	getargs 2;
+	my @input = ($ARGV[0]) if $ARGV[0] ne '-';
+	my @output = ('--output', $ARGV[1]) if $ARGV[1] ne '-';
+	vexec @gpg_de, @output, @input;
+}
+
+sub recrypt {
+	getargs 1;
+	my ($fh,$fn) = tempfile $ARGV[0].".XXXXXXXX";
+	my $cleartext = join '', pipeslurp @gpg_de, $ARGV[0];
+	open STDOUT, '>&', $fh or die "dup: $!\n";
+	pipespew $cleartext, @gpg_en, recipients;
+	rename $fn => $ARGV[0]
+	    or die "rename $fn => $ARGV[0]: $!\n";
+	return 0;
+}
+
+sub lscrypt {
+	getargs 1;
+	my @keys = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
+	    pipeslurp @gpg, qw(--list-only --status-fd 1), @ARGV;
+	vsystem_warn @gpg, '--fingerprint', $_ for @keys;
+	return 0;
+}
+
+usage unless @ARGV;
+my $subcommand = shift;
+if (exists $::{$subcommand}) {
+	exit $::{$subcommand}();
+} else {
+	usage;
+}
+
+__END__
+
+=head1 NAME
+
+regpg - repeatable encryption / decryption for managed set of recipients
+
+=head1 SYNOPSIS
+
+B<regpg> B<help>
+
+B<regpg> B<addkey> [I<options>] <I<keyname>>
+
+B<regpg> B<delkey> [I<options>] <I<keyname>>
+
+B<regpg> B<lskeys> [I<options>]
+
+B<regpg> B<encrypt> [I<options>] <I<clearfile>> <I<cryptfile>>
+
+B<regpg> B<decrypt> [I<options>] <I<cryptfile>> <I<clearfile>>
+
+B<regpg> B<recrypt> [I<options>] <I<cryptfile>>
+
+B<regpg> B<lscrypt> [I<options>] <I<cryptfile>>
+
+=head1 DESCRIPTION
+
+The B<regpg> program helps with managing secrets that need to be
+stored encrypted in revision control for a configuration management
+system.
+These secrets need to be decrypted only in controlled circumstances.
+
+You use the B<regpg> B<*keys> subcommands to maintain a GPG public key
+ring file (by default F<./pubring.gpg>) which lists the set of people
+who can decrypt the secrets.
+
+You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
+
+=head1 OPTIONS
+
+The B<regpg> subcommands all take the same options.
+
+=over
+
+=item B<-k> I<pubring.gpg>
+
+Specify the name of the public key ring file,
+to override the default F<./pubring.gpg>.
+
+=item B<-v>
+
+Verbose mode. This mainly prints the GPG commands.
+
+=back
+
+=head1 SUBCOMMANDS
+
+=over
+
+=item B<regpg> B<help>
+
+Display this documentation.
+
+=item B<regpg> B<addkey> <I<keyname>>
+
+Export a key from your default GPG public keyring,
+and import it into the B<regpg> keyring.
+
+The I<keyname> can be a key fingerprint or ID
+or the owner's email address.
+
+=item B<regpg> B<delkey> <I<keyname>>
+
+Delete a key from the B<regpg> keyring.
+
+The I<keyname> can be a key fingerprint or ID
+or the owner's email address.
+
+=item B<regpg> B<lskeys>
+
+List the keys in the B<regpg> keyring.
+
+=item B<regpg> B<encrypt> <I<clearfile>> <I<cryptfile>>
+
+Encrypt I<clearfile> to produce I<cryptfile>.
+
+If I<clearfile> is C<-> then it is read from stdin.
+
+If I<cryptfile> is C<-> then it is written to stdout.
+
+=item B<regpg> B<decrypt> <I<cryptfile>> <I<clearfile>>
+
+Decrypt I<cryptfile> to produce I<clearfile>.
+
+If I<cryptfile> is C<-> then it is read from stdin.
+
+If I<clearfile> is C<-> then it is written to stdout.
+
+You must be running C<gpg-agent> which will be used
+to gain access to your private key for decryption.
+
+=item B<regpg> B<recrypt> <I<cryptfile>>
+
+Re-encrypt I<cryptfile>.
+
+You should use this after using B<addkey> or B<delkey>.
+
+=item B<regpg> B<lscrypt> <I<cryptfile>>
+
+List the keys which are able to decrypt I<cryptfile>.
+
+=back
+
+=head1 ANSIBLE
+
+Accompanying B<regpg> is an Ansible Jinja2 filter plugin called
+B<gpg_de> that decrypts secrets for deployment on servers.
+
+To set up the B<gpg_de> filter plugin, copy it into a F<plugins/filter>
+subdirectory, next to your B<roles> subdirectory.
+Edit F<ansible.cfg> to add
+
+	[default]
+	filter_plugins = plugins/filter
+
+Ansible filter plugins work in Jinja2 templates. For example,
+
+	- name: install ssh host keys
+	  copy:
+	    dest: /etc/ssh/{{item}}
+	    content: "{{ item+'.asc' | gpg_de }}"
+	  with_items
+	    - ssh_host_dsa_key
+	    - ssh_host_ecdsa_key
+	    - ssh_host_ed25519_key
+	    - ssh_host_rsa_key
+
+=head1 SEE ALSO
+
+gpg(1), gpg-agent(1)
+
+=cut
