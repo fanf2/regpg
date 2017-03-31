@@ -10,16 +10,17 @@ use MIME::Base64;
 sub usage {
 	print STDERR <<EOF;
 usage:	regpg help
-	regpg addkey [options] <keyname>
-	regpg delkey [options] <keyname>
+	regpg addkey [options] <keyname>...
+	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
 	regpg genpwd [options] <cryptfile>
-	regpg encrypt [options] <clearfile> <cryptfile>
-	regpg decrypt [options] <cryptfile> <clearfile>
-	regpg recrypt [options] <cryptfile>
+	regpg encrypt [options] [clearfile] <cryptfile>
+	regpg decrypt [options] <cryptfile> [clearfile]
+	regpg recrypt [options] <cryptfile>...
 	regpg lscrypt [options] <cryptfile>
 	regpg find [options]
 options:
+	-a			recrypt all files after keyring changes
 	-k pubring.gpg		recipient keyring
 	-n			no changes (implies -v)
 	-v			verbose mode
@@ -39,15 +40,26 @@ our @gpg_de;
 our @gpg_en;
 
 sub getargs {
-	my $argc = shift;
+	my $argmin = shift;
+	my $argmax = shift;
 	usage unless getopts '-hak:nv', \%opt;
 	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
 	$opt{v} = 1 if $opt{n};
-	usage unless $argc == @ARGV;
+	usage if @ARGV < $argmin;
+	usage if defined $argmax and @ARGV > $argmax;
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
-	@gpg_de = (@gpg, qw(--decrypt --use-agent --batch --quiet));
-	@gpg_en = (@gpg, qw(--encrypt --armor --trust-model=always));
+	@gpg_de = (@gpg, qw(--use-agent --batch --quiet --decrypt));
+	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
+}
+
+sub getout {
+	return ('--output', $ARGV[0]) if $ARGV[0] ne '-';
+}
+
+sub getinout {
+	my $in = shift @ARGV;
+	return getout, $in eq '-' ? () : $in;
 }
 
 sub verbose {
@@ -102,6 +114,28 @@ sub recipients {
 	return map { ('--recipient' => $_) } @keys;
 }
 
+# save stdout once
+open my $stdout, '>&STDOUT' or die "dup: $!\n";
+
+sub recrypt_one {
+	my $fn = shift;
+	my @recipients = @_;
+	my $cleartext = join '', pipeslurp @gpg_de, $fn;
+	if ($opt{n}) {
+		verbose "pipe to", @gpg_en, @recipients,
+		    '--output', $fn;
+		return;
+	}
+	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
+	verbose "tempfile $tn";
+	open STDOUT, '>&', $th or die "dup: $!\n";
+	pipespew $cleartext, @gpg_en, @recipients;
+	open STDOUT, '>&', $stdout or die "dup: $!\n";
+	verbose "rename $tn => $fn";
+	rename $tn => $fn
+	    or die "rename $tn => $fn: $!\n";
+}
+
 # subcommands
 
 sub addkey {
@@ -126,58 +160,43 @@ sub delkey {
 }
 
 sub lskeys {
-	getargs 0;
+	getargs 0, 0;
 	vexec @gpg, '--fingerprint';
 }
 
 sub genpwd {
-	getargs 1;
+	getargs 1, 1;
 	open my $fh, '<', '/dev/urandom'
 	    or die "open /dev/urandom: $!\n";
 	my $len = 15;
 	$len == sysread $fh, my $bytes, $len
 	    or die "read /dev/urandom: $!\n";
 	my $chars = encode_base64 $bytes;
-	my @output = ('--output', $ARGV[0]) if $ARGV[0] ne '-';
-	pipespew $chars, @gpg_en, recipients, @output;
+	pipespew $chars, @gpg_en, recipients, getout;
 	return 0;
 }
 
 sub encrypt {
-	getargs 2;
-	my @input = ($ARGV[0]) if $ARGV[0] ne '-';
-	my @output = ('--output', $ARGV[1]) if $ARGV[1] ne '-';
-	vexec @gpg_en, recipients, @output, @input;
+	getargs 1, 2;
+	unshift @ARGV, '-' if @ARGV == 1;
+	vexec @gpg_en, recipients, getinout;
 }
 
 sub decrypt {
-	getargs 2;
-	my @input = ($ARGV[0]) if $ARGV[0] ne '-';
-	my @output = ('--output', $ARGV[1]) if $ARGV[1] ne '-';
-	vexec @gpg_de, @output, @input;
+	getargs 1, 2;
+	push @ARGV, '-' if @ARGV == 1;
+	vexec @gpg_de, getinout;
 }
 
 sub recrypt {
 	getargs 1;
 	my @recipients = recipients;
-	my $cleartext = join '', pipeslurp @gpg_de, $ARGV[0];
-	if ($opt{n}) {
-		verbose "pipe to", @gpg_en, @recipients,
-		    '--output', $ARGV[0];
-		return 0;
-	}
-	my ($fh,$fn) = tempfile $ARGV[0].".XXXXXXXX";
-	verbose "tempfile $fn";
-	open STDOUT, '>&', $fh or die "dup: $!\n";
-	pipespew $cleartext, @gpg_en, @recipients;
-	verbose "rename $fn => $ARGV[0]";
-	rename $fn => $ARGV[0]
-	    or die "rename $fn => $ARGV[0]: $!\n";
+	recrypt_one $_, @recipients for @ARGV;
 	return 0;
 }
 
 sub lscrypt {
-	getargs 1;
+	getargs 1, 1;
 	my @keys = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
 	    pipeslurp @gpg, qw(--list-only --status-fd 1), @ARGV;
 	vsystem_warn @gpg, '--fingerprint', $_ for @keys;
@@ -207,19 +226,19 @@ regpg - repeatable encryption / decryption for managed set of recipients
 
 B<regpg> B<help>
 
-B<regpg> B<addkey> [I<options>] <I<keyname>>
+B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
-B<regpg> B<delkey> [I<options>] <I<keyname>>
+B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<lskeys> [I<options>]
 
 B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
-B<regpg> B<encrypt> [I<options>] <I<clearfile>> <I<cryptfile>>
+B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
-B<regpg> B<decrypt> [I<options>] <I<cryptfile>> <I<clearfile>>
+B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
-B<regpg> B<recrypt> [I<options>] <I<cryptfile>>
+B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
 
 B<regpg> B<lscrypt> [I<options>] <I<cryptfile>>
 
@@ -244,6 +263,11 @@ The B<regpg> subcommands all take the same options.
 
 =over
 
+=item B<-a>
+
+For the B<addkey>, B<delkey>, and B<recrypt> subcommands,
+recrypt all files found by the B<find> subcommand.
+
 =item B<-k> I<pubring.gpg>
 
 Specify the name of the public key ring file,
@@ -267,20 +291,20 @@ Verbose mode. This mainly prints the GPG commands.
 
 Display this documentation.
 
-=item B<regpg> B<addkey> <I<keyname>>
+=item B<regpg> B<addkey> <I<keyname>>...
 
-Export a key from your default GPG public keyring,
-and import it into the B<regpg> keyring.
+Export keys from your default GPG public keyring,
+and import them into the B<regpg> keyring.
 
-The I<keyname> can be a key fingerprint or ID
-or the owner's email address.
+A I<keyname> can be a key fingerprint or ID
+or a person's email address.
 
-=item B<regpg> B<delkey> <I<keyname>>
+=item B<regpg> B<delkey> <I<keyname>>...
 
-Delete a key from the B<regpg> keyring.
+Delete keys from the B<regpg> keyring.
 
-The I<keyname> can be a key fingerprint or ID
-or the owner's email address.
+A I<keyname> can be a key fingerprint or ID
+or a person's email address.
 
 =item B<regpg> B<lskeys>
 
@@ -292,28 +316,28 @@ Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
-=item B<regpg> B<encrypt> <I<clearfile>> <I<cryptfile>>
+=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
 
 Encrypt I<clearfile> to produce I<cryptfile>.
 
-If I<clearfile> is C<-> then it is read from stdin.
+If I<clearfile> is C<-> or is omitted then it is read from stdin.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
-=item B<regpg> B<decrypt> <I<cryptfile>> <I<clearfile>>
+=item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
 
 Decrypt I<cryptfile> to produce I<clearfile>.
 
 If I<cryptfile> is C<-> then it is read from stdin.
 
-If I<clearfile> is C<-> then it is written to stdout.
+If I<clearfile> is C<-> or is omitted then it is written to stdout.
 
 You must be running C<gpg-agent> which will be used
 to gain access to your private key for decryption.
 
-=item B<regpg> B<recrypt> <I<cryptfile>>
+=item B<regpg> B<recrypt> <I<cryptfile>>...
 
-Re-encrypt I<cryptfile>.
+Re-encrypt I<cryptfile>s.
 
 You should use this after using B<addkey> or B<delkey>.
 
