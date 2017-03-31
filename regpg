@@ -118,9 +118,11 @@ sub recipients {
 }
 
 sub find_all {
-	return pipeslurp
-	    q(find . -type f |
+	my $save = $opt{n}; undef $opt{n};
+	my @files = pipeslurp q(find . -type f |
 		xargs grep -l '^-----BEGIN PGP MESSAGE-----$');
+	$opt{n} = $save;
+	return map m{^([^\n]+)\n*$}, @files;
 }
 
 # save stdout once
