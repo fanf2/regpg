@@ -432,13 +432,13 @@ Ansible filter plugins work in Jinja2 templates. For example,
 
 	- name: install ssh host keys
 	  copy:
-	    dest: /etc/ssh/{{item}}
+	    dest: /etc/ssh/{{ item | replace(".asc","") }}
 	    content: "{{ item | gpg_d }}"
 	  with_items
-	    - ssh_host_dsa_key
-	    - ssh_host_ecdsa_key
-	    - ssh_host_ed25519_key
-	    - ssh_host_rsa_key
+	    - ssh_host_dsa_key.asc
+	    - ssh_host_ecdsa_key.asc
+	    - ssh_host_ed25519_key.asc
+	    - ssh_host_rsa_key.asc
 
 =head1 SEE ALSO
 
