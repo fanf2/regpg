@@ -10,6 +10,7 @@ use MIME::Base64;
 sub usage {
 	print STDERR <<EOF;
 usage:	regpg help
+	regpg find
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
@@ -18,7 +19,6 @@ usage:	regpg help
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
 	regpg lscrypt [options] <cryptfile>
-	regpg find [options]
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -258,6 +258,8 @@ regpg - manage gpg-encrypted secrets
 
 B<regpg> B<help>
 
+B<regpg> B<find>
+
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
@@ -273,8 +275,6 @@ B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
 
 B<regpg> B<lscrypt> [I<options>] <I<cryptfile>>
-
-B<regpg> B<find>
 
 =head1 DESCRIPTION
 
@@ -324,6 +324,11 @@ Verbose mode. This mainly prints the GPG commands.
 =item B<regpg> B<help>
 
 Display this documentation.
+
+=item B<regpg> B<find>
+
+Recursively find and list all encrypted files.
+These are the files that are recryped by the B<-r> option.
 
 =item B<regpg> B<addkey> <I<keyname>>...
 
@@ -387,11 +392,6 @@ if you did not pass the B<-r> option.
 =item B<regpg> B<lscrypt> <I<cryptfile>>
 
 List the keys which are able to decrypt I<cryptfile>.
-
-=item B<regpg> B<find>
-
-Recursively find and list all encrypted files.
-These are the files that are recryped by the B<-r> option.
 
 =back
 
