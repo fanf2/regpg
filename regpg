@@ -20,9 +20,9 @@ usage:	regpg help
 	regpg lscrypt [options] <cryptfile>
 	regpg find [options]
 options:
-	-a			recrypt all files after keyring changes
-	-k pubring.gpg		recipient keyring
+	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
+	-r			recrypt all files after keyring changes
 	-v			verbose mode
 Either or both file arguments to `encrypt` and `decrypt`
 can be '-' meaning stdin or stdout. Omitted clearfile
@@ -43,7 +43,7 @@ our @gpg_en;
 sub getargs {
 	my $argmin = shift;
 	my $argmax = shift;
-	usage unless getopts '-hak:nv', \%opt;
+	usage unless getopts '-hk:nrv', \%opt;
 	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
 	$opt{v} = 1 if $opt{n};
@@ -170,7 +170,7 @@ sub addkey {
 			     @ARGV;
 	# Import to this local keyring
 	pipespew $keys, @gpg, '--import';
-	recrypt_all if $opt{a};
+	recrypt_all if $opt{r};
 	return 0;
 }
 
@@ -179,7 +179,7 @@ sub delkey {
 	# --expert persuades gpg to delete the key even if the secret
 	# key is available, when deleting one of the user's own keys
 	vsystem @gpg, '--expert', '--delete-key', @ARGV;
-	recrypt_all if $opt{a};
+	recrypt_all if $opt{r};
 	return 0;
 }
 
@@ -214,7 +214,7 @@ sub decrypt {
 
 sub recrypt {
 	getargs 0;
-	if ($opt{a}) {
+	if ($opt{r}) {
 		usage unless @ARGV == 0;
 		recrypt_all;
 	} else {
@@ -250,7 +250,7 @@ __END__
 
 =head1 NAME
 
-regpg - repeatable encryption / decryption for managed set of recipients
+regpg - manage gpg-encrypted secrets
 
 =head1 SYNOPSIS
 
@@ -295,11 +295,6 @@ The B<regpg> subcommands all take the same options.
 
 =over
 
-=item B<-a>
-
-For the B<addkey>, B<delkey>, and B<recrypt> subcommands,
-recrypt all files found by the B<find> subcommand.
-
 =item B<-k> I<pubring.gpg>
 
 Specify the name of the public key ring file,
@@ -308,6 +303,11 @@ to override the default F<./pubring.gpg>.
 =item B<-n>
 
 Do nothing, but show what would have been done.
+
+=item B<-r>
+
+For the B<addkey>, B<delkey>, and B<recrypt> subcommands,
+recrypt all files found by the B<find> subcommand.
 
 =item B<-v>
 
@@ -331,7 +331,7 @@ and import them into the B<regpg> keyring.
 A I<keyname> can be a key fingerprint or ID
 or a person's email address.
 
-If the B<-a> option is given,
+If the B<-r> option is given,
 all files are recrypted after the key is added.
 
 =item B<regpg> B<delkey> <I<keyname>>...
@@ -341,7 +341,7 @@ Delete keys from the B<regpg> keyring.
 A I<keyname> can be a key fingerprint or ID
 or a person's email address.
 
-If the B<-a> option is given,
+If the B<-r> option is given,
 all files are recrypted after the key is added.
 
 =item B<regpg> B<lskeys>
@@ -376,11 +376,11 @@ If I<clearfile> is C<-> or is omitted then it is written to stdout.
 =item B<regpg> B<recrypt> <I<cryptfile>>...
 
 Re-encrypt I<cryptfile>s.
-If the B<-a> option is given,
+If the B<-r> option is given,
 all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
-if you did not pass the B<-a> option.
+if you did not pass the B<-r> option.
 
 =item B<regpg> B<lscrypt> <I<cryptfile>>
 
@@ -388,8 +388,8 @@ List the keys which are able to decrypt I<cryptfile>.
 
 =item B<regpg> B<find>
 
-Find and list all encrypted files.
-These are the files that are recryped by the B<-a> option.
+Recursively find and list all encrypted files.
+These are the files that are recryped by the B<-r> option.
 
 =back
 
