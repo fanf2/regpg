@@ -55,7 +55,7 @@ sub getargs {
 }
 
 sub getout {
-	return ('--output', $ARGV[0]) if $ARGV[0] ne '-';
+	return  $ARGV[0] eq '-' ? () : ('--output', $ARGV[0]);
 }
 
 sub getinout {
