@@ -240,7 +240,9 @@ sub find {
 
 usage unless @ARGV;
 my $subcommand = shift;
-if (exists $::{$subcommand}) {
+if (grep $subcommand eq $_,
+    qw(help find addkey delkey lskeys
+       genpwd encrypt decrypt recrypt lscrypt)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
