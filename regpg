@@ -276,9 +276,9 @@ B<regpg> B<find>
 
 =head1 DESCRIPTION
 
-The B<regpg> program helps with managing secrets that need to be
-stored encrypted in revision control for a configuration management
-system.
+The B<regpg> program is a thin wrapper around gpg
+to help with managing secrets that need to be stored encrypted
+in revision control for a configuration management system.
 These secrets need to be decrypted only in controlled circumstances.
 
 You use the B<regpg> B<*keys> subcommands to maintain a GPG public key
@@ -286,6 +286,8 @@ ring file (by default F<./pubring.gpg>) which lists the set of people
 who can decrypt the secrets.
 
 You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
+The encryption recipients are all the keys in the pubic key ring.
+Decryption is non-interactive, using B<gpg-agent>.
 
 =head1 OPTIONS
 
@@ -355,6 +357,7 @@ If I<cryptfile> is C<-> then it is written to stdout.
 =item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
 
 Encrypt I<clearfile> to produce I<cryptfile>.
+The encryption recipients are all the keys in the pubic key ring.
 
 If I<clearfile> is C<-> or is omitted then it is read from stdin.
 
@@ -363,13 +366,12 @@ If I<cryptfile> is C<-> then it is written to stdout.
 =item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
 
 Decrypt I<cryptfile> to produce I<clearfile>.
+You must be running C<gpg-agent> which will be used
+to gain access to your private key for decryption.
 
 If I<cryptfile> is C<-> then it is read from stdin.
 
 If I<clearfile> is C<-> or is omitted then it is written to stdout.
-
-You must be running C<gpg-agent> which will be used
-to gain access to your private key for decryption.
 
 =item B<regpg> B<recrypt> <I<cryptfile>>...
 
