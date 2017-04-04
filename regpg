@@ -50,7 +50,7 @@ sub getargs {
 	usage if @ARGV < $argmin;
 	usage if defined $argmax and @ARGV > $argmax;
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
-	@gpg_de = (@gpg, qw(--use-agent --batch --quiet --decrypt));
+	@gpg_de = qw(gpg --use-agent --batch --quiet --decrypt);
 	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
 }
 
