@@ -6,19 +6,21 @@ use strict;
 use File::Temp qw(tempfile);
 use Getopt::Std;
 use MIME::Base64;
+use POSIX;
+use Term::ANSIColor;
 
 sub usage {
 	print STDERR <<EOF;
 usage:	regpg help
-	regpg find
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
 	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
+	regpg find
+	regpg check [options] <cryptfile>...
 	regpg recrypt [options] <cryptfile>...
-	regpg lscrypt [options] <cryptfile>
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -41,14 +43,16 @@ our @gpg_de;
 our @gpg_en;
 
 sub getargs {
-	my $argmin = shift;
-	my $argmax = shift;
+	my %arg = @_;
 	usage unless getopts '-hk:nrv', \%opt;
 	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
 	$opt{v} = 1 if $opt{n};
-	usage if @ARGV < $argmin;
-	usage if defined $argmax and @ARGV > $argmax;
+	usage if @ARGV < $arg{min};
+	usage if defined $arg{max} and @ARGV > $arg{max};
+	die "regpg: $opt{k} not found\n"
+	    unless -f $opt{k} or $arg{keymaker};
+	$opt{k} = "./$opt{k}" unless $opt{k} =~ m{/};
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
 	@gpg_de = qw(gpg --use-agent --batch --quiet --decrypt);
 	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
@@ -109,13 +113,18 @@ sub pipespew {
 	}
 }
 
-sub recipients {
+sub ring_keys {
 	my $save = $opt{n}; undef $opt{n};
+	# get the key ID of each encryption-capable public key or subkey
 	my @keys = map m{^(?:[^:]*:){4}([^:]*):},
-	    grep m{^pub:},
+	    grep m{^[ps]ub:.*:\w*e\w*:$},
 	    pipeslurp @gpg, qw(--list-keys --with-colons);
 	$opt{n} = $save;
-	return map { ('--recipient' => $_) } @keys;
+	return @keys;
+}
+
+sub recipients {
+	return map { ('--recipient' => $_) } ring_keys;
 }
 
 sub find_all {
@@ -151,16 +160,97 @@ sub recrypt_one {
 sub recrypt_some {
 	my @recipients = recipients;
 	recrypt_one $_, @recipients for @_;
+	return 0;
 }
 
-sub recrypt_all {
-	recrypt_some find_all;
+sub maybe_recrypt_all {
+	recrypt_some find_all if $opt{r};
+}
+
+sub check_quiet {
+	my $fn = shift;
+	my @ring = @_;
+	my @file = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
+	    pipeslurp @gpg, qw(--list-only --status-fd 1), $fn;
+	# diff key lists
+	my %ring; @ring{@ring} = (); delete @ring{@file};
+	my %file; @file{@file} = (); delete @file{@ring};
+	@ring = keys %ring;
+	@file = keys %file;
+	my $clear = ($fn =~ m{^(.*)[.](asc|gpg)$} && -f $1)
+	    ? $1 : undef;
+	return ( ring => [ @ring ],
+		 file => [ @file ],
+		 diff => (!!@ring || !!@file),
+		 clear => $clear );
+}
+
+sub diff_del {
+	return map colored("-$_", "red"), @_;
+}
+sub diff_add {
+	return map colored("+$_", "green"), @_;
+}
+sub holy_crap {
+	return colored " CLEARTEXT @_", "bright_white on_bright_red";
+}
+
+sub check_one {
+	my $fn = shift;
+	my %ck = check_quiet $fn, @_;
+	print $fn,
+	    $ck{clear} ? "\t" . holy_crap : "",
+	    $ck{diff} ? "\t" : "",
+	    diff_del(@{ $ck{file} }),
+	    diff_add(@{ $ck{ring} }),
+	    "\n";
+	return !!$ck{clear} || $ck{diff};
+}
+
+sub fingerprint {
+	eval {
+		return pipeslurp @gpg, '--fingerprint', @_;
+	};
+	return pipeslurp 'gpg', '--fingerprint', @_;
+}
+
+sub check_long {
+	my $fn = shift;
+	my %ck = check_quiet $fn, @_;
+	print " checking: $fn\n";
+	printf "%s\n", holy_crap $ck{clear}
+	    if $ck{clear};
+	print diff_del fingerprint $_ for @{ $ck{file} };
+	print diff_add fingerprint $_ for @{ $ck{ring} };
+	return !!$ck{clear} || $ck{diff};
+}
+
+sub check_some {
+	my @ring_keys = ring_keys;
+	return check_long @_, @ring_keys if @_ == 1;
+	my $r = 0;
+	$r |= check_one $_, @ring_keys for @_;
+	return $r;
+}
+
+sub for_files {
+	my $sub = shift;
+	getargs min => 0;
+	if ($opt{r}) {
+		die "regpg: either -r or arguments, not both\n"
+		    unless @ARGV == 0;
+		return &$sub(find_all);
+	} else {
+		die "regpg: use -r to recurse over all files\n"
+		    if @ARGV == 0;
+		return &$sub(@ARGV);
+	}
 }
 
 # subcommands
 
 sub addkey {
-	getargs 1;
+	getargs keymaker => 1, min => 1;
 	# Export from the user's normal gpg setup. export-minimal
 	# removes extraneous signatures from the key, which avoids
 	# complaints about unavailable public keys when it is imported
@@ -170,26 +260,26 @@ sub addkey {
 			     @ARGV;
 	# Import to this local keyring
 	pipespew $keys, @gpg, '--import';
-	recrypt_all if $opt{r};
+	maybe_recrypt_all;
 	return 0;
 }
 
 sub delkey {
-	getargs 1;
+	getargs keymaker => 1, min => 1;
 	# --expert persuades gpg to delete the key even if the secret
 	# key is available, when deleting one of the user's own keys
 	vsystem @gpg, '--expert', '--delete-key', @ARGV;
-	recrypt_all if $opt{r};
+	maybe_recrypt_all;
 	return 0;
 }
 
 sub lskeys {
-	getargs 0, 0;
+	getargs min => 0, max => 0;
 	vexec @gpg, '--fingerprint';
 }
 
 sub genpwd {
-	getargs 1, 1;
+	getargs min => 1, max => 1;
 	open my $fh, '<', '/dev/urandom'
 	    or die "open /dev/urandom: $!\n";
 	my $len = 15;
@@ -201,39 +291,27 @@ sub genpwd {
 }
 
 sub encrypt {
-	getargs 1, 2;
+	getargs min => 1, max => 2;
 	unshift @ARGV, '-' if @ARGV == 1;
 	vexec @gpg_en, recipients, getinout;
 }
 
 sub decrypt {
-	getargs 1, 2;
+	getargs min => 1, max => 2;
 	push @ARGV, '-' if @ARGV == 1;
 	vexec @gpg_de, getinout;
 }
 
 sub recrypt {
-	getargs 0;
-	if ($opt{r}) {
-		usage unless @ARGV == 0;
-		recrypt_all;
-	} else {
-		usage unless @ARGV > 0;
-		recrypt_some @ARGV;
-	}
-	return 0;
+	for_files \&recrypt_some;
 }
 
-sub lscrypt {
-	getargs 1, 1;
-	my @keys = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
-	    pipeslurp @gpg, qw(--list-only --status-fd 1), @ARGV;
-	vsystem_warn @gpg, '--fingerprint', $_ for @keys;
-	return 0;
+sub check {
+	for_files \&check_some;
 }
 
 sub find {
-	getargs 0;
+	getargs min => 0;
 	print "$_\n" for find_all;
 	return 0;
 }
@@ -241,8 +319,8 @@ sub find {
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep $subcommand eq $_,
-    qw(help find addkey delkey lskeys
-       genpwd encrypt decrypt recrypt lscrypt)) {
+    qw(help find check addkey delkey lskeys
+       genpwd encrypt decrypt recrypt)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -258,8 +336,6 @@ regpg - manage gpg-encrypted secrets
 
 B<regpg> B<help>
 
-B<regpg> B<find>
-
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
@@ -272,9 +348,11 @@ B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
-B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+B<regpg> B<find>
 
-B<regpg> B<lscrypt> [I<options>] <I<cryptfile>>
+B<regpg> B<check> [I<options>] <I<cryptfile>>...
+
+B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
 
 =head1 DESCRIPTION
 
@@ -324,11 +402,6 @@ Verbose mode. This mainly prints the GPG commands.
 =item B<regpg> B<help>
 
 Display this documentation.
-
-=item B<regpg> B<find>
-
-Recursively find and list all encrypted files.
-These are the files that are recryped by the B<-r> option.
 
 =item B<regpg> B<addkey> <I<keyname>>...
 
@@ -380,6 +453,31 @@ If I<cryptfile> is C<-> then it is read from stdin.
 
 If I<clearfile> is C<-> or is omitted then it is written to stdout.
 
+=item B<regpg> B<find>
+
+Recursively find and list all encrypted files.
+These are the files that are recryped by the B<-r> option.
+
+=item B<regpg> B<check> <I<cryptfile>>...
+
+Check I<cryptfile>s for consistency.
+If the B<-r> option is given,
+all files are checked.
+
+If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
+and an adjacent file exists without the extension,
+it is called out as a potential cleartext file.
+
+Keys that can decrypt a I<cryptfile>
+but are not present in the B<-k> I<pubring.gpg>
+are listed in red with C<-> markers.
+
+Keys are present in the B<-k> I<pubring.gpg>
+but cannot decrypt a I<cryptfile>
+are listed in green with C<+> markers.
+
+These differences can be resolved by the B<recrypt> subcommand.
+
 =item B<regpg> B<recrypt> <I<cryptfile>>...
 
 Re-encrypt I<cryptfile>s.
@@ -388,10 +486,6 @@ all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
-
-=item B<regpg> B<lscrypt> <I<cryptfile>>
-
-List the keys which are able to decrypt I<cryptfile>.
 
 =back
 
