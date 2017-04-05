@@ -18,7 +18,6 @@ usage:	regpg help
 	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
-	regpg find
 	regpg check [options] <cryptfile>...
 	regpg recrypt [options] <cryptfile>...
 options:
@@ -241,8 +240,6 @@ sub for_files {
 		    unless @ARGV == 0;
 		return &$sub(find_all);
 	} else {
-		die "regpg: use -r to recurse over all files\n"
-		    if @ARGV == 0;
 		return &$sub(@ARGV);
 	}
 }
@@ -303,10 +300,13 @@ sub decrypt {
 }
 
 sub recrypt {
+	die "regpg: use -r to really recrypt all files\n"
+	    if @ARGV == 0;
 	for_files \&recrypt_some;
 }
 
 sub check {
+	$opt{r} = 1 if @ARGV == 0;
 	for_files \&check_some;
 }
 
@@ -316,11 +316,23 @@ sub find {
 	return 0;
 }
 
+my %longer = (
+	'--help' => 'help',
+	'add' => 'addkey',
+	'del' => 'delkey',
+	'ls' => 'lskeys',
+	'pwd' => 'genpwd',
+	'en' => 'encrypt',
+	'decrypt' => 'decrypt',
+	're' => 'recrypt',
+	'ck' => 'check',
+    );
+
 usage unless @ARGV;
 my $subcommand = shift;
-if (grep $subcommand eq $_,
-    qw(help find check addkey delkey lskeys
-       genpwd encrypt decrypt recrypt)) {
+$subcommand = $longer{$subcommand}
+    if exists $longer{$subcommand};
+if (grep $subcommand eq $_, values %longer) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -347,8 +359,6 @@ B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
-
-B<regpg> B<find>
 
 B<regpg> B<check> [I<options>] <I<cryptfile>>...
 
@@ -453,16 +463,13 @@ If I<cryptfile> is C<-> then it is read from stdin.
 
 If I<clearfile> is C<-> or is omitted then it is written to stdout.
 
-=item B<regpg> B<find>
-
-Recursively find and list all encrypted files.
-These are the files that are recryped by the B<-r> option.
-
 =item B<regpg> B<check> <I<cryptfile>>...
 
 Check I<cryptfile>s for consistency.
-If the B<-r> option is given,
-all files are checked.
+
+If no arguments are given, B<check>
+recursively finds and lists all encrypted files.
+These are the files that are recryped by the B<-r> option.
 
 If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
 and an adjacent file exists without the extension,
