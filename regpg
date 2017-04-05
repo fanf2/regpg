@@ -208,10 +208,12 @@ sub check_one {
 }
 
 sub fingerprint {
-	eval {
-		return pipeslurp @gpg, '--fingerprint', @_;
-	};
-	return pipeslurp 'gpg', '--fingerprint', @_;
+	my @r;
+	eval { @r = pipeslurp @gpg, '--fingerprint', @_; };
+	return @r if @r;
+	eval { @r = pipeslurp 'gpg', '--fingerprint', @_; };
+	return @r if @r;
+	return "no fingerprint for @_\n", "\n";
 }
 
 sub check_long {
@@ -507,11 +509,16 @@ Keys are present in the B<-k> I<pubring.gpg>
 but cannot decrypt a I<cryptfile>
 are listed in green with C<+> markers.
 
+If one argument is given then key fingerprints are printed in full,
+otherwise the diffs just list bare key IDs.
+
 These differences can be resolved by the B<recrypt> subcommand.
 
 =back
 
-=head1 ANSIBLE VAULT
+=head1 EXAMPLES
+
+=head2 Ansible Vault
 
 You can use B<regpg> to manage your B<ansible-vault> password.
 
@@ -532,7 +539,7 @@ To set up automatic decryption, edit F<ansible.cfg> to add
 	[default]
 	vault_password_file = ./vault.open
 
-=head1 ANSIBLE WITHOUT VAULT
+=head2 Ansible without Vault
 
 Accompanying B<regpg> is an Ansible Jinja2 filter plugin called
 B<gpg_d> that decrypts secrets for deployment on servers.
