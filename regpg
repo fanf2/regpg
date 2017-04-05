@@ -233,14 +233,16 @@ sub check_some {
 }
 
 sub for_files {
-	my $sub = shift;
+	my ($zap,$sub) = @_;
 	getargs min => 0;
-	if ($opt{r}) {
-		die "regpg: either -r or arguments, not both\n"
-		    unless @ARGV == 0;
+	if (@ARGV and $opt{r}) {
+		die "regpg: either -r or arguments, not both\n";
+	} elsif (@ARGV) {
+		return &$sub(@ARGV);
+	} elsif ($opt{r} or $zap eq 'zap') {
 		return &$sub(find_all);
 	} else {
-		return &$sub(@ARGV);
+		die "regpg: use -r to really $zap all files\n";
 	}
 }
 
@@ -300,20 +302,11 @@ sub decrypt {
 }
 
 sub recrypt {
-	die "regpg: use -r to really recrypt all files\n"
-	    if @ARGV == 0;
-	for_files \&recrypt_some;
+	for_files recrypt => \&recrypt_some;
 }
 
 sub check {
-	$opt{r} = 1 if @ARGV == 0;
-	for_files \&check_some;
-}
-
-sub find {
-	getargs min => 0;
-	print "$_\n" for find_all;
-	return 0;
+	for_files zap => \&check_some;
 }
 
 my %longer = (
