@@ -18,8 +18,8 @@ usage:	regpg help
 	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
-	regpg check [options] <cryptfile>...
 	regpg recrypt [options] <cryptfile>...
+	regpg check [options] <cryptfile>...
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -197,6 +197,7 @@ sub holy_crap {
 sub check_one {
 	my $fn = shift;
 	my %ck = check_quiet $fn, @_;
+	return 0 if $opt{n};
 	print $fn,
 	    $ck{clear} ? "\t" . holy_crap : "",
 	    $ck{diff} ? "\t" : "",
@@ -216,6 +217,7 @@ sub fingerprint {
 sub check_long {
 	my $fn = shift;
 	my %ck = check_quiet $fn, @_;
+	return 0 if $opt{n};
 	print " checking: $fn\n";
 	printf "%s\n", holy_crap $ck{clear}
 	    if $ck{clear};
@@ -353,9 +355,9 @@ B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
-B<regpg> B<check> [I<options>] <I<cryptfile>>...
-
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+
+B<regpg> B<check> [I<options>] <I<cryptfile>>...
 
 =head1 DESCRIPTION
 
@@ -371,6 +373,9 @@ who can decrypt the secrets.
 You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
 The encryption recipients are all the keys in the pubic key ring.
 Decryption is non-interactive, using B<gpg-agent>.
+
+The B<regpg> B<check> subcommand verifies that the encrypted files and
+public keyring are consistent with each other.
 
 =head1 OPTIONS
 
@@ -390,7 +395,7 @@ Do nothing, but show what would have been done.
 =item B<-r>
 
 For the B<addkey>, B<delkey>, and B<recrypt> subcommands,
-recrypt all files found by the B<find> subcommand.
+recrypt all files found by the B<check> subcommand.
 
 =item B<-v>
 
@@ -400,6 +405,8 @@ Verbose mode. This mainly prints the GPG commands.
 
 =head1 SUBCOMMANDS
 
+Most subcommands have abbreviated synonyms.
+
 =over
 
 =item B<regpg> B<help>
@@ -407,6 +414,9 @@ Verbose mode. This mainly prints the GPG commands.
 Display this documentation.
 
 =item B<regpg> B<addkey> <I<keyname>>...
+
+=item B<regpg> B<add> <I<keyname>>...
+
 
 Export keys from your default GPG public keyring,
 and import them into the B<regpg> keyring.
@@ -419,6 +429,8 @@ all files are recrypted after the key is added.
 
 =item B<regpg> B<delkey> <I<keyname>>...
 
+=item B<regpg> B<del> <I<keyname>>...
+
 Delete keys from the B<regpg> keyring.
 
 A I<keyname> can be a key fingerprint or ID
@@ -429,15 +441,21 @@ all files are recrypted after the key is added.
 
 =item B<regpg> B<lskeys>
 
+=item B<regpg> B<ls>
+
 List the keys in the B<regpg> keyring.
 
 =item B<regpg> B<genpwd> <I<cryptfile>>
+
+=item B<regpg> B<pwd> <I<cryptfile>>
 
 Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
 =item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
+
+=item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
 
 Encrypt I<clearfile> to produce I<cryptfile>.
 The encryption recipients are all the keys in the pubic key ring.
@@ -456,7 +474,20 @@ If I<cryptfile> is C<-> then it is read from stdin.
 
 If I<clearfile> is C<-> or is omitted then it is written to stdout.
 
+=item B<regpg> B<recrypt> <I<cryptfile>>...
+
+=item B<regpg> B<re> <I<cryptfile>>...
+
+Decrypt and re-encrypt I<cryptfile>s.
+If the B<-r> option is given,
+all files are re-encrypted.
+
+You should use this after using B<addkey> or B<delkey>,
+if you did not pass the B<-r> option.
+
 =item B<regpg> B<check> <I<cryptfile>>...
+
+=item B<regpg> B<ck> <I<cryptfile>>...
 
 Check I<cryptfile>s for consistency.
 
@@ -477,15 +508,6 @@ but cannot decrypt a I<cryptfile>
 are listed in green with C<+> markers.
 
 These differences can be resolved by the B<recrypt> subcommand.
-
-=item B<regpg> B<recrypt> <I<cryptfile>>...
-
-Re-encrypt I<cryptfile>s.
-If the B<-r> option is given,
-all files are re-encrypted.
-
-You should use this after using B<addkey> or B<delkey>,
-if you did not pass the B<-r> option.
 
 =back
 
