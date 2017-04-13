@@ -574,6 +574,18 @@ Generate a certificate signing request using the encrypted key:
 	openssl req -new -key <(regpg decrypt mytls.pem.asc) \
 		-out mytls.csr -config openssl.conf
 
+=head2 OpenSSH
+
+It is difficult to get B<ssh-keygen> to write private keys to stdout
+so that they can be immediately encrypted by B<regpg>. However,
+OpenSSH private RSA keys have the same format as OpenSSL private RSA
+keys. So you can use B<openssl> B<genrsa> to create the key as above,
+then create the OpenSSH public key from the private key:
+
+	openssl genrsa 2048 | regpg encrypt myssh.asc
+
+	ssh-keygen -y -f <(regpg decrypt myssh.asc) >myssh.pub
+
 =head1 SEE ALSO
 
 gpg(1), gpg-agent(1)
