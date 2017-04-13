@@ -563,6 +563,17 @@ Ansible filter plugins work in Jinja2 templates. For example,
 	    - ssh_host_ed25519_key.asc
 	    - ssh_host_rsa_key.asc
 
+=head2 OpenSSL
+
+Generate a new RSA key and immediately encrypt it:
+
+	openssl genrsa 2048 | regpg encrypt mytls.pem.asc
+
+Generate a certificate signing request using the encrypted key:
+
+	openssl req -new -key <(regpg decrypt mytls.pem.asc) \
+		-out mytls.csr -config openssl.conf
+
 =head1 SEE ALSO
 
 gpg(1), gpg-agent(1)
