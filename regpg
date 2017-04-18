@@ -579,9 +579,9 @@ Generate a certificate signing request using the encrypted key:
 
 It is difficult to get B<ssh-keygen> to write private keys to a pipe
 so that they can be immediately encrypted by B<regpg>. However,
-OpenSSH private keys usually have the same format as OpenSSL private
-keys. So you can use B<openssl> B<genrsa> to create the key as above,
-then create the OpenSSH public key from the private key:
+OpenSSH private keys usually have the same PEM format as OpenSSL
+private keys. So you can use B<openssl> B<genrsa> to create the key as
+above, then create the OpenSSH public key from the private key:
 
 	openssl genrsa 2048 |
 		regpg encrypt ssh-rsa.asc
