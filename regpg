@@ -567,24 +567,43 @@ Ansible filter plugins work in Jinja2 templates. For example,
 
 Generate a new RSA key and immediately encrypt it:
 
-	openssl genrsa 2048 | regpg encrypt mytls.pem.asc
+	openssl genrsa 2048 |
+		regpg encrypt ssl-rsa.pem.asc
 
 Generate a certificate signing request using the encrypted key:
 
-	openssl req -new -key <(regpg decrypt mytls.pem.asc) \
-		-out mytls.csr -config openssl.conf
+	openssl req -new -key <(regpg decrypt ssl-rsa.pem.asc) \
+		-out ssl-rsa.csr -config openssl.conf
 
 =head2 OpenSSH
 
-It is difficult to get B<ssh-keygen> to write private keys to stdout
+It is difficult to get B<ssh-keygen> to write private keys to a pipe
 so that they can be immediately encrypted by B<regpg>. However,
-OpenSSH private RSA keys have the same format as OpenSSL private RSA
+OpenSSH private keys usually have the same format as OpenSSL private
 keys. So you can use B<openssl> B<genrsa> to create the key as above,
 then create the OpenSSH public key from the private key:
 
-	openssl genrsa 2048 | regpg encrypt myssh.asc
+	openssl genrsa 2048 |
+		regpg encrypt ssh-rsa.asc
+	ssh-keygen -y -f <(regpg decrypt ssh-rsa.asc) >ssh-rsa.pub
 
-	ssh-keygen -y -f <(regpg decrypt myssh.asc) >myssh.pub
+To generate a DSA key, use the B<openssl> B<dsaparam> command,
+followed by the same B<ssh-keygen> command to create an SSH public key
+file. OpenSSH requires the size parameter to be 1024.
+
+	openssl dsaparam -genkey -noout 1024 |
+		regpg encrypt ssh-dsa.asc
+	ssh-keygen -y -f <(regpg decrypt ssh-dsa.asc) >ssh-dsa.pub
+
+To generate an ECDSA key, use the B<openssl> B<ecparam> command.
+OpenSSH supports three curves, I<prime256v1>, I<secp384r1>, and
+I<secp521r1>:
+
+	openssl ecparam -noout -name prime256v1 -genkey |
+		regpg encrypt ssh-ec256.asc
+	ssh-keygen -y -f <(regpg decrypt ssh-ec256.asc) >ssh-ec256.pub
+
+OpenSSH also supports Ed25519 keys, but OpenSSL does not.
 
 =head1 SEE ALSO
 
