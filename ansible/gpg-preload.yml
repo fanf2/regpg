@@ -1,0 +1,8 @@
+---
+- hosts: ::1
+  connection: local
+  tasks:
+    - name: ensure gpg agent is ready
+      assert:
+        msg: gpg agent failed
+        that: "{{ 'gpg-preload.asc' | gpg_d }}"
