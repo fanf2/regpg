@@ -12,15 +12,15 @@ use Term::ANSIColor;
 sub usage {
 	print STDERR <<EOF;
 usage:	regpg help
+	regpg check [options] <cryptfile>...
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
-	regpg genkey [options] <algorithm> <private> [public]
-	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
-	regpg check [options] <cryptfile>...
+	regpg genkey [options] <algorithm> <private> [public]
+	regpg genpwd [options] <cryptfile>
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -371,15 +371,13 @@ regpg - manage gpg-encrypted secrets
 
 B<regpg> B<help>
 
+B<regpg> B<check> [I<options>] <I<cryptfile>>...
+
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<lskeys> [I<options>]
-
-B<regpg> B<genkey> [I<options>] I<<algorithm>> I<<private>> [I<public>]
-
-B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
 B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
@@ -387,7 +385,9 @@ B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
 
-B<regpg> B<check> [I<options>] <I<cryptfile>>...
+B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
+
+B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
 =head1 DESCRIPTION
 
@@ -445,6 +445,33 @@ Most subcommands have abbreviated synonyms.
 
 Display this documentation.
 
+=item B<regpg> B<check> <I<cryptfile>>...
+
+=item B<regpg> B<ck> <I<cryptfile>>...
+
+Check I<cryptfile>s for consistency.
+
+If no arguments are given, B<check>
+recursively finds and lists all encrypted files.
+These are the files that are recryped by the B<-r> option.
+
+If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
+and an adjacent file exists without the extension,
+it is called out as a potential cleartext file.
+
+Keys that can decrypt a I<cryptfile>
+but are not present in the B<-k> I<pubring.gpg>
+are listed in red with C<-> markers.
+
+Keys are present in the B<-k> I<pubring.gpg>
+but cannot decrypt a I<cryptfile>
+are listed in green with C<+> markers.
+
+If one argument is given then key fingerprints are printed in full,
+otherwise the diffs just list bare key IDs.
+
+These differences can be resolved by the B<recrypt> subcommand.
+
 =item B<regpg> B<addkey> <I<keyname>>...
 
 =item B<regpg> B<add> <I<keyname>>...
@@ -473,6 +500,38 @@ all files are recrypted after the key is added.
 =item B<regpg> B<lskeys>
 
 =item B<regpg> B<ls>
+
+=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
+
+=item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
+
+Encrypt I<clearfile> to produce I<cryptfile>.
+The encryption recipients are all the keys in the pubic key ring.
+
+If I<clearfile> is C<-> or is omitted then it is read from stdin.
+
+If I<cryptfile> is C<-> then it is written to stdout.
+
+=item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
+
+Decrypt I<cryptfile> to produce I<clearfile>.
+You must be running C<gpg-agent> which will be used
+to gain access to your private key for decryption.
+
+If I<cryptfile> is C<-> then it is read from stdin.
+
+If I<clearfile> is C<-> or is omitted then it is written to stdout.
+
+=item B<regpg> B<recrypt> <I<cryptfile>>...
+
+=item B<regpg> B<re> <I<cryptfile>>...
+
+Decrypt and re-encrypt I<cryptfile>s.
+If the B<-r> option is given,
+all files are re-encrypted.
+
+You should use this after using B<addkey> or B<delkey>,
+if you did not pass the B<-r> option.
 
 List the keys in the B<regpg> keyring.
 
@@ -509,65 +568,6 @@ The algorithm can be one of:
 Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
-
-=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
-
-=item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
-
-Encrypt I<clearfile> to produce I<cryptfile>.
-The encryption recipients are all the keys in the pubic key ring.
-
-If I<clearfile> is C<-> or is omitted then it is read from stdin.
-
-If I<cryptfile> is C<-> then it is written to stdout.
-
-=item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
-
-Decrypt I<cryptfile> to produce I<clearfile>.
-You must be running C<gpg-agent> which will be used
-to gain access to your private key for decryption.
-
-If I<cryptfile> is C<-> then it is read from stdin.
-
-If I<clearfile> is C<-> or is omitted then it is written to stdout.
-
-=item B<regpg> B<recrypt> <I<cryptfile>>...
-
-=item B<regpg> B<re> <I<cryptfile>>...
-
-Decrypt and re-encrypt I<cryptfile>s.
-If the B<-r> option is given,
-all files are re-encrypted.
-
-You should use this after using B<addkey> or B<delkey>,
-if you did not pass the B<-r> option.
-
-=item B<regpg> B<check> <I<cryptfile>>...
-
-=item B<regpg> B<ck> <I<cryptfile>>...
-
-Check I<cryptfile>s for consistency.
-
-If no arguments are given, B<check>
-recursively finds and lists all encrypted files.
-These are the files that are recryped by the B<-r> option.
-
-If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
-and an adjacent file exists without the extension,
-it is called out as a potential cleartext file.
-
-Keys that can decrypt a I<cryptfile>
-but are not present in the B<-k> I<pubring.gpg>
-are listed in red with C<-> markers.
-
-Keys are present in the B<-k> I<pubring.gpg>
-but cannot decrypt a I<cryptfile>
-are listed in green with C<+> markers.
-
-If one argument is given then key fingerprints are printed in full,
-otherwise the diffs just list bare key IDs.
-
-These differences can be resolved by the B<recrypt> subcommand.
 
 =back
 
