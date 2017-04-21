@@ -19,6 +19,7 @@ usage:	regpg help
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
+	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
 options:
@@ -284,6 +285,18 @@ sub lskeys {
 	vexec @gpg, '--fingerprint';
 }
 
+sub gencsr {
+	getargs min => 2, max => 3;
+	my ($conf,$priv,$req) = @ARGV;
+	my $key = pipeslurp @gpg_de, $priv;
+	my @opt = ('-config', $conf);
+	push @opt, '-out', $req if $req and $req ne '-';
+	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
+	vsystem qw(openssl req -text -in), $req
+	    if $opt{v} and $opt[-2] eq '-out';
+	return 0;
+}
+
 our %genkey = (
 	dsa   => [qw(dsaparam -genkey -noout 1024)],
 	ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
@@ -343,6 +356,7 @@ my %longer = (
 	'add' => 'addkey',
 	'del' => 'delkey',
 	'ls' => 'lskeys',
+	'csr' => 'gencsr',
 	'key' => 'genkey',
 	'pwd' => 'genpwd',
 	'en' => 'encrypt',
@@ -384,6 +398,8 @@ B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+
+B<regpg> B<gencsr> [I<options>] <I<config>> <I<private>> [I<request>]
 
 B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
@@ -535,6 +551,24 @@ if you did not pass the B<-r> option.
 
 List the keys in the B<regpg> keyring.
 
+=item B<regpg> B<gencsr> <I<conf>> <I<priv>> [I<req>]
+
+=item B<regpg> B<csr> <I<conf>> <I<priv>> [I<req>]
+
+Generate an X.509 certificate signing request
+for an encrypted private key.
+
+The CSR parameters (distinguished name, subjectAltName, etc)
+are given in the OpenSSL configuration file I<conf>.
+(See the B<req>(1ssl) man page for details.)
+
+The private key I<priv> should have been generated
+with B<regpg> B<genkey> B<rsa>.
+
+If I<req> is C<-> or is omitted then it is written to stdout.
+
+The CSR is pinted in text form if you give the B<-v> option.
+
 =item B<regpg> B<genkey> <I<algo>> <I<priv>> [I<pub>]
 
 =item B<regpg> B<key> <I<algo>> <I<priv>> [I<pub>]
@@ -617,17 +651,6 @@ Ansible filter plugins work in Jinja2 templates. For example,
 	    - ssh_host_ecdsa_key.asc
 	    - ssh_host_ed25519_key.asc
 	    - ssh_host_rsa_key.asc
-
-=head2 OpenSSL
-
-Create a private key:
-
-	regpg genkey rsa ssl-rsa.pem.asc
-
-Generate a certificate signing request using the encrypted key:
-
-	openssl req -new -key <(regpg decrypt ssl-rsa.pem.asc) \
-		-out ssl-rsa.csr -config openssl.conf
 
 =head1 SEE ALSO
 
