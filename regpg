@@ -151,7 +151,7 @@ sub find_all {
 	my @files = pipeslurp q(find . -type f |
 		xargs grep -l '^-----BEGIN PGP MESSAGE-----$');
 	$opt{n} = $save;
-	return map m{^([^\n]+)\n*$}, @files;
+	return sort map m{^([^\n]+)\n*$}, @files;
 }
 
 sub recrypt_one {
