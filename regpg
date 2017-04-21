@@ -15,6 +15,7 @@ usage:	regpg help
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
+	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
@@ -58,7 +59,7 @@ sub getargs {
 }
 
 sub getout {
-	return  $ARGV[0] eq '-' ? () : ('--output', $ARGV[0]);
+	return $ARGV[0] eq '-' ? () : ('--output', $ARGV[0]);
 }
 
 sub getinout {
@@ -96,7 +97,8 @@ sub pipeslurp {
 		die "read pipe from $_[0]: $!\n" if $!;
 		die "pipe from $_[0] failed\n";
 	}
-	return @out;
+	return @out if wantarray;
+	return join '', @out;
 }
 
 sub pipespew {
@@ -110,6 +112,23 @@ sub pipespew {
 		die "write pipe to $_[0]: $!\n" if $!;
 		die "pipe to $_[0] failed\n";
 	}
+}
+
+# save stdout once
+open my $stdout, '>&STDOUT' or die "dup: $!\n";
+
+sub pipespewto {
+	my $fn = shift;
+	my $data = shift;
+	verbose "will pipe out to $fn";
+	return verbose "pipe to", @_
+	    if $opt{n};
+	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
+	open STDOUT, '>&', $th or die "dup: $!\n";
+	pipespew $data, @_;
+	open STDOUT, '>&', $stdout or die "dup: $!\n";
+	rename $tn => $fn
+	    or die "rename $tn => $fn: $!\n";
 }
 
 sub ring_keys {
@@ -134,26 +153,11 @@ sub find_all {
 	return map m{^([^\n]+)\n*$}, @files;
 }
 
-# save stdout once
-open my $stdout, '>&STDOUT' or die "dup: $!\n";
-
 sub recrypt_one {
 	my $fn = shift;
 	my @recipients = @_;
-	my $cleartext = join '', pipeslurp @gpg_de, $fn;
-	if ($opt{n}) {
-		verbose "pipe to", @gpg_en, @recipients,
-		    '--output', $fn;
-		return;
-	}
-	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
-	verbose "tempfile $tn";
-	open STDOUT, '>&', $th or die "dup: $!\n";
-	pipespew $cleartext, @gpg_en, @recipients;
-	open STDOUT, '>&', $stdout or die "dup: $!\n";
-	verbose "rename $tn => $fn";
-	rename $tn => $fn
-	    or die "rename $tn => $fn: $!\n";
+	my $cleartext = pipeslurp @gpg_de, $fn;
+	pipespewto $fn, $cleartext, @gpg_en, @recipients;
 }
 
 sub recrypt_some {
@@ -257,10 +261,9 @@ sub addkey {
 	# Export from the user's normal gpg setup. export-minimal
 	# removes extraneous signatures from the key, which avoids
 	# complaints about unavailable public keys when it is imported
-	my $keys = join '',
-	    pipeslurp qw(gpg --export --armor
-			 --export-options export-minimal),
-			     @ARGV;
+	my $keys = pipeslurp qw(gpg --export --armor
+				--export-options export-minimal),
+				    @ARGV;
 	# Import to this local keyring
 	pipespew $keys, @gpg, '--import';
 	maybe_recrypt_all;
@@ -279,6 +282,28 @@ sub delkey {
 sub lskeys {
 	getargs min => 0, max => 0;
 	vexec @gpg, '--fingerprint';
+}
+
+our %genkey = (
+	dsa   => [qw(dsaparam -genkey -noout 1024)],
+	ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
+	ec256 => [qw(ecparam  -genkey -noout -name prime256v1)],
+	ec384 => [qw(ecparam  -genkey -noout -name secp384r1)],
+	ec521 => [qw(ecparam  -genkey -noout -name secp521r1)],
+	rsa   => [qw(genrsa 2048)],
+    );
+our @genkey = sort keys %genkey;
+
+sub genkey {
+	getargs min => 2, max => 3;
+	my ($algo,$priv,$pub) = @ARGV;
+	die "regpg genkey: algorithm $algo is not in @genkey\n",
+	    unless exists $genkey{$algo};
+	my $key = pipeslurp 'openssl', @{ $genkey{$algo} };
+	pipespewto $priv, $key, @gpg_en, recipients;
+	pipespewto $pub, $key, qw(ssh-keygen -y -f /dev/stdin)
+	    if $pub;
+	return 0;
 }
 
 sub genpwd {
@@ -318,6 +343,7 @@ my %longer = (
 	'add' => 'addkey',
 	'del' => 'delkey',
 	'ls' => 'lskeys',
+	'key' => 'genkey',
 	'pwd' => 'genpwd',
 	'en' => 'encrypt',
 	'decrypt' => 'decrypt',
@@ -351,6 +377,8 @@ B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<lskeys> [I<options>]
 
+B<regpg> B<genkey> [I<options>] I<<algorithm>> I<<private>> [I<public>]
+
 B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
 B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
@@ -375,6 +403,8 @@ who can decrypt the secrets.
 You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
 The encryption recipients are all the keys in the pubic key ring.
 Decryption is non-interactive, using B<gpg-agent>.
+
+You use the B<regpg> B<gen*> subcommands to create encrypted secrets.
 
 The B<regpg> B<check> subcommand verifies that the encrypted files and
 public keyring are consistent with each other.
@@ -419,7 +449,6 @@ Display this documentation.
 
 =item B<regpg> B<add> <I<keyname>>...
 
-
 Export keys from your default GPG public keyring,
 and import them into the B<regpg> keyring.
 
@@ -446,6 +475,32 @@ all files are recrypted after the key is added.
 =item B<regpg> B<ls>
 
 List the keys in the B<regpg> keyring.
+
+=item B<regpg> B<genkey> <I<algo>> <I<priv>> [I<pub>]
+
+=item B<regpg> B<key> <I<algo>> <I<priv>> [I<pub>]
+
+Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
+The PEM private key is encrypted and written to the file I<priv>.
+If a I<pub> filename is given, an B<ssh> public key is written to it.
+
+The algorithm can be one of:
+
+=over
+
+=item dsa - 1024 bit DSA
+
+=item ec256 - 256 bit ECDSA (prime256v1)
+
+=item ec384 - 384 bit ECDSA (secp384r1)
+
+=item ec521 - 521 bit ECDSA (secp521r1)
+
+=item ecdsa - same as ec256
+
+=item rsa - 2048 bit RSA
+
+=back
 
 =item B<regpg> B<genpwd> <I<cryptfile>>
 
@@ -565,45 +620,14 @@ Ansible filter plugins work in Jinja2 templates. For example,
 
 =head2 OpenSSL
 
-Generate a new RSA key and immediately encrypt it:
+Create a private key:
 
-	openssl genrsa 2048 |
-		regpg encrypt ssl-rsa.pem.asc
+	regpg genkey rsa ssl-rsa.pem.asc
 
 Generate a certificate signing request using the encrypted key:
 
 	openssl req -new -key <(regpg decrypt ssl-rsa.pem.asc) \
 		-out ssl-rsa.csr -config openssl.conf
-
-=head2 OpenSSH
-
-It is difficult to get B<ssh-keygen> to write private keys to a pipe
-so that they can be immediately encrypted by B<regpg>. However,
-OpenSSH private keys usually have the same PEM format as OpenSSL
-private keys. So you can use B<openssl> B<genrsa> to create the key as
-above, then create the OpenSSH public key from the private key:
-
-	openssl genrsa 2048 |
-		regpg encrypt ssh-rsa.asc
-	ssh-keygen -y -f <(regpg decrypt ssh-rsa.asc) >ssh-rsa.pub
-
-To generate a DSA key, use the B<openssl> B<dsaparam> command,
-followed by the same B<ssh-keygen> command to create an SSH public key
-file. OpenSSH requires the size parameter to be 1024.
-
-	openssl dsaparam -genkey -noout 1024 |
-		regpg encrypt ssh-dsa.asc
-	ssh-keygen -y -f <(regpg decrypt ssh-dsa.asc) >ssh-dsa.pub
-
-To generate an ECDSA key, use the B<openssl> B<ecparam> command.
-OpenSSH supports three curves, I<prime256v1>, I<secp384r1>, and
-I<secp521r1>:
-
-	openssl ecparam -noout -name prime256v1 -genkey |
-		regpg encrypt ssh-ec256.asc
-	ssh-keygen -y -f <(regpg decrypt ssh-ec256.asc) >ssh-ec256.pub
-
-OpenSSH also supports Ed25519 keys, but OpenSSL does not.
 
 =head1 SEE ALSO
 
