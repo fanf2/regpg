@@ -560,14 +560,15 @@ for an encrypted private key.
 
 The CSR parameters (distinguished name, subjectAltName, etc)
 are given in the OpenSSL configuration file I<conf>.
-(See the B<req>(1ssl) man page for details.)
+(See the L<req(1ssl)> man page for details.)
 
 The private key I<priv> should have been generated
 with B<regpg> B<genkey> B<rsa>.
 
 If I<req> is C<-> or is omitted then it is written to stdout.
 
-The CSR is pinted in text form if you give the B<-v> option.
+As well as being written to I<req>, the CSR is printed in text form
+if you give the B<-v> option.
 
 =item B<regpg> B<genkey> <I<algo>> <I<priv>> [I<pub>]
 
@@ -651,9 +652,41 @@ Ansible filter plugins work in Jinja2 templates. For example,
 	    - ssh_host_ecdsa_key.asc
 	    - ssh_host_ed25519_key.asc
 	    - ssh_host_rsa_key.asc
+	  when: secrets | default(all) | default()
+
+The condition on the last line allows you to avoid decrypting secrets
+except when necessary.
+
+=head2 Preload gpg-agent
+
+When Ansible invokes B<gpg_d> multiple times concurrently, you may be
+asked to enter your passphrase for B<gpg-agent> more than once. To
+avoid this problem, you can force Ansible to preload B<gpg-agent>
+before running the main playbook.
+
+Create a dummy encrypted file:
+
+	printf True | regpg encrypt gpg-preload.asc
+
+Create a F<gpg-preload.yml> playbook to decrypt the dummy file:
+
+	---
+	- hosts: localhost
+	  connection: local
+	  tasks:
+	    - name: ensure gpg agent is ready
+	      assert:
+	        that: "{{ 'gpg-preload.asc' | gpg_d }}"
+
+Then at the start of your main playbook, you can put:
+
+	---
+	- include: gpg-preload.yml
+	  when: secrets | default(all) | default()
+	# etc...
 
 =head1 SEE ALSO
 
-gpg(1), gpg-agent(1)
+gpg(1), gpg-agent(1), openssl(1), ssh-keygen(1)
 
 =cut
