@@ -24,6 +24,7 @@ usage:	regpg help
 	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
+	regpg init [options] [methods]
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -292,7 +293,7 @@ sub add_keys {
 }
 
 sub init_keys {
-	return if -f $opt{k};
+	return verbose "done init -k $opt{k}" if -f $opt{k};
 	# add the user's own keys from their secret keyring
 	add_keys ring_keys qw(gpg --list-secret-keys --with-colons),
 	    $ENV{USER};
@@ -327,7 +328,7 @@ YAML
 sub init_preload {
 	my $asc = "${keydir}gpg-preload.asc";
 	my $yml = "${keydir}gpg-preload.yml";
-	return if -f $asc and -f $yml;
+	return verbose "done init ansible-gpg-preload" if -f $asc and -f $yml;
 	pipespewto $asc, 'True', @gpg_en, recipients;
 	spewto $yml, $gpg_preload;
 }
@@ -358,7 +359,7 @@ PYTHON
 sub init_plugin {
 	my $dir = "${keydir}plugins/filter";
 	my $py = "$dir/gpg_d.py";
-	return if -f $py;
+	return verbose "done init ansible-gpg-d" if -f $py;
 	mkpath $dir;
 	spewto $py, $gpg_d;
 }
@@ -386,13 +387,13 @@ sub random_password {
 
 our $vault_open = <<SHELL;
 #!/bin/sh
-regpg decrypt vault.pwd
+gpg --use-agent --batch --quiet --decrypt vault.pwd
 SHELL
 
 sub init_ansible_vault {
 	my $pwd = "${keydir}vault.pwd";
 	my $open = "${keydir}vault.open";
-	return if -f $pwd and -f $open;
+	return verbose "done init ansible-vault" if -f $pwd and -f $open;
 	pipespewto $pwd, random_password, @gpg_en, recipients;
 	spewto $open, $vault_open;
 	chmod 0777 & ~umask, $open;
@@ -555,6 +556,8 @@ B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
 B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
+B<regpg> B<init> [I<options>] [I<methods>]
+
 =head1 DESCRIPTION
 
 The B<regpg> program is a thin wrapper around gpg
@@ -574,6 +577,9 @@ You use the B<regpg> B<gen*> subcommands to create encrypted secrets.
 
 The B<regpg> B<check> subcommand verifies that the encrypted files and
 public keyring are consistent with each other.
+
+The B<regpg> B<init> subcommand helps you to hook up B<regpg> with
+a few other utilities.
 
 =head1 OPTIONS
 
@@ -754,44 +760,79 @@ Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
+=item B<regpg> B<init> [I<methods>]
+
+Easy initialization of B<regpg> and its hooks for other utilities.
+The B<init> methods do nothing if they have already been run.
+
+You may want to use the B<-v> option to see what this command does.
+
+Every B<init> run ensures the B<regpg> public keyring exists. If it
+doesn't, the keyring is automatically created and populated with your
+own B<gpg> public key.
+
+The B<init> methods are:
+
+=over
+
+=item B<regpg> B<init> B<git>
+
+Configure B<git> to provide human-readable diffs of the B<regpg>
+public keyring.
+
+Note: you must have run B<git> B<init> first.
+
+Note: this does not provide human-readable diffs of the cleartext
+contents of encrypted files, because that exposes secrets dangerously.
+
+=item B<regpg> B<init> B<ansible>
+
+Configure Ansible for use with B<regpg>.
+An F<ansible.cfg> file is created if necessary.
+
+This installs an Ansible Jinja2 filter plugin called F<gpg_d> that
+decrypts secrets for deployment on servers. It can be used in
+templates, or with the B<content:> option to Ansible's B<copy> module.
+
+This also creates a F<gpg-preload.yml> playbook, which you can use to
+avoid the problem that when Ansible invokes F<gpg_d> multiple times
+concurrently, you may be asked to enter your passphrase for
+B<gpg-agent> more than once.
+
+See the L</EXAMPLES> section for how to use this setup.
+
+Note: these Ansible hooks only use B<gpg>, so you don't need B<regpg>
+to run your playbooks. You only need B<regpg> for altering the public
+keyring and encrypted files.
+
+=item B<regpg> B<init> B<ansible-vault>
+
+Configure Ansible Vault for use with B<regpg>.
+An F<ansible.cfg> file is created if necessary.
+
+This creates an encrypted vault password F<vault.pwd> and a wrapper
+script F<vault.open> to decrypt the password using B<gpg>.
+
+You can then use B<ansible-vault> as usual, and when it needs the
+vault password it will be automatically decrypted.
+
+Note: the decryption script only uses B<gpg>, so you don't need
+B<regpg> to run B<ansible-playbook> nor B<ansible-vault>. You only
+need B<regpg> for altering the public keyring.
+
+=back
+
 =back
 
 =head1 EXAMPLES
 
-=head2 Ansible Vault
-
-You can use B<regpg> to manage your B<ansible-vault> password.
-
-Create a vault password:
-
-	$ regpg genpwd vault.pwd
-
-Create a decryption script:
-
-	$ cat >vault.open
-	#!/bin/sh
-	regpg decrypt vault.pwd
-	^D
-	$ chmod +x vault.open
-
-To set up automatic decryption, edit F<ansible.cfg> to add
-
-	[default]
-	vault_password_file = ./vault.open
-
 =head2 Ansible without Vault
 
-Accompanying B<regpg> is an Ansible Jinja2 filter plugin called
-B<gpg_d> that decrypts secrets for deployment on servers.
+After running B<regpg> B<init> B<ansible>, here are a couple of ways
+you can use B<gpg> in your Ansible playbooks.
 
-To set up the B<gpg_d> filter plugin, copy it into a F<plugins/filter>
-subdirectory, next to your B<roles> subdirectory.
-Edit F<ansible.cfg> to add
-
-	[default]
-	filter_plugins = plugins/filter
-
-Ansible filter plugins work in Jinja2 templates. For example,
+The Ansible F<gpg_d> filter plugin works in Jinja2 templates, such as
+the B<content:> option to Ansible's B<copy> module. For example,
 
 	- name: install ssh host keys
 	  copy:
@@ -807,28 +848,8 @@ Ansible filter plugins work in Jinja2 templates. For example,
 The condition on the last line allows you to avoid decrypting secrets
 except when necessary.
 
-=head2 Preload gpg-agent
-
-When Ansible invokes B<gpg_d> multiple times concurrently, you may be
-asked to enter your passphrase for B<gpg-agent> more than once. To
-avoid this problem, you can force Ansible to preload B<gpg-agent>
-before running the main playbook.
-
-Create a dummy encrypted file:
-
-	printf True | regpg encrypt gpg-preload.asc
-
-Create a F<gpg-preload.yml> playbook to decrypt the dummy file:
-
-	---
-	- hosts: localhost
-	  connection: local
-	  tasks:
-	    - name: ensure gpg agent is ready
-	      assert:
-	        that: "{{ 'gpg-preload.asc' | gpg_d }}"
-
-Then at the start of your main playbook, you can put:
+To force Ansible to preload B<gpg-agent> before running the main
+playbook, you can put the following at the start of your main playbook:
 
 	---
 	- include: gpg-preload.yml
@@ -837,6 +858,6 @@ Then at the start of your main playbook, you can put:
 
 =head1 SEE ALSO
 
-gpg(1), gpg-agent(1), openssl(1), ssh-keygen(1)
+gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1), ssh-keygen(1)
 
 =cut
