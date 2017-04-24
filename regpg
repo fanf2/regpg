@@ -24,7 +24,7 @@ usage:	regpg help
 	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
-	regpg init [options] [methods]
+	regpg init [options] [hooks]
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -494,7 +494,7 @@ our @init = sort keys %init;
 sub init {
 	getargs keymaker => 1, min => 0;
 	for my $init ('keys', @ARGV) {
-		die "regpg init: method $init is not in @init\n",
+		die "regpg init: hook $init is not in @init\n",
 		    unless exists $init{$init};
 		$init{$init}->();
 	}
@@ -556,7 +556,7 @@ B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
 B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
-B<regpg> B<init> [I<options>] [I<methods>]
+B<regpg> B<init> [I<options>] [I<hooks>]
 
 =head1 DESCRIPTION
 
@@ -760,18 +760,18 @@ Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
-=item B<regpg> B<init> [I<methods>]
+=item B<regpg> B<init> [I<hooks>]
 
 Easy initialization of B<regpg> and its hooks for other utilities.
-The B<init> methods do nothing if they have already been run.
+A hook init does nothing if it has already been run.
 
 You may want to use the B<-v> option to see what this command does.
 
 Every B<init> run ensures the B<regpg> public keyring exists. If it
 doesn't, the keyring is automatically created and populated with your
-own B<gpg> public key.
+own B<gpg> public key(s).
 
-The B<init> methods are:
+The hooks are:
 
 =over
 
