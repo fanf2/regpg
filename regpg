@@ -24,7 +24,7 @@ usage:	regpg help
 	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
-	regpg init [options] [hooks]
+	regpg init [options] [hook]...
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -556,7 +556,7 @@ B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
 B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
 
-B<regpg> B<init> [I<options>] [I<hooks>]
+B<regpg> B<init> [I<options>] [I<hook>]...
 
 =head1 DESCRIPTION
 
@@ -760,7 +760,7 @@ Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
-=item B<regpg> B<init> [I<hooks>]
+=item B<regpg> B<init> [I<hook>]...
 
 Easy initialization of B<regpg> and its hooks for other utilities.
 A hook init does nothing if it has already been run.
@@ -771,7 +771,7 @@ Every B<init> run ensures the B<regpg> public keyring exists. If it
 doesn't, the keyring is automatically created and populated with your
 own B<gpg> public key(s).
 
-The hooks are:
+The hooks can be zero or more of:
 
 =over
 
