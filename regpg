@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use File::Basename;
+use File::Path;
 use File::Temp qw(tempfile);
 use Getopt::Std;
 use MIME::Base64;
@@ -43,6 +44,8 @@ our %opt;
 our @gpg;
 our @gpg_de;
 our @gpg_en;
+our $keydir;
+our $keybase;
 
 sub getargs {
 	my %arg = @_;
@@ -55,6 +58,7 @@ sub getargs {
 	die "regpg: $opt{k} not found\n"
 	    unless -f $opt{k} or $arg{keymaker};
 	$opt{k} = "./$opt{k}" unless $opt{k} =~ m{/};
+	($keybase,$keydir) = fileparse $opt{k};
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
 	@gpg_de = qw(gpg --use-agent --batch --quiet --decrypt);
 	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
@@ -124,6 +128,16 @@ sub pipespew {
 # save stdout once
 open my $stdout, '>&STDOUT' or die "dup: $!\n";
 
+sub tempclose {
+	my ($th,$tn,$fn) = @_;
+	close $th
+	    or die "write $tn: $!\n";
+	chmod 0666 & ~umask, $tn
+	    or die "chmod $tn: $!\n";
+	rename $tn => $fn
+	    or die "rename $tn => $fn: $!\n";
+}
+
 sub pipespewto {
 	my $fn = shift;
 	my $data = shift;
@@ -134,8 +148,17 @@ sub pipespewto {
 	open STDOUT, '>&', $th or die "dup: $!\n";
 	pipespew $data, @_;
 	open STDOUT, '>&', $stdout or die "dup: $!\n";
-	rename $tn => $fn
-	    or die "rename $tn => $fn: $!\n";
+	tempclose $th, $tn, $fn;
+}
+
+sub spewto {
+	my $fn = shift;
+	my $data = shift;
+	verbose "write to $fn";
+	return if $opt{n};
+	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
+	print $th $data;
+	tempclose $th, $tn, $fn;
 }
 
 sub ring_keys {
@@ -278,18 +301,74 @@ sub init_keys {
 sub init_git {
 	my $a = safeslurp qw(git check-attr diff), $opt{k};
 	if ($a eq "$opt{k}: diff: unspecified\n") {
-		my ($base,$dir) = fileparse $opt{k};
-		my $gitattr = "$dir.gitattributes";
+		my $gitattr = "$keydir.gitattributes";
 		verbose "append to $gitattr";
 		unless ($opt{n}) {
 			open my $fh, '>>', $gitattr
 			    or die "open $gitattr: $!\n";
-			print $fh "$base diff=gpgkeys\n";
+			print $fh "$keybase diff=gpgkeys\n";
 			close $fh
 			    or die "write $gitattr: $!\n";
 		}
 	}
 	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
+}
+
+our $gpg_preload = <<YAML;
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: ensure gpg agent is ready
+      assert:
+        that: "{{ 'gpg-preload.asc' | gpg_d }}"
+YAML
+
+sub init_preload {
+	my $asc = "${keydir}gpg-preload.asc";
+	my $yml = "${keydir}gpg-preload.yml";
+	return if -f $asc and -f $yml;
+	pipespewto $asc, 'True', @gpg_en, recipients;
+	spewto $yml, $gpg_preload;
+}
+
+our $gpg_d = <<PYTHON;
+import ansible
+import subprocess
+
+def gpg_d(file):
+    try:
+        output = subprocess.check_output(
+            ['gpg', '--use-agent', '--batch', '--quiet', '--decrypt', file])
+    except subprocess.CalledProcessError as e:
+        raise ansible.errors.AnsibleFilterError(
+            'gpg --decrypt '+file+' failed: '+e.output)
+    if output == "":
+        raise ansible.errors.AnsibleFilterError(
+            'gpg --decrypt '+file+' produced no output')
+    return output
+
+class FilterModule(object):
+    def filters(self):
+        return {
+            'gpg_d': gpg_d
+        }
+PYTHON
+
+sub init_plugin {
+	my $dir = "${keydir}plugins/filter";
+	my $py = "$dir/gpg_d.py";
+	return if -f $py;
+	mkpath $dir;
+	spewto $py, $gpg_d;
+}
+
+sub init_ansible {
+	init_preload;
+	init_plugin;
+	vsystem qw(ansible localhost -c local -m ini_file -a),
+	    'section=defaults option=filter_plugins value=plugins/filter '.
+	    "dest=${keydir}ansible.cfg create=yes";
 }
 
 # subcommands
