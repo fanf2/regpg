@@ -795,10 +795,8 @@ This installs an Ansible Jinja2 filter plugin called F<gpg_d> that
 decrypts secrets for deployment on servers. It can be used in
 templates, including the B<content:> option to Ansible's B<copy> module.
 
-This also creates a F<gpg-preload.yml> playbook, which you can use to
-avoid the problem that when Ansible invokes F<gpg_d> multiple times
-concurrently, you may be asked to enter your passphrase for
-B<gpg-agent> more than once.
+It also creates a F<gpg-preload.yml> playbook, which you can use to
+get B<gpg-agent> ready right at the start of a playbook run.
 
 See the L</EXAMPLES> section for how to use this setup.
 
@@ -847,9 +845,11 @@ except when necessary.
 	    - ssh_host_*_key.asc
 	  when: secrets | default(all) | default()
 
-To force Ansible to preload B<gpg-agent> immediately at startup,
-rather than prompting for your passphrase later when F<gpg_d> is
-invoked, you can put the following at the start of your main playbook:
+There can be a problem when Ansible invokes F<gpg_d> multiple times
+concurrently, that you may be asked to enter your passphrase more than
+once. You can avoid this by forcing Ansible to preload B<gpg-agent>
+immediately at startup. Do this by including F<gpg-preload.yml> at the
+start of your main playbook:
 
 	---
 	- include: gpg-preload.yml
