@@ -363,12 +363,40 @@ sub init_plugin {
 	spewto $py, $gpg_d;
 }
 
+sub ansible_cfg {
+	vsystem qw(ansible localhost -c local -m ini_file -a),
+	    "section=$_[0] option=$_[1] value=$_[2] ".
+	    "dest=${keydir}ansible.cfg create=yes";
+}
+
 sub init_ansible {
 	init_preload;
 	init_plugin;
-	vsystem qw(ansible localhost -c local -m ini_file -a),
-	    'section=defaults option=filter_plugins value=plugins/filter '.
-	    "dest=${keydir}ansible.cfg create=yes";
+	ansible_cfg qw(defaults filter_plugins plugins/filter);
+}
+
+sub random_password {
+	open my $fh, '<', '/dev/urandom'
+	    or die "open /dev/urandom: $!\n";
+	my $len = 15;
+	$len == sysread $fh, my $bytes, $len
+	    or die "read /dev/urandom: $!\n";
+	return encode_base64 $bytes;
+}
+
+our $vault_open = <<SHELL;
+#!/bin/sh
+regpg decrypt vault.pwd
+SHELL
+
+sub init_ansible_vault {
+	my $pwd = "${keydir}vault.pwd";
+	my $open = "${keydir}vault.open";
+	return if -f $pwd and -f $open;
+	pipespewto $pwd, random_password, @gpg_en, recipients;
+	spewto $open, $vault_open;
+	chmod 0777 & ~umask, $open;
+	ansible_cfg qw(defaults vault_password_file vault.open);
 }
 
 # subcommands
@@ -450,13 +478,7 @@ sub genkey {
 
 sub genpwd {
 	getargs min => 1, max => 1;
-	open my $fh, '<', '/dev/urandom'
-	    or die "open /dev/urandom: $!\n";
-	my $len = 15;
-	$len == sysread $fh, my $bytes, $len
-	    or die "read /dev/urandom: $!\n";
-	my $chars = encode_base64 $bytes;
-	pipespew $chars, @gpg_en, recipients, getout;
+	pipespew random_password, @gpg_en, recipients, getout;
 	return 0;
 }
 
