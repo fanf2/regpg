@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 
+use File::Basename;
 use File::Temp qw(tempfile);
 use Getopt::Std;
 use MIME::Base64;
@@ -275,6 +276,20 @@ sub init_keys {
 }
 
 sub init_git {
+	my $a = safeslurp qw(git check-attr diff), $opt{k};
+	if ($a eq "$opt{k}: diff: unspecified\n") {
+		my ($base,$dir) = fileparse $opt{k};
+		my $gitattr = "$dir.gitattributes";
+		verbose "append to $gitattr";
+		unless ($opt{n}) {
+			open my $fh, '>>', $gitattr
+			    or die "open $gitattr: $!\n";
+			print $fh "$base diff=gpgkeys\n";
+			close $fh
+			    or die "write $gitattr: $!\n";
+		}
+	}
+	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
 }
 
 # subcommands
