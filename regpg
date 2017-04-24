@@ -102,6 +102,11 @@ sub pipeslurp {
 	return join '', @out;
 }
 
+sub safeslurp {
+	delete local $opt{n};
+	return pipeslurp @_;
+}
+
 sub pipespew {
 	my $data = shift;
 	verbose "pipe to @_";
@@ -133,13 +138,11 @@ sub pipespewto {
 }
 
 sub ring_keys {
-	my $save = $opt{n}; undef $opt{n};
-	# get the key ID of each encryption-capable public key or subkey
-	my @keys = map m{^(?:[^:]*:){4}([^:]*):},
-	    grep m{^[ps]ub:.*:\w*e\w*:$},
-	    pipeslurp @gpg, qw(--list-keys --with-colons);
-	$opt{n} = $save;
-	return @keys;
+	my @out = @_ ? (safeslurp @_)
+	    : (safeslurp @gpg, qw(--list-keys --with-colons));
+	# get the key ID of each encryption-capable key or subkey
+	return map m{^(?:[^:]*:){4}([^:]*):},
+	    grep m{^(pub|sub|sec|ssb):.*:\w*e\w*:$}, @out;
 }
 
 sub recipients {
@@ -147,11 +150,9 @@ sub recipients {
 }
 
 sub find_all {
-	my $save = $opt{n}; undef $opt{n};
-	my @files = pipeslurp q(find . -type f |
+	return sort map m{^([^\n]+)\n*$},
+	    safeslurp q(find . -type f |
 		xargs grep -l '^-----BEGIN PGP MESSAGE-----$');
-	$opt{n} = $save;
-	return sort map m{^([^\n]+)\n*$}, @files;
 }
 
 sub recrypt_one {
@@ -255,18 +256,32 @@ sub for_files {
 	}
 }
 
-# subcommands
-
-sub addkey {
-	getargs keymaker => 1, min => 1;
+sub add_keys {
 	# Export from the user's normal gpg setup. export-minimal
 	# removes extraneous signatures from the key, which avoids
 	# complaints about unavailable public keys when it is imported
 	my $keys = pipeslurp qw(gpg --export --armor
 				--export-options export-minimal),
-				    @ARGV;
+				    @_;
 	# Import to this local keyring
 	pipespew $keys, @gpg, '--import';
+}
+
+sub init_keys {
+	return if -f $opt{k};
+	# add the user's own keys from their secret keyring
+	add_keys ring_keys qw(gpg --list-secret-keys --with-colons),
+	    $ENV{USER};
+}
+
+sub init_git {
+}
+
+# subcommands
+
+sub addkey {
+	getargs keymaker => 1, min => 1;
+	add_keys @ARGV;
 	maybe_recrypt_all;
 	return 0;
 }
@@ -351,6 +366,24 @@ sub genpwd {
 	return 0;
 }
 
+our %init = (
+	'keys' => \&init_keys,
+	'git' => \&init_git,
+	'ansible' => \&init_ansible,
+	'ansible-vault' => \&init_ansible_vault,
+    );
+our @init = sort keys %init;
+
+sub init {
+	getargs keymaker => 1, min => 0;
+	for my $init ('keys', @ARGV) {
+		die "regpg init: method $init is not in @init\n",
+		    unless exists $init{$init};
+		$init{$init}->();
+	}
+	return 0;
+}
+
 my %longer = (
 	'--help' => 'help',
 	'add' => 'addkey',
@@ -363,6 +396,7 @@ my %longer = (
 	'csr' => 'gencsr',
 	'key' => 'genkey',
 	'pwd' => 'genpwd',
+	'init' => 'init',
     );
 
 usage unless @ARGV;
