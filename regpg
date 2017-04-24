@@ -285,6 +285,26 @@ sub lskeys {
 	vexec @gpg, '--fingerprint';
 }
 
+sub encrypt {
+	getargs min => 1, max => 2;
+	unshift @ARGV, '-' if @ARGV == 1;
+	vexec @gpg_en, recipients, getinout;
+}
+
+sub decrypt {
+	getargs min => 1, max => 2;
+	push @ARGV, '-' if @ARGV == 1;
+	vexec @gpg_de, getinout;
+}
+
+sub recrypt {
+	for_files recrypt => \&recrypt_some;
+}
+
+sub check {
+	for_files zap => \&check_some;
+}
+
 sub gencsr {
 	getargs min => 2, max => 3;
 	my ($conf,$priv,$req) = @ARGV;
@@ -331,38 +351,18 @@ sub genpwd {
 	return 0;
 }
 
-sub encrypt {
-	getargs min => 1, max => 2;
-	unshift @ARGV, '-' if @ARGV == 1;
-	vexec @gpg_en, recipients, getinout;
-}
-
-sub decrypt {
-	getargs min => 1, max => 2;
-	push @ARGV, '-' if @ARGV == 1;
-	vexec @gpg_de, getinout;
-}
-
-sub recrypt {
-	for_files recrypt => \&recrypt_some;
-}
-
-sub check {
-	for_files zap => \&check_some;
-}
-
 my %longer = (
 	'--help' => 'help',
 	'add' => 'addkey',
 	'del' => 'delkey',
 	'ls' => 'lskeys',
-	'csr' => 'gencsr',
-	'key' => 'genkey',
-	'pwd' => 'genpwd',
 	'en' => 'encrypt',
 	'decrypt' => 'decrypt',
 	're' => 'recrypt',
 	'ck' => 'check',
+	'csr' => 'gencsr',
+	'key' => 'genkey',
+	'pwd' => 'genpwd',
     );
 
 usage unless @ARGV;
