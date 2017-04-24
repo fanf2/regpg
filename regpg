@@ -783,7 +783,8 @@ public keyring.
 Note: you must have run B<git> B<init> first.
 
 Note: this does not provide human-readable diffs of the cleartext
-contents of encrypted files, because that exposes secrets dangerously.
+contents of encrypted files, because that would expose secrets
+dangerously.
 
 =item B<regpg> B<init> B<ansible>
 
@@ -792,7 +793,7 @@ An F<ansible.cfg> file is created if necessary.
 
 This installs an Ansible Jinja2 filter plugin called F<gpg_d> that
 decrypts secrets for deployment on servers. It can be used in
-templates, or with the B<content:> option to Ansible's B<copy> module.
+templates, including the B<content:> option to Ansible's B<copy> module.
 
 This also creates a F<gpg-preload.yml> playbook, which you can use to
 avoid the problem that when Ansible invokes F<gpg_d> multiple times
@@ -831,25 +832,24 @@ need B<regpg> for altering the public keyring.
 After running B<regpg> B<init> B<ansible>, here are a couple of ways
 you can use B<gpg> in your Ansible playbooks.
 
-The Ansible F<gpg_d> filter plugin works in Jinja2 templates, such as
-the B<content:> option to Ansible's B<copy> module. For example,
+This Ansible task installs B<ssh> host private keys that have been
+encrypted with B<regpg>. The private key file B<content:> is generated
+from a Jinja2 template that uses the F<gpg_d> filter plugin. The
+condition on the last line allows you to avoid decrypting secrets
+except when necessary.
 
 	- name: install ssh host keys
 	  copy:
-	    dest: /etc/ssh/{{ item | replace(".asc","") }}
 	    content: "{{ item | gpg_d }}"
-	  with_items
-	    - ssh_host_dsa_key.asc
-	    - ssh_host_ecdsa_key.asc
-	    - ssh_host_ed25519_key.asc
-	    - ssh_host_rsa_key.asc
+	    dest: "/etc/ssh/{{ item | basename | replace('.asc','') }}"
+	    mode: 0600
+	  with_fileglob:
+	    - ssh_host_*_key.asc
 	  when: secrets | default(all) | default()
 
-The condition on the last line allows you to avoid decrypting secrets
-except when necessary.
-
-To force Ansible to preload B<gpg-agent> before running the main
-playbook, you can put the following at the start of your main playbook:
+To force Ansible to preload B<gpg-agent> immediately at startup,
+rather than prompting for your passphrase later when F<gpg_d> is
+invoked, you can put the following at the start of your main playbook:
 
 	---
 	- include: gpg-preload.yml
