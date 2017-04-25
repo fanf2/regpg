@@ -328,7 +328,6 @@ YAML
 sub init_preload {
 	my $asc = "${keydir}gpg-preload.asc";
 	my $yml = "${keydir}gpg-preload.yml";
-	return verbose "done init ansible-gpg-preload" if -f $asc and -f $yml;
 	pipespewto $asc, 'True', @gpg_en, recipients;
 	spewto $yml, $gpg_preload;
 }
@@ -356,24 +355,23 @@ class FilterModule(object):
         }
 PYTHON
 
-sub init_plugin {
-	my $dir = "${keydir}plugins/filter";
-	my $py = "$dir/gpg_d.py";
-	return verbose "done init ansible-gpg-d" if -f $py;
-	mkpath $dir;
-	spewto $py, $gpg_d;
-}
-
 sub ansible_cfg {
 	vsystem qw(ansible localhost -c local -m ini_file -a),
 	    "section=$_[0] option=$_[1] value=$_[2] ".
 	    "dest=${keydir}ansible.cfg create=yes";
 }
 
+sub init_plugin {
+	my $dir = "${keydir}plugins/filter";
+	my $py = "$dir/gpg_d.py";
+	mkpath $dir;
+	spewto $py, $gpg_d;
+	ansible_cfg qw(defaults filter_plugins plugins/filter);
+}
+
 sub init_ansible {
 	init_preload;
 	init_plugin;
-	ansible_cfg qw(defaults filter_plugins plugins/filter);
 }
 
 sub random_password {
@@ -393,7 +391,6 @@ SHELL
 sub init_ansible_vault {
 	my $pwd = "${keydir}vault.pwd";
 	my $open = "${keydir}vault.open";
-	return verbose "done init ansible-vault" if -f $pwd and -f $open;
 	pipespewto $pwd, random_password, @gpg_en, recipients;
 	spewto $open, $vault_open;
 	chmod 0777 & ~umask, $open;
@@ -493,6 +490,7 @@ our @init = sort keys %init;
 
 sub init {
 	getargs keymaker => 1, min => 0;
+	$opt{v} = 1;
 	for my $init ('keys', @ARGV) {
 		die "regpg init: hook $init is not in @init\n",
 		    unless exists $init{$init};
@@ -763,9 +761,7 @@ If I<cryptfile> is C<-> then it is written to stdout.
 =item B<regpg> B<init> [I<hook>]...
 
 Easy initialization of B<regpg> and its hooks for other utilities.
-A hook init does nothing if it has already been run.
-
-You may want to use the B<-v> option to see what this command does.
+It is safe to re-run B<regpg> B<init> since it is idempotent.
 
 Every B<init> run ensures the B<regpg> public keyring exists. If it
 doesn't, the keyring is automatically created and populated with your
