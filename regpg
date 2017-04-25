@@ -174,6 +174,22 @@ sub recipients {
 	return map { ('--recipient' => $_) } ring_keys;
 }
 
+sub self_keys {
+	return ring_keys
+	    qw(gpg --list-secret-keys --with-colons), $ENV{USER};
+}
+
+sub add_keys {
+	# Export from the user's normal gpg setup. export-minimal
+	# removes extraneous signatures from the key, which avoids
+	# complaints about unavailable public keys when it is imported
+	my $keys = pipeslurp qw(gpg --export --armor
+				--export-options export-minimal),
+				    @_;
+	# Import to this local keyring
+	pipespew $keys, @gpg, '--import';
+}
+
 sub find_all {
 	return sort map m{^([^\n]+)\n*$},
 	    safeslurp q(find . -type f |
@@ -281,22 +297,9 @@ sub for_files {
 	}
 }
 
-sub add_keys {
-	# Export from the user's normal gpg setup. export-minimal
-	# removes extraneous signatures from the key, which avoids
-	# complaints about unavailable public keys when it is imported
-	my $keys = pipeslurp qw(gpg --export --armor
-				--export-options export-minimal),
-				    @_;
-	# Import to this local keyring
-	pipespew $keys, @gpg, '--import';
-}
-
 sub init_keys {
 	return verbose "done init -k $opt{k}" if -f $opt{k};
-	# add the user's own keys from their secret keyring
-	add_keys ring_keys qw(gpg --list-secret-keys --with-colons),
-	    $ENV{USER};
+	add_keys self_keys;
 }
 
 sub init_git {
@@ -406,6 +409,12 @@ sub addkey {
 	return 0;
 }
 
+sub addself {
+	getargs keymaker => 1, min => 0, max => 0;
+	add_keys self_keys;
+	return 0;
+}
+
 sub delkey {
 	getargs keymaker => 1, min => 1;
 	# --expert persuades gpg to delete the key even if the secret
@@ -502,6 +511,7 @@ sub init {
 my %longer = (
 	'--help' => 'help',
 	'add' => 'addkey',
+	'addself' => 'addself',
 	'del' => 'delkey',
 	'ls' => 'lskeys',
 	'en' => 'encrypt',
@@ -537,6 +547,8 @@ B<regpg> B<help>
 B<regpg> B<check> [I<options>] <I<cryptfile>>...
 
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
+
+B<regpg> B<addself> [I<options>]
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
@@ -655,6 +667,17 @@ or a person's email address.
 If the B<-r> option is given,
 all files are recrypted after the key is added.
 
+=item B<regpg> B<addself>
+
+Adds your own key(s) to the B<regpg> keyring.
+
+A key is "yours" if you have a private key and it has an
+identity matching your login name.
+
+If none of your keys were previously on the B<regpg> keyring then you
+will not be able to B<recrypt> the secrets. You will need to get one
+of the existing keyholders to do that for you.
+
 =item B<regpg> B<delkey> <I<keyname>>...
 
 =item B<regpg> B<del> <I<keyname>>...
@@ -764,8 +787,7 @@ Easy initialization of B<regpg> and its hooks for other utilities.
 It is safe to re-run B<regpg> B<init> since it is idempotent.
 
 Every B<init> run ensures the B<regpg> public keyring exists. If it
-doesn't, the keyring is automatically created and populated with your
-own B<gpg> public key(s).
+doesn't, the keyring is created using B<regpg> B<addself>.
 
 The hooks can be zero or more of:
 
