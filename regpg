@@ -74,6 +74,11 @@ sub getinout {
 	return getout, $in eq '-' ? () : $in;
 }
 
+########################################################################
+#
+#  utilities
+#
+
 sub verbose {
 	print STDERR "@_\n" if $opt{v};
 }
@@ -162,6 +167,20 @@ sub spewto {
 	tempclose $th, $tn, $fn;
 }
 
+sub random_password {
+	open my $fh, '<', '/dev/urandom'
+	    or die "open /dev/urandom: $!\n";
+	my $len = 15;
+	$len == sysread $fh, my $bytes, $len
+	    or die "read /dev/urandom: $!\n";
+	return encode_base64 $bytes;
+}
+
+########################################################################
+#
+#  gpg wrappers
+#
+
 sub ring_keys {
 	my @out = @_ ? (safeslurp @_)
 	    : (safeslurp @gpg, qw(--list-keys --with-colons));
@@ -190,6 +209,16 @@ sub add_keys {
 	pipespew $keys, @gpg, '--import';
 }
 
+sub fingerprint {
+	# search in both the regpg keyring and the user's keyring
+	my @r;
+	eval { @r = pipeslurp @gpg, '--fingerprint', @_; };
+	return @r if @r;
+	eval { @r = pipeslurp 'gpg', '--fingerprint', @_; };
+	return @r if @r;
+	return "no fingerprint for @_\n", "\n";
+}
+
 sub find_all {
 	return sort map m{^([^\n]+)\n*$},
 	    safeslurp q(find . -type f |
@@ -212,6 +241,11 @@ sub recrypt_some {
 sub maybe_recrypt_all {
 	recrypt_some find_all if $opt{r};
 }
+
+########################################################################
+#
+#  check
+#
 
 sub check_quiet {
 	my $fn = shift;
@@ -254,15 +288,6 @@ sub check_one {
 	return !!$ck{clear} || $ck{diff};
 }
 
-sub fingerprint {
-	my @r;
-	eval { @r = pipeslurp @gpg, '--fingerprint', @_; };
-	return @r if @r;
-	eval { @r = pipeslurp 'gpg', '--fingerprint', @_; };
-	return @r if @r;
-	return "no fingerprint for @_\n", "\n";
-}
-
 sub check_long {
 	my $fn = shift;
 	my %ck = check_quiet $fn, @_;
@@ -297,43 +322,10 @@ sub for_files {
 	}
 }
 
-sub init_keys {
-	return verbose "done init -k $opt{k}" if -f $opt{k};
-	add_keys self_keys;
-}
-
-sub init_git {
-	my $a = safeslurp qw(git check-attr diff), $opt{k};
-	if ($a eq "$opt{k}: diff: unspecified\n") {
-		my $gitattr = "$keydir.gitattributes";
-		verbose "append to $gitattr";
-		unless ($opt{n}) {
-			open my $fh, '>>', $gitattr
-			    or die "open $gitattr: $!\n";
-			print $fh "$keybase diff=gpgkeys\n";
-			close $fh
-			    or die "write $gitattr: $!\n";
-		}
-	}
-	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
-}
-
-our $gpg_preload = <<YAML;
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: ensure gpg agent is ready
-      assert:
-        that: "{{ 'gpg-preload.asc' | gpg_d }}"
-YAML
-
-sub init_preload {
-	my $asc = "${keydir}gpg-preload.asc";
-	my $yml = "${keydir}gpg-preload.yml";
-	pipespewto $asc, 'True', @gpg_en, recipients;
-	spewto $yml, $gpg_preload;
-}
+########################################################################
+#
+#  init
+#
 
 our $gpg_d = <<PYTHON;
 import ansible
@@ -358,10 +350,32 @@ class FilterModule(object):
         }
 PYTHON
 
+our $gpg_preload = <<YAML;
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: ensure gpg agent is ready
+      assert:
+        that: "{{ 'gpg-preload.asc' | gpg_d }}"
+YAML
+
+our $vault_open = <<SHELL;
+#!/bin/sh
+gpg --use-agent --batch --quiet --decrypt vault.pwd
+SHELL
+
 sub ansible_cfg {
 	vsystem qw(ansible localhost -c local -m ini_file -a),
 	    "section=$_[0] option=$_[1] value=$_[2] ".
 	    "dest=${keydir}ansible.cfg create=yes";
+}
+
+sub init_preload {
+	my $asc = "${keydir}gpg-preload.asc";
+	my $yml = "${keydir}gpg-preload.yml";
+	pipespewto $asc, 'True', @gpg_en, recipients;
+	spewto $yml, $gpg_preload;
 }
 
 sub init_plugin {
@@ -377,20 +391,6 @@ sub init_ansible {
 	init_plugin;
 }
 
-sub random_password {
-	open my $fh, '<', '/dev/urandom'
-	    or die "open /dev/urandom: $!\n";
-	my $len = 15;
-	$len == sysread $fh, my $bytes, $len
-	    or die "read /dev/urandom: $!\n";
-	return encode_base64 $bytes;
-}
-
-our $vault_open = <<SHELL;
-#!/bin/sh
-gpg --use-agent --batch --quiet --decrypt vault.pwd
-SHELL
-
 sub init_ansible_vault {
 	my $pwd = "${keydir}vault.pwd";
 	my $open = "${keydir}vault.open";
@@ -400,7 +400,31 @@ sub init_ansible_vault {
 	ansible_cfg qw(defaults vault_password_file vault.open);
 }
 
-# subcommands
+sub init_git {
+	my $a = safeslurp qw(git check-attr diff), $opt{k};
+	if ($a eq "$opt{k}: diff: unspecified\n") {
+		my $gitattr = "$keydir.gitattributes";
+		verbose "append to $gitattr";
+		unless ($opt{n}) {
+			open my $fh, '>>', $gitattr
+			    or die "open $gitattr: $!\n";
+			print $fh "$keybase diff=gpgkeys\n";
+			close $fh
+			    or die "write $gitattr: $!\n";
+		}
+	}
+	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
+}
+
+sub init_keys {
+	return verbose "done init -k $opt{k}" if -f $opt{k};
+	add_keys self_keys;
+}
+
+########################################################################
+#
+#  subcommands
+#
 
 sub addkey {
 	getargs keymaker => 1, min => 1;
@@ -669,9 +693,9 @@ all files are recrypted after the key is added.
 
 =item B<regpg> B<addself>
 
-Adds your own key(s) to the B<regpg> keyring.
+Add your own key(s) to the B<regpg> keyring.
 
-A key is "yours" if you have a private key and it has an
+A key is "yours" if you have its secret key and it has an
 identity matching your login name.
 
 If none of your keys were previously on the B<regpg> keyring then you
