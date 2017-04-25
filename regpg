@@ -16,6 +16,7 @@ sub usage {
 usage:	regpg help
 	regpg check [options] <cryptfile>...
 	regpg addkey [options] <keyname>...
+	regpg addself [options]
 	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
 	regpg encrypt [options] [clearfile] <cryptfile>
@@ -308,20 +309,6 @@ sub check_some {
 	return $r;
 }
 
-sub for_files {
-	my ($zap,$sub) = @_;
-	getargs min => 0;
-	if (@ARGV and $opt{r}) {
-		die "regpg: either -r or arguments, not both\n";
-	} elsif (@ARGV) {
-		return &$sub(@ARGV);
-	} elsif ($opt{r} or $zap eq 'zap') {
-		return &$sub(find_all);
-	} else {
-		die "regpg: use -r to really $zap all files\n";
-	}
-}
-
 ########################################################################
 #
 #  init
@@ -453,6 +440,28 @@ sub lskeys {
 	vexec @gpg, '--fingerprint';
 }
 
+sub for_files {
+	my ($zap,$sub) = @_;
+	getargs min => 0;
+	if (@ARGV and $opt{r}) {
+		die "regpg: either -r or arguments, not both\n";
+	} elsif (@ARGV) {
+		return &$sub(@ARGV);
+	} elsif ($opt{r} or $zap eq 'zap') {
+		return &$sub(find_all);
+	} else {
+		die "regpg: use -r to really $zap all files\n";
+	}
+}
+
+sub check {
+	for_files zap => \&check_some;
+}
+
+sub recrypt {
+	for_files recrypt => \&recrypt_some;
+}
+
 sub encrypt {
 	getargs min => 1, max => 2;
 	unshift @ARGV, '-' if @ARGV == 1;
@@ -463,14 +472,6 @@ sub decrypt {
 	getargs min => 1, max => 2;
 	push @ARGV, '-' if @ARGV == 1;
 	vexec @gpg_de, getinout;
-}
-
-sub recrypt {
-	for_files recrypt => \&recrypt_some;
-}
-
-sub check {
-	for_files zap => \&check_some;
 }
 
 sub gencsr {
