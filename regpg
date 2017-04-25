@@ -361,7 +361,8 @@ sub ansible_cfg {
 sub init_preload {
 	my $asc = "${keydir}gpg-preload.asc";
 	my $yml = "${keydir}gpg-preload.yml";
-	pipespewto $asc, 'True', @gpg_en, recipients;
+	pipespewto $asc, 'True', @gpg_en, recipients
+	    unless -f $asc;
 	spewto $yml, $gpg_preload;
 }
 
