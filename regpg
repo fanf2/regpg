@@ -824,7 +824,9 @@ The hooks can be zero or more of:
 Configure B<git> to provide human-readable diffs of the B<regpg>
 public keyring.
 
-Note: you must have run B<git> B<init> first.
+Note: You must have run B<git> B<init> first. The B<git> B<diff>
+configuration is not propagated with the contents of the repository,
+so you need to re-run B<regpg> B<init> B<git> in each fresh clone.
 
 Note: this does not provide human-readable diffs of the cleartext
 contents of encrypted files, because that would expose secrets
