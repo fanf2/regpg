@@ -720,6 +720,8 @@ all files are recrypted after the key is added.
 
 =item B<regpg> B<ls>
 
+List the keys in the B<regpg> keyring.
+
 =item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
 
 =item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
@@ -751,8 +753,6 @@ all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
-
-List the keys in the B<regpg> keyring.
 
 =item B<regpg> B<gencsr> <I<conf>> <I<priv>> [I<req>]
 
