@@ -342,6 +342,9 @@ our $gpg_preload = <<YAML;
 - hosts: localhost
   connection: local
   tasks:
+    - name: check gpg agent is available
+      assert:
+        that: "{{ lookup('env', 'GPG_AGENT_INFO') != '' }}"
     - name: ensure gpg agent is ready
       assert:
         that: "{{ 'gpg-preload.asc' | gpg_d }}"
