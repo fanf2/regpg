@@ -887,9 +887,9 @@ except when necessary.
 
 	- name: install ssh host keys
 	  copy:
-	    content: "{{ item | gpg_d }}"
-	    dest: "/etc/ssh/{{ item | basename | replace('.asc','') }}"
-	    mode: 0600
+	    content="{{ item | gpg_d }}"
+	    dest="/etc/ssh/{{ item | basename | replace('.asc','') }}"
+	    mode=0600
 	  with_fileglob:
 	    - ssh_host_*_key.asc
 	  when: secrets | default(all) | default()
