@@ -358,7 +358,7 @@ SHELL
 sub ansible_cfg {
 	vsystem qw(ansible localhost -c local -m ini_file -a),
 	    "section=$_[0] option=$_[1] value=$_[2] ".
-	    "dest=${keydir}ansible.cfg create=yes";
+	    "dest=${keydir}ansible.cfg";
 }
 
 sub init_preload {
