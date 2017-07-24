@@ -495,7 +495,7 @@ sub csrconf {
 		    "openssl s_client -connect $source ".
 		    "</dev/null 2>/dev/null |\n@openssl_x509";
 	}
-	my $dns = qr{DNS:([A-Za-z0-9.-]+)[,\s]+};
+	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
 	$cert =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
 		   [ ]+X509v3[ ]Subject[ ]Alternative[ ]Name:\s+($dns+)}x
 	    or die "regpg: could not find certificate subject\n";
@@ -506,15 +506,15 @@ sub csrconf {
 	my $conftext = <<CONF;
 [ req ]
 prompt = no
-distinguished_name = req_distinguished_name
+distinguished_name = distinguished_name
 req_extensions = req_extensions
 
 [ req_extensions ]
-subjectAltName = \@subject_alt_names
+subjectAltName = \@subjectAltName
 
-[ req_distinguished_name ]
+[ distinguished_name ]
 $subject
-[ subject_alt_names ]
+[ subjectAltName ]
 $san
 CONF
 	if (not defined $conffile or $conffile eq '-') {
@@ -815,7 +815,7 @@ which can be used with B<regpg> B<gencsr>.
 You can use B<csrconf> with an existing certificate file I<certfile>
 to help with renewals, or you can fetch a web server's certificate
 from I<hostname> to create an example configuration to adapt for a new
-certificate request.
+certificate request. See the L</EXAMPLES> below.
 
 If I<certfile> is C<-> or is omitted then it is read from stdin.
 
@@ -938,13 +938,27 @@ need B<regpg> for altering the public keyring.
 
 =head1 EXAMPLES
 
+=head2 TLS preparation
+
+Get a template OpenSSL CSR configuration file based on a certificate
+similar to the one you want. This example gets the request details
+from the certificate for C<cam.ac.uk>:
+
+	$ regpg csrconf cam.ac.uk tls.csr.conf
+
+Edit F<tls.csr.conf> to the correct details for your server, then you
+can generate a key and CSR:
+
+	$ regpg genkey rsa tls.pem.asc
+	$ regpg gencsr tls.csr.conf tls.pem.asc tls.csr
+
 =head2 Ansible without Vault
 
 After running B<regpg> B<init> B<ansible>, here are a couple of ways
 you can use B<gpg> in your Ansible playbooks.
 
 This Ansible task installs B<ssh> host private keys that have been
-encrypted with B<regpg>. The private key file B<content:> is generated
+encrypted with B<regpg>. The private key file B<content=> is generated
 from a Jinja2 template that uses the F<gpg_d> filter plugin. The
 condition on the last line allows you to avoid decrypting secrets
 except when necessary.
