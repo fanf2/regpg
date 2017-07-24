@@ -67,13 +67,18 @@ sub getargs {
 	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
 }
 
+sub stdio {
+	my $stdio = (not defined $_[-1] or $_[-1] eq '-');
+	return !wantarray ? $stdio : $stdio ? () : @_;
+}
+
 sub getout {
-	return $ARGV[0] eq '-' ? () : ('--output', $ARGV[0]);
+	return stdio '--output', $ARGV[0];
 }
 
 sub getinout {
 	my $in = shift @ARGV;
-	return getout, $in eq '-' ? () : $in;
+	return getout, stdio $in;
 }
 
 ########################################################################
@@ -471,13 +476,11 @@ sub recrypt {
 
 sub encrypt {
 	getargs min => 1, max => 2;
-	unshift @ARGV, '-' if @ARGV == 1;
 	vexec @gpg_en, recipients, getinout;
 }
 
 sub decrypt {
 	getargs min => 1, max => 2;
-	push @ARGV, '-' if @ARGV == 1;
 	vexec @gpg_de, getinout;
 }
 
@@ -485,15 +488,12 @@ sub csrconf {
 	getargs min => 0, max => 2;
 	my ($source,$conffile,$cert) = @ARGV;
 	my @openssl_x509 = qw(openssl x509 -noout -text -nameopt multiline);
-	if (not defined $source or $source eq '-' or -f $source) {
-		$cert = safeslurp @openssl_x509,
-		    (not defined $source or $source eq '-')
-			? () : ('-in', $source);
+	if (stdio $source or -f $source) {
+		$cert = safeslurp @openssl_x509, stdio '-in', $source;
 	} else {
 		$source .= ':443' unless $source =~ m{:\d+$};
-		$cert = safeslurp
-		    "openssl s_client -connect $source ".
-		    "</dev/null 2>/dev/null |\n@openssl_x509";
+		$cert = safeslurp "openssl s_client -connect $source ".
+				"</dev/null 2>/dev/null | @openssl_x509";
 	}
 	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
 	$cert =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
@@ -517,8 +517,8 @@ $subject
 [ subjectAltName ]
 $san
 CONF
-	if (not defined $conffile or $conffile eq '-') {
-		print $conftext
+	if (stdio $conffile) {
+		print $conftext;
 	} else {
 		spewto $conffile, $conftext;
 	}
@@ -530,7 +530,7 @@ sub gencsr {
 	my ($conf,$priv,$req) = @ARGV;
 	my $key = pipeslurp @gpg_de, $priv;
 	my @opt = ('-config', $conf);
-	push @opt, '-out', $req if $req and $req ne '-';
+	push @opt, stdio '-out', $req;
 	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
 	vsystem qw(openssl req -text -in), $req
 	    if $opt{v} and $opt[-2] eq '-out';
