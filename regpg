@@ -22,6 +22,7 @@ usage:	regpg help
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
+	regpg csrconf [options] [certfile|hostname] [config]
 	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] <cryptfile>
@@ -480,6 +481,50 @@ sub decrypt {
 	vexec @gpg_de, getinout;
 }
 
+sub csrconf {
+	getargs min => 0, max => 2;
+	my ($source,$conffile,$cert) = @ARGV;
+	my @openssl_x509 = qw(openssl x509 -noout -text -nameopt multiline);
+	if (not defined $source or $source eq '-' or -f $source) {
+		$cert = safeslurp @openssl_x509,
+		    (not defined $source or $source eq '-')
+			? () : ('-in', $source);
+	} else {
+		$source .= ':443' unless $source =~ m{:\d+$};
+		$cert = safeslurp
+		    "openssl s_client -connect $source ".
+		    "</dev/null 2>/dev/null |\n@openssl_x509";
+	}
+	my $dns = qr{DNS:([A-Za-z0-9.-]+)[,\s]+};
+	$cert =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
+		   [ ]+X509v3[ ]Subject[ ]Alternative[ ]Name:\s+($dns+)}x
+	    or die "regpg: could not find certificate subject\n";
+	my $subject = $2;
+	my @san = $3 =~ m{$dns}g;
+	$subject =~ s{^\s+}{}mg;
+	my $san = join '', map "DNS.$_ = $san[$_]\n", keys @san;
+	my $conftext = <<CONF;
+[ req ]
+prompt = no
+distinguished_name = req_distinguished_name
+req_extensions = req_extensions
+
+[ req_extensions ]
+subjectAltName = \@subject_alt_names
+
+[ req_distinguished_name ]
+$subject
+[ subject_alt_names ]
+$san
+CONF
+	if (not defined $conffile or $conffile eq '-') {
+		print $conftext
+	} else {
+		spewto $conffile, $conftext;
+	}
+	return 0;
+}
+
 sub gencsr {
 	getargs min => 2, max => 3;
 	my ($conf,$priv,$req) = @ARGV;
@@ -549,6 +594,7 @@ my %longer = (
 	'decrypt' => 'decrypt',
 	're' => 'recrypt',
 	'ck' => 'check',
+	'csrconf' => 'csrconf',
 	'csr' => 'gencsr',
 	'key' => 'genkey',
 	'pwd' => 'genpwd',
@@ -590,6 +636,8 @@ B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+
+B<regpg> B<csrconf> [I<options>] [I<certfile>>|<I<hostname>] [I<config>]
 
 B<regpg> B<gencsr> [I<options>] <I<config>> <I<private>> [I<request>]
 
@@ -758,6 +806,20 @@ all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
+
+=item B<regpg> B<csrconf> [I<certfile>>|<I<hostname>] [I<config>]
+
+Convert an X.509 certificate into an B<openssl> B<req> configuration file
+which can be used with B<regpg> B<gencsr>.
+
+You can use B<csrconf> with an existing certificate file I<certfile>
+to help with renewals, or you can fetch a web server's certificate
+from I<hostname> to create an example configuration to adapt for a new
+certificate request.
+
+If I<certfile> is C<-> or is omitted then it is read from stdin.
+
+If I<config> is C<-> or is omitted then it is written to stdout.
 
 =item B<regpg> B<gencsr> <I<conf>> <I<priv>> [I<req>]
 
