@@ -25,7 +25,7 @@ usage:	regpg help
 	regpg csrconf [options] [certfile|hostname] [config]
 	regpg gencsr [options] <config> <private> [request]
 	regpg genkey [options] <algorithm> <private> [public]
-	regpg genpwd [options] <cryptfile>
+	regpg genpwd [options] [cryptfile]
 	regpg init [options] [hook]...
 options:
 	-k <pubring.gpg>	recipient keyring
@@ -560,7 +560,7 @@ sub genkey {
 }
 
 sub genpwd {
-	getargs min => 1, max => 1;
+	getargs min => 0, max => 1;
 	pipespew random_password, @gpg_en, recipients, getout;
 	return 0;
 }
@@ -643,7 +643,7 @@ B<regpg> B<gencsr> [I<options>] <I<config>> <I<private>> [I<request>]
 
 B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
-B<regpg> B<genpwd> [I<options>] <I<cryptfile>>
+B<regpg> B<genpwd> [I<options>] [I<cryptfile>]
 
 B<regpg> B<init> [I<options>] [I<hook>]...
 
@@ -872,7 +872,7 @@ The algorithm can be one of:
 
 Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
-If I<cryptfile> is C<-> then it is written to stdout.
+If I<cryptfile> is missing or C<-> then it is written to stdout.
 
 =item B<regpg> B<init> [I<hook>]...
 
