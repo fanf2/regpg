@@ -659,7 +659,7 @@ ring file (by default F<./pubring.gpg>) which lists the set of people
 who can decrypt the secrets.
 
 You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
-The encryption recipients are all the keys in the pubic key ring.
+The encryption recipients are all the keys in the public key ring.
 Decryption is non-interactive, using B<gpg-agent>.
 
 You use the B<regpg> B<gen*> subcommands to create encrypted secrets.
@@ -780,7 +780,7 @@ List the keys in the B<regpg> keyring.
 =item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
 
 Encrypt I<clearfile> to produce I<cryptfile>.
-The encryption recipients are all the keys in the pubic key ring.
+The encryption recipients are all the keys in the public key ring.
 
 If I<clearfile> is C<-> or is omitted then it is read from stdin.
 
