@@ -649,12 +649,12 @@ B<regpg> B<init> [I<options>] [I<hook>]...
 
 =head1 DESCRIPTION
 
-The B<regpg> program is a thin wrapper around gpg
+The B<regpg> program is a thin wrapper around B<gpg>
 to help with managing secrets that need to be stored encrypted
 in revision control for a configuration management system.
 These secrets need to be decrypted only in controlled circumstances.
 
-You use the B<regpg> B<*keys> subcommands to maintain a GPG public key
+You use the B<regpg> B<*keys> subcommands to maintain a B<gpg> public key
 ring file (by default F<./pubring.gpg>) which lists the set of people
 who can decrypt the secrets.
 
@@ -692,7 +692,7 @@ recrypt all files found by the B<check> subcommand.
 
 =item B<-v>
 
-Verbose mode. This mainly prints the GPG commands.
+Verbose mode. This mainly prints the B<gpg> commands.
 
 =back
 
@@ -737,7 +737,7 @@ These differences can be resolved by the B<recrypt> subcommand.
 
 =item B<regpg> B<add> <I<keyname>>...
 
-Export keys from your default GPG public keyring,
+Export keys from your default B<gpg> public keyring,
 and import them into the B<regpg> keyring.
 
 A I<keyname> can be a key fingerprint or ID
