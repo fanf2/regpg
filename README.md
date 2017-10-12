@@ -31,7 +31,8 @@ Downloads
 
 The `regpg` homepage is <http://dotat.at/prog/regpg/>
 
-Read the `regpg` manual: <http://dotat.at/prog/regpg/regpg.html>
+Read the `regpg` reference manual:
+<http://dotat.at/prog/regpg/regpg.html>
 
 ### Code
 
