@@ -2,10 +2,11 @@
 ==================================
 
 > This is a lightly-edited copy of a message I sent to my colleagues
-> to announce `regpg` and explain why it exists. At the time this was
-> written, Jon Warbrick and Ben Harris were using `ansible-gpg` which
-> they had written to encrypt `ansible-vault` passphrases using `gpg`.
-> Key management in `regpg` was copied from `ansible-gpg`.
+> to announce [`regpg`](https://dotat.at/prog/regpg/) and explain why
+> it exists. At the time this was written, Jon Warbrick and Ben Harris
+> were using `ansible-gpg` which they had written to encrypt
+> `ansible-vault` passphrases using `gpg`. Key management in `regpg`
+> was copied from `ansible-gpg`.
 
 I've done some more investigation and fiddling around, and I have made a
 thing which I am a bit more happy with than `ansible-vault`.
@@ -104,7 +105,9 @@ At the moment this idea is very speculative.
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
-at Cambridge University Information Services.
-You may do anything with this. It has no warranty.
-<https://creativecommons.org/publicdomain/zero/1.0/>
+> Part of `regpg` <https://dotat.at/prog/regpg/>
+>
+> Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>  
+> at Cambridge University Information Services.  
+> You may do anything with this. It has no warranty.  
+> <https://creativecommons.org/publicdomain/zero/1.0/>
