@@ -104,7 +104,7 @@ At the moment this idea is very speculative.
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at> <fanf2@cam.ac.uk>
+Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
 at Cambridge University Information Services.
 You may do anything with this. It has no warranty.
 <https://creativecommons.org/publicdomain/zero/1.0/>

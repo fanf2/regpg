@@ -13,6 +13,7 @@ use Term::ANSIColor;
 
 sub usage {
 	print STDERR <<EOF;
+regpg - safely store server secrets
 usage:	regpg help
 	regpg check [options] <cryptfile>...
 	regpg addkey [options] <keyname>...
@@ -615,7 +616,7 @@ __END__
 
 =head1 NAME
 
-regpg - manage gpg-encrypted secrets
+regpg - safely store server secrets
 
 =head1 SYNOPSIS
 
@@ -982,6 +983,15 @@ start of your main playbook:
 	- include: gpg-preload.yml
 	  when: secrets | default(all) | default()
 	# etc...
+
+=head1 VERSION
+
+  This is regpg-0.42 <https://dotat.at/prog/regpg/>
+
+  Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
+  at Cambridge University Information Services.
+  You may do anything with this. It has no warranty.
+  <https://creativecommons.org/publicdomain/zero/1.0/>
 
 =head1 SEE ALSO
 
