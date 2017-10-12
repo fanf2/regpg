@@ -50,6 +50,7 @@ upload: all
 	git push --tags dotat master
 	git push --tags uis master
 	ln -sf README.html index.html
-	rsync -ilt ${PROGS} ${htmlfiles} dist \
+	rsync -ilt ${PROGS} ${htmlfiles} \
+		index.html dist \
 		chiark:public-html/prog/regpg/
 	rm -f index.html

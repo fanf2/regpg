@@ -1,9 +1,9 @@
 regpg - safely store server secrets
 ===================================
 
-The `regpg` program is a thin wrapper around gpg to help with managing
-secrets that need to be stored encrypted in revision control for a
-configuration management system.
+The `regpg` program is a thin wrapper around `gpg` to help with
+managing secrets that need to be stored encrypted in revision control
+for a configuration management system.
 
 Dependencies
 ------------
@@ -11,15 +11,15 @@ Dependencies
 To use `regpg` you need the following programs. I've listed the
 versions that I have tested.
 
-* perl 5.20
-* gpg 1.4.18
-* gpg-agent 2.0.26
-* pinentry-gtk2 0.8.3 / pinentry-tty 0.9.7
+* `perl` 5.20
+* `gpg` 1.4.18
+* `gpg-agent` 2.0.26
+* `pinentry-gtk2` 0.8.3 / `pinentry-tty` 0.9.7
 
-You only need the following programs if you use the `regpg`'s helper
+You only need the following programs if you use `regpg`'s helper
 subcommands.
 
-* git 2.10
+* `git` 2.10
 * Ansible 2.2
 * OpenSSH 6.7
 * OpenSSL 1.0.1
@@ -29,9 +29,9 @@ Downloads
 
 ### Documentation
 
-The regpg homepage is <http://dotat.at/prog/regpg/>
+The `regpg` homepage is <http://dotat.at/prog/regpg/>
 
-Read the regpg manual: <http://dotat.at/prog/regpg/regpg.html>
+Read the `regpg` manual: <http://dotat.at/prog/regpg/regpg.html>
 
 ### Code
 
