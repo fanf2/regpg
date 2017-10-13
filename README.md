@@ -47,7 +47,8 @@ Documentation
 
  *  Reference manual: <http://dotat.at/prog/regpg/regpg.html>
 
- *  [Rationale](2017-04-03-rationale.md) - why `regpg` exists.
+ *  [2017-04-03-rationale.md](http://dotat.at/prog/regpg/2017-04-03-rationale.html) -
+    why `regpg` exists.
 
 
 Installing
