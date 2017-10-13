@@ -992,6 +992,11 @@ start of your main playbook:
   You may do anything with this. It has no warranty.
   <https://creativecommons.org/publicdomain/zero/1.0/>
 
+=head1 ACKNOWLEDGMENTS
+
+Thanks to Ben Harris and Jon Warbrick who gave me the idea for
+B<regpg>'s key management.
+
 =head1 SEE ALSO
 
 gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1), ssh-keygen(1)

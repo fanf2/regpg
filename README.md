@@ -53,6 +53,13 @@ You can clone or browse the repository from:
 * <https://github.com/fanf2/regpg.git>
 * <https://git.uis.cam.ac.uk/x/uis/git/regpg.git>
 
+
+Acknowledgments
+---------------
+
+Thanks to Ben Harris and Jon Warbrick who gave me the idea for
+`regpg`'s key management.
+
 ---------------------------------------------------------------------------
 
 > Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>  
