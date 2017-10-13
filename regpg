@@ -16,10 +16,10 @@ sub usage {
 regpg - safely store server secrets
 usage:	regpg help
 	regpg check [options] <cryptfile>...
-	regpg addkey [options] <keyname>...
-	regpg addself [options]
-	regpg delkey [options] <keyname>...
 	regpg lskeys [options]
+	regpg addself [options]
+	regpg addkey [options] <keyname>...
+	regpg delkey [options] <keyname>...
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
@@ -624,13 +624,13 @@ B<regpg> B<help>
 
 B<regpg> B<check> [I<options>] <I<cryptfile>>...
 
-B<regpg> B<addkey> [I<options>] <I<keyname>>...
+B<regpg> B<lskeys> [I<options>]
 
 B<regpg> B<addself> [I<options>]
 
-B<regpg> B<delkey> [I<options>] <I<keyname>>...
+B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
-B<regpg> B<lskeys> [I<options>]
+B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
@@ -650,10 +650,9 @@ B<regpg> B<init> [I<options>] [I<hook>]...
 
 =head1 DESCRIPTION
 
-The B<regpg> program is a thin wrapper around B<gpg>
-to help with managing secrets that need to be stored encrypted
-in revision control for a configuration management system.
-These secrets need to be decrypted only in controlled circumstances.
+The B<regpg> program is a thin wrapper around B<gpg> for looking after
+configuration management secrets that need to be stored encrypted in a
+version control system.
 
 You use the B<regpg> B<*keys> subcommands to maintain a B<gpg> public key
 ring file (by default F<./pubring.gpg>) which lists the set of people
@@ -734,6 +733,23 @@ otherwise the diffs just list bare key IDs.
 
 These differences can be resolved by the B<recrypt> subcommand.
 
+=item B<regpg> B<lskeys>
+
+=item B<regpg> B<ls>
+
+List the keys in the B<regpg> keyring.
+
+=item B<regpg> B<addself>
+
+Add your own key(s) to the B<regpg> keyring.
+
+A key is "yours" if you have its secret key and it has an
+identity matching your login name.
+
+If none of your keys were previously on the B<regpg> keyring then you
+will not be able to B<recrypt> the secrets. You will need to get one
+of the existing keyholders to do that for you.
+
 =item B<regpg> B<addkey> <I<keyname>>...
 
 =item B<regpg> B<add> <I<keyname>>...
@@ -747,17 +763,6 @@ or a person's email address.
 If the B<-r> option is given,
 all files are recrypted after the key is added.
 
-=item B<regpg> B<addself>
-
-Add your own key(s) to the B<regpg> keyring.
-
-A key is "yours" if you have its secret key and it has an
-identity matching your login name.
-
-If none of your keys were previously on the B<regpg> keyring then you
-will not be able to B<recrypt> the secrets. You will need to get one
-of the existing keyholders to do that for you.
-
 =item B<regpg> B<delkey> <I<keyname>>...
 
 =item B<regpg> B<del> <I<keyname>>...
@@ -769,12 +774,6 @@ or a person's email address.
 
 If the B<-r> option is given,
 all files are recrypted after the key is added.
-
-=item B<regpg> B<lskeys>
-
-=item B<regpg> B<ls>
-
-List the keys in the B<regpg> keyring.
 
 =item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
 
