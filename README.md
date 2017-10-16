@@ -47,7 +47,7 @@ Documentation
 
  *  Reference manual: <http://dotat.at/prog/regpg/regpg.html>
 
- *  [2017-04-03-rationale.md](http://dotat.at/prog/regpg/2017-04-03-rationale.html) -
+ *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
     why `regpg` exists.
 
 
