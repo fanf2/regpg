@@ -14,19 +14,24 @@ use Term::ANSIColor;
 sub usage {
 	print STDERR <<EOF;
 regpg - safely store server secrets
-usage:	regpg help
+usage:
+	regpg help
 	regpg check [options] <cryptfile>...
+keys:
 	regpg lskeys [options]
 	regpg addself [options]
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
+secrets:
 	regpg encrypt [options] [clearfile] <cryptfile>
 	regpg decrypt [options] <cryptfile> [clearfile]
 	regpg recrypt [options] <cryptfile>...
+helpers:
 	regpg csrconf [options] [certfile|hostname] [config]
 	regpg gencsr [options] <private> <config> [request]
 	regpg genkey [options] <algorithm> <private> [public]
 	regpg genpwd [options] [cryptfile]
+setup:
 	regpg init [options] [hook]...
 options:
 	-k <pubring.gpg>	recipient keyring
@@ -624,6 +629,8 @@ B<regpg> B<help>
 
 B<regpg> B<check> [I<options>] <I<cryptfile>>...
 
+- keys:
+
 B<regpg> B<lskeys> [I<options>]
 
 B<regpg> B<addself> [I<options>]
@@ -632,11 +639,15 @@ B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
+- secrets:
+
 B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
 
 B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+
+- helpers:
 
 B<regpg> B<csrconf> [I<options>] [I<certfile>>|<I<hostname>] [I<config>]
 
@@ -645,6 +656,8 @@ B<regpg> B<gencsr> [I<options>] <I<private>> <I<config>> [I<request>]
 B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
 
 B<regpg> B<genpwd> [I<options>] [I<cryptfile>]
+
+- setup:
 
 B<regpg> B<init> [I<options>] [I<hook>]...
 
@@ -733,6 +746,15 @@ otherwise the diffs just list bare key IDs.
 
 These differences can be resolved by the B<recrypt> subcommand.
 
+=back
+
+=head2 Key management
+
+The following subcommands manage the contents of the publig key ring
+file, by default F<pubring.gpg>.
+
+=over
+
 =item B<regpg> B<lskeys>
 
 =item B<regpg> B<ls>
@@ -775,6 +797,15 @@ or a person's email address.
 If the B<-r> option is given,
 all files are recrypted after the key is added.
 
+=back
+
+=head2 Secret management
+
+The following are the core secret encryption and decryption
+subcommands.
+
+=over
+
 =item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
 
 =item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
@@ -806,6 +837,16 @@ all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
+
+=back
+
+=head2 Higher-level helpers
+
+The following subcommands combine the core B<regpg> B<encrypt> /
+B<decrypt> subcommands with secret handling tools from OpenSSL and
+OpenSSH, etc.
+
+=over
 
 =item B<regpg> B<csrconf> [I<certfile>>|<I<hostname>] [I<config>]
 
@@ -873,6 +914,12 @@ The algorithm can be one of:
 Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
 
 If I<cryptfile> is missing or C<-> then it is written to stdout.
+
+=back
+
+=head2 Initial setup
+
+=over
 
 =item B<regpg> B<init> [I<hook>]...
 
