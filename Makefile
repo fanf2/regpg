@@ -46,11 +46,4 @@ release: ${DOCS}
 	util/release.sh ${DOCS}
 
 upload: all
-	git push --tags github master
-	git push --tags dotat master
-	git push --tags uis master
-	ln -sf README.html index.html
-	rsync -ilrt ${PROGS} ${htmlfiles} \
-		index.html dist \
-		chiark:public-html/prog/regpg/
-	rm -f index.html
+	util/upload.sh

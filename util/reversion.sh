@@ -9,7 +9,7 @@ case $# in
 	;;
 esac
 
-perl -pi -e 's{regpg-\d\.\d\d(\.X)?}{'$V'}' \
+perl -pi -e 's{regpg-[0-9.]+}{'$V'}' \
 	README.md regpg
 
 git commit -a -m $V

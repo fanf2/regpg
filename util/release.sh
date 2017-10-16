@@ -1,12 +1,27 @@
 #!/bin/sh
 
-V=$(git describe --tags --dirty=.X)
-mkdir $V
-cp $(git ls-files | fgrep -v .git) "$@" $V
+set -eux
+
+V=$(git describe --tags --dirty=.X | perl -pe 's{-(\d+)-g}{.$1.}')
+for f in $(git ls-files | fgrep -v .git) "$@"
+do	mkdir -p $V/$(dirname $f)
+	cp $f $V/$f
+done
+
 zip -qr $V.zip $V
 tar cf $V.tar $V
 xz -k9 $V.tar
 gzip -9 $V.tar
 rm -R $V
-mkdir -p dist
-mv $V.* dist
+
+gpg --detach-sign --armor $V.tar.gz
+gpg --detach-sign --armor $V.tar.xz
+gpg --detach-sign --armor $V.zip
+
+if git rev-parse --verify --quiet $V
+then	dist=dist
+else	dist=dust
+fi
+
+mkdir -p $dist
+mv $V.* $dist
