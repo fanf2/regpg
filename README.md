@@ -9,10 +9,11 @@ version control system.
 Overview
 --------
 
- *  secrets in files
+ *  discreet and discrete
 
     `regpg` is designed to store each secret in its own
-    ASCII-armored PGP-encryped file.
+    ASCII-armored PGP-encryped file, separate from non-secret
+    code and configuration
 
  *  simplified key management
 
