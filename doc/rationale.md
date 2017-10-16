@@ -1,12 +1,11 @@
-2017-04-03 - why not Ansible Vault
-==================================
+regpg - why not Ansible Vault?
+==============================
 
 > This is a lightly-edited copy of a message I sent to my colleagues
-> to announce [`regpg`](https://dotat.at/prog/regpg/) and explain why
-> it exists. At the time this was written, Jon Warbrick and Ben Harris
-> were using `ansible-gpg` which they had written to encrypt
-> `ansible-vault` passphrases using `gpg`. Key management in `regpg`
-> was copied from `ansible-gpg`.
+> on 3rd April 2017 to announce `regpg and explain why it exists.
+> When this was written, Jon Warbrick and Ben Harris were using
+> `ansible-gpg` which they had written to encrypt `ansible-vault`
+> passphrases using `gpg`.
 
 I've done some more investigation and fiddling around, and I have made a
 thing which I am a bit more happy with than `ansible-vault`.
