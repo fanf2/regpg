@@ -820,6 +820,8 @@ If I<clearfile> is C<-> or is omitted then it is read from stdin.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
+Note: conventionally the I<cryptfile> has a C<.gpg> or C<.asc> extension.
+
 =item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
 
 Decrypt I<cryptfile> to produce I<clearfile>.
