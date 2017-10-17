@@ -2,8 +2,8 @@ regpg - safely store server secrets
 ===================================
 
 The `regpg` program is a thin wrapper around `gpg` for looking after
-configuration management secrets that need to be stored encrypted in a
-version control system.
+secrets that need to be stored encrypted in a version control system
+and deployed to servers with a configuration management system.
 
 
 Overview

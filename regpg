@@ -667,8 +667,8 @@ B<regpg> B<init> [I<options>] [I<hook>]...
 =head1 DESCRIPTION
 
 The B<regpg> program is a thin wrapper around B<gpg> for looking after
-configuration management secrets that need to be stored encrypted in a
-version control system.
+secrets that need to be stored encrypted in a version control system
+and deployed to servers with a configuration management system.
 
 You use the B<regpg> B<*keys> subcommands to maintain a B<gpg> public key
 ring file (by default F<./pubring.gpg>) which lists the set of people
