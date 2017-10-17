@@ -830,6 +830,10 @@ If I<cryptfile> is C<-> then it is read from stdin.
 
 If I<clearfile> is C<-> or is omitted then it is written to stdout.
 
+Note: You can also just use C<gpg --decrypt>. The C<regpg decrypt>
+subcommand requires the GPG agent so it has consistent behaviour in
+bulk operations such as C<regpg recrypt -r>.
+
 =item B<regpg> B<recrypt> <I<cryptfile>>...
 
 =item B<regpg> B<re> <I<cryptfile>>...
