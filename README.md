@@ -21,15 +21,15 @@ Overview
     whoever is allowed to decrypt the secrets.
 
     There is no need to curate your personal public keyring, or
-    get involved in the web or trust, or use PGP keyservers.
+    get involved in the web of trust, or use PGP keyservers.
     You exchange public keys with your colleagues via the `regpg`
     `pubring.gpg` file in your version control system.
 
  *  keeping consistent
 
-    After you have added or removed a key it is easy to decrypt
-    and re-encrypt all the secrets. `regpg` can check that all
-    secrets are encrypted to the keys in its `pubring.gpg` file.
+    After you have added or removed a key it is easy to re-encrypt
+    secrets. `regpg` can check that all secrets are properly
+    encrypted to the keys in its `pubring.gpg` file.
 
  *  handy helpers
 
