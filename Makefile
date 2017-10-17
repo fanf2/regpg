@@ -12,7 +12,9 @@ man1dest=	${DESTDIR}${man1dir}
 
 PROGS=		regpg
 
-markdown=	doc/rationale.md
+markdown=	doc/rationale.md	\
+		doc/secrets.md		\
+		doc/threat-model.md
 
 htmlfiles=	regpg.html README.html ${markdown:.md=.html}
 man1files=	regpg.1
