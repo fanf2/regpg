@@ -491,15 +491,18 @@ sub decrypt {
 }
 
 sub csrconf {
-	getargs min => 0, max => 2;
+	# not really a keymaker - we just don't use the keyring
+	getargs keymaker => 1, min => 0, max => 2;
 	my ($source,$conffile,$cert) = @ARGV;
 	my @openssl_x509 = qw(openssl x509 -noout -text -nameopt multiline);
 	if (stdio $source or -f $source) {
 		$cert = safeslurp @openssl_x509, stdio '-in', $source;
 	} else {
-		$source .= ':443' unless $source =~ m{:\d+$};
-		$cert = safeslurp "openssl s_client -connect $source ".
-				"</dev/null 2>/dev/null | @openssl_x509";
+		my $connect = $source =~ s{^(.*)(:\d+)$}{$1}
+		    ? "$1$2" : "$source:443";
+		$cert = safeslurp "openssl s_client ".
+		    "-servername $source -connect $connect ".
+		    "</dev/null 2>/dev/null | @openssl_x509";
 	}
 	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
 	$cert =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
