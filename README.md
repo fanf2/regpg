@@ -46,7 +46,8 @@ Documentation
 
  *  Homepage: <http://dotat.at/prog/regpg/>
 
- *  Reference manual: <http://dotat.at/prog/regpg/regpg.html>
+ *  `regpg help` displays the reference manual, or you can read it at
+    <http://dotat.at/prog/regpg/regpg.html>
 
  *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
     why `regpg` exists.
