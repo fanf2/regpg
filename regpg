@@ -16,21 +16,21 @@ sub usage {
 regpg - safely store server secrets
 usage:
 	regpg help
-	regpg check [options] <cryptfile>...
+	regpg check [options] <cryptfile.asc>...
 keys:
 	regpg lskeys [options]
 	regpg addself [options]
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 secrets:
-	regpg encrypt [options] [clearfile] <cryptfile>
-	regpg decrypt [options] <cryptfile> [clearfile]
-	regpg recrypt [options] <cryptfile>...
+	regpg encrypt [options] [clearfile] <cryptfile.asc>
+	regpg decrypt [options] <cryptfile.asc> [clearfile]
+	regpg recrypt [options] <cryptfile.asc>...
 helpers:
 	regpg csrconf [options] [certfile|hostname] [config]
-	regpg gencsr [options] <private> <config> [request]
-	regpg genkey [options] <algorithm> <private> [public]
-	regpg genpwd [options] [cryptfile]
+	regpg gencsr [options] <private.asc> <config> [request]
+	regpg genkey [options] <algorithm> <private.asc> [public]
+	regpg genpwd [options] [cryptfile.asc]
 setup:
 	regpg init [options] [hook]...
 options:
@@ -630,7 +630,7 @@ regpg - safely store server secrets
 
 B<regpg> B<help>
 
-B<regpg> B<check> [I<options>] <I<cryptfile>>...
+B<regpg> B<check> [I<options>] <I<cryptfile.asc>>...
 
 - keys:
 
@@ -644,21 +644,21 @@ B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 - secrets:
 
-B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile>>
+B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile.asc>>
 
-B<regpg> B<decrypt> [I<options>] <I<cryptfile>> [I<clearfile>]
+B<regpg> B<decrypt> [I<options>] <I<cryptfile.asc>> [I<clearfile>]
 
-B<regpg> B<recrypt> [I<options>] <I<cryptfile>>...
+B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
 - helpers:
 
 B<regpg> B<csrconf> [I<options>] [I<certfile>>|<I<hostname>] [I<config>]
 
-B<regpg> B<gencsr> [I<options>] <I<private>> <I<config>> [I<request>]
+B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<config>> [I<request>]
 
-B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private>> [I<public>]
+B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<public>]
 
-B<regpg> B<genpwd> [I<options>] [I<cryptfile>]
+B<regpg> B<genpwd> [I<options>] [I<cryptfile.asc>]
 
 - setup:
 
@@ -722,9 +722,9 @@ Most subcommands have abbreviated synonyms.
 
 Display this documentation.
 
-=item B<regpg> B<check> <I<cryptfile>>...
+=item B<regpg> B<check> <I<cryptfile.asc>>...
 
-=item B<regpg> B<ck> <I<cryptfile>>...
+=item B<regpg> B<ck> <I<cryptfile.asc>>...
 
 Check I<cryptfile>s for consistency.
 
@@ -809,22 +809,23 @@ subcommands.
 
 =over
 
-=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile>>
+=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile.asc>>
 
-=item B<regpg> B<en> [I<clearfile>] <I<cryptfile>>
+=item B<regpg> B<en> [I<clearfile>] <I<cryptfile.asc>>
 
-Encrypt I<clearfile> to produce I<cryptfile>.
+Encrypt I<clearfile> to produce I<cryptfile.asc>.
 The encryption recipients are all the keys in the public key ring.
 
 If I<clearfile> is C<-> or is omitted then it is read from stdin.
 
 If I<cryptfile> is C<-> then it is written to stdout.
 
-Note: conventionally the I<cryptfile> has a C<.gpg> or C<.asc> extension.
+Note: conventionally the I<cryptfile> has a C<.asc> (for
+ASCII-armored) or C<.gpg> extension.
 
-=item B<regpg> B<decrypt> <I<cryptfile>> [I<clearfile>]
+=item B<regpg> B<decrypt> <I<cryptfile.asc>> [I<clearfile>]
 
-Decrypt I<cryptfile> to produce I<clearfile>.
+Decrypt I<cryptfile.asc> to produce I<clearfile>.
 You must be running B<gpg-agent> which will be used
 to gain access to your private key for decryption.
 
@@ -836,9 +837,9 @@ Note: You can also just use C<gpg --decrypt>. The C<regpg decrypt>
 subcommand requires the GPG agent so it has consistent behaviour in
 bulk operations such as C<regpg recrypt -r>.
 
-=item B<regpg> B<recrypt> <I<cryptfile>>...
+=item B<regpg> B<recrypt> <I<cryptfile.asc>>...
 
-=item B<regpg> B<re> <I<cryptfile>>...
+=item B<regpg> B<re> <I<cryptfile.asc>>...
 
 Decrypt and re-encrypt I<cryptfile>s.
 If the B<-r> option is given,
@@ -871,9 +872,9 @@ If I<certfile> is C<-> or is omitted then it is read from stdin.
 
 If I<config> is C<-> or is omitted then it is written to stdout.
 
-=item B<regpg> B<gencsr> <I<priv>> <I<conf>> [I<req>]
+=item B<regpg> B<gencsr> <I<priv.asc>> <I<conf>> [I<req>]
 
-=item B<regpg> B<csr> <I<priv>> <I<conf>> [I<req>]
+=item B<regpg> B<csr> <I<priv.asc>> <I<conf>> [I<req>]
 
 Generate an X.509 certificate signing request
 for an encrypted private key.
@@ -882,7 +883,7 @@ The CSR parameters (distinguished name, subjectAltName, etc)
 are given in the OpenSSL configuration file I<conf>.
 (See the L<req(1ssl)> man page for details.)
 
-The private key I<priv> should have been generated
+The private key I<priv.asc> should have been generated
 with B<regpg> B<genkey> B<rsa>.
 
 If I<req> is C<-> or is omitted then it is written to stdout.
@@ -890,12 +891,12 @@ If I<req> is C<-> or is omitted then it is written to stdout.
 As well as being written to I<req>, the CSR is printed in text form
 if you give the B<-v> option.
 
-=item B<regpg> B<genkey> <I<algo>> <I<priv>> [I<pub>]
+=item B<regpg> B<genkey> <I<algo>> <I<priv.asc>> [I<pub>]
 
-=item B<regpg> B<key> <I<algo>> <I<priv>> [I<pub>]
+=item B<regpg> B<key> <I<algo>> <I<priv.asc>> [I<pub>]
 
 Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
-The PEM private key is encrypted and written to the file I<priv>.
+The PEM private key is encrypted and written to the file I<priv.asc>.
 If a I<pub> filename is given, an B<ssh> public key is written to it.
 
 The algorithm can be one of:
@@ -916,11 +917,11 @@ The algorithm can be one of:
 
 =back
 
-=item B<regpg> B<genpwd> <I<cryptfile>>
+=item B<regpg> B<genpwd> <I<cryptfile.asc>>
 
-=item B<regpg> B<pwd> <I<cryptfile>>
+=item B<regpg> B<pwd> <I<cryptfile.asc>>
 
-Generate a 20 character password, encrypt it, and store it in I<cryptfile>.
+Generate a 20 character password, encrypt it, and store it in I<cryptfile.asc>.
 
 If I<cryptfile> is missing or C<-> then it is written to stdout.
 
