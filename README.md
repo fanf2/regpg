@@ -100,11 +100,14 @@ Downloads
 Download the single-file `regpg` perl script:
 <https://dotat.at/prog/regpg/regpg>
 
-Download the full source archives:
+Download the full source archives and GPG signatures:
 
 * <http://dotat.at/prog/regpg/regpg-0.69.tar.xz>
+  ([sig](http://dotat.at/prog/regpg/regpg-0.69.tar.xz.asc))
 * <http://dotat.at/prog/regpg/regpg-0.69.tar.gz>
+  ([sig](http://dotat.at/prog/regpg/regpg-0.69.tar.gz.asc))
 * <http://dotat.at/prog/regpg/regpg-0.69.zip>
+  ([sig](http://dotat.at/prog/regpg/regpg-0.69.zip.asc))
 
 
 Repositories
