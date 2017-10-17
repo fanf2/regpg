@@ -14,7 +14,8 @@ PROGS=		regpg
 
 markdown=	doc/rationale.md	\
 		doc/secrets.md		\
-		doc/threat-model.md
+		doc/threat-model.md	\
+		doc/tutorial.md
 
 htmlfiles=	regpg.html README.html ${markdown:.md=.html}
 man1files=	regpg.1
