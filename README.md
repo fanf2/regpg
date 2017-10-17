@@ -52,6 +52,9 @@ Documentation
  *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
     why `regpg` exists.
 
+ *  [doc/secrets.md](http://dotat.at/prog/regpg/doc/rationale.html) -
+    `regpg`'s approach to handling secrets.
+
 
 Installing
 ----------
