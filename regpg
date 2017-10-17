@@ -264,7 +264,7 @@ sub check_quiet {
 	my $fn = shift;
 	my @ring = @_;
 	my @file = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
-	    pipeslurp @gpg, qw(--list-only --status-fd 1), $fn;
+	    pipeslurp @gpg, qw(--list-only --quiet --status-fd 1), $fn;
 	# diff key lists
 	my %ring; @ring{@ring} = (); delete @ring{@file};
 	my %file; @file{@file} = (); delete @file{@ring};
