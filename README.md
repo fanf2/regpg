@@ -52,8 +52,11 @@ Documentation
  *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
     why `regpg` exists.
 
- *  [doc/secrets.md](http://dotat.at/prog/regpg/doc/rationale.html) -
+ *  [doc/secrets.md](http://dotat.at/prog/regpg/doc/secrets.html) -
     `regpg`'s approach to handling secrets.
+
+ *  [doc/threat-model.md](http://dotat.at/prog/regpg/doc/threat-model.html) -
+    `regpg`'s threat model.
 
 
 Installing
