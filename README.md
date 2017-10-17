@@ -102,9 +102,9 @@ Download the single-file `regpg` perl script:
 
 Download the full source archives:
 
-* <http://dotat.at/prog/regpg/regpg-0.42.tar.xz>
-* <http://dotat.at/prog/regpg/regpg-0.42.tar.gz>
-* <http://dotat.at/prog/regpg/regpg-0.42.zip>
+* <http://dotat.at/prog/regpg/regpg-0.69.tar.xz>
+* <http://dotat.at/prog/regpg/regpg-0.69.tar.gz>
+* <http://dotat.at/prog/regpg/regpg-0.69.zip>
 
 
 Repositories
