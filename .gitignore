@@ -1,5 +1,4 @@
 *.html
-doc/*.html
 regpg.1
 dist
 dust
