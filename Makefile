@@ -36,8 +36,8 @@ clean:
 regpg.1: regpg
 	pod2man regpg regpg.1
 
-regpg.html: regpg util/fixhtml.sed
-	pod2html regpg | sed -f util/fixhtml.sed >regpg.html
+regpg.html: regpg
+	pod2html --noindex --title 'regpg reference manual' regpg >regpg.html
 	rm -f pod2htm?.tmp
 
 .SUFFIXES: .md .html
