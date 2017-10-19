@@ -5,7 +5,7 @@ body {
 }
 
 code, tt {
-    font-family: Monaco, fixed;
+    font-family: Monaco, fixed, monospace;
     font-size: 90%;
 }
 
