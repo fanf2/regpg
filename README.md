@@ -49,7 +49,7 @@ Documentation
  *  `regpg help` displays the reference manual, or you can read it at
     <http://dotat.at/prog/regpg/regpg.html>
 
- *  [doc/tutorial.md](http://dotat.at/prog/regpg/doc/rationale.html) -
+ *  [doc/tutorial.md](http://dotat.at/prog/regpg/doc/tutorial.html) -
     an introduction and overview of `regpg`.
 
  *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
