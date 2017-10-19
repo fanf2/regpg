@@ -21,3 +21,11 @@ h2, h3, h4, h5, h6 {
 p, dt {
     margin-left: 2em;
 }
+
+ul {
+    margin-left: 1em;
+}
+
+li > p {
+    margin-left: 0em;
+}
