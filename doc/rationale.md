@@ -68,7 +68,7 @@ mistake.
 
 Working out where variables come from in Ansible can be tricky. Encrypting
 variable files makes this much harder. There is
-[an unpleasant official workaround](http://docs.ansible.com/ansible/playbooks_best_practices.html#best-practices-for-variables-and-vaults)
+[an unpleasant official workaround](https://docs.ansible.com/ansible/playbooks_best_practices.html#best-practices-for-variables-and-vaults)
 based on duplicating the vault's structure in cleartext variables.
 
 [I haven't found a use for encrypted variables (as opposed to encrypted

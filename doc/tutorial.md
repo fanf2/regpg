@@ -197,7 +197,7 @@ We'll fetch it into our gpg public key ring in `~/.gnupg`, then copy
 it to `regpg`'s `pubring.gpg` using the key ID we were told when we
 fetched it:
 
-        $ gpg --fetch-keys http://dotat.at/fanf.gpg
+        $ gpg --fetch-keys https://dotat.at/fanf.gpg
         gpg: key 78D9305F: public key "Tony Finch <dot@dotat.at>" imported
         gpg: Total number processed: 1
         gpg:               imported: 1  (RSA: 1)

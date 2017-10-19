@@ -45,21 +45,21 @@ Overview
 Documentation
 -------------
 
- *  Homepage: <http://dotat.at/prog/regpg/>
+ *  Homepage: <https://dotat.at/prog/regpg/>
 
  *  `regpg help` displays the reference manual, or you can read it at
-    <http://dotat.at/prog/regpg/regpg.html>
+    <https://dotat.at/prog/regpg/regpg.html>
 
- *  [doc/tutorial.md](http://dotat.at/prog/regpg/doc/tutorial.html) -
+ *  [doc/tutorial.md](https://dotat.at/prog/regpg/doc/tutorial.html) -
     an introduction and overview of `regpg`.
 
- *  [doc/rationale.md](http://dotat.at/prog/regpg/doc/rationale.html) -
+ *  [doc/rationale.md](https://dotat.at/prog/regpg/doc/rationale.html) -
     why `regpg` exists.
 
- *  [doc/secrets.md](http://dotat.at/prog/regpg/doc/secrets.html) -
+ *  [doc/secrets.md](https://dotat.at/prog/regpg/doc/secrets.html) -
     `regpg`'s approach to handling secrets.
 
- *  [doc/threat-model.md](http://dotat.at/prog/regpg/doc/threat-model.html) -
+ *  [doc/threat-model.md](https://dotat.at/prog/regpg/doc/threat-model.html) -
     `regpg`'s threat model.
 
 
@@ -103,12 +103,12 @@ Download the single-file `regpg` perl script:
 
 Download the full source archives and GPG signatures:
 
-* <http://dotat.at/prog/regpg/regpg-0.69.tar.xz>
-  ([sig](http://dotat.at/prog/regpg/regpg-0.69.tar.xz.asc))
-* <http://dotat.at/prog/regpg/regpg-0.69.tar.gz>
-  ([sig](http://dotat.at/prog/regpg/regpg-0.69.tar.gz.asc))
-* <http://dotat.at/prog/regpg/regpg-0.69.zip>
-  ([sig](http://dotat.at/prog/regpg/regpg-0.69.zip.asc))
+* <https://dotat.at/prog/regpg/regpg-0.69.tar.xz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.69.tar.xz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.69.tar.gz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.69.tar.gz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.69.zip>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.69.zip.asc))
 
 
 Repositories
