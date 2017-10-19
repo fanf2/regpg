@@ -1,6 +1,7 @@
-html {
+body {
     font-family: Optima, serif;
     font-size: 11pt;
+    max-width: 600px;
 }
 
 code, tt {
@@ -11,4 +12,12 @@ code, tt {
 h1, h2, h3, h4, h5, h6 {
     font-family: Gill Sans, sans-serif;
     font-weight: normal;
+}
+
+h2, h3, h4, h5, h6 {
+    margin-left: 0.5em;
+}
+
+p, dt {
+    margin-left: 2em;
 }
