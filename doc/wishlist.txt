@@ -1,0 +1,9 @@
+Different recipient lists for different secrets?
+
+(via Ian Jackson)
+
+- at the moment you can easily do this by separating them into
+  different subdirectories with a pubring.gpg in each one
+
+- maybe there should be something more sophisticated that works better
+  with shared Ansible roles?
