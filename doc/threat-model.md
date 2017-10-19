@@ -25,7 +25,8 @@ configuration change.
 
 With `regpg`, change reviews are important to protect against
 elevation of privilege by an attacker who gains write access to
-`pubring.gpg`.
+`pubring.gpg`. To make this easier, `regpg init git` installs a
+`git diff` hook for `pubring.gpg`.
 
 
 existence of secrets
