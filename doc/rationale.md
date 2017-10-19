@@ -2,7 +2,7 @@ regpg - why not Ansible Vault?
 ==============================
 
 > This is a lightly-edited copy of a message I sent to my colleagues
-> on 3rd April 2017 to announce `regpg and explain why it exists.
+> on 3rd April 2017 to announce `regpg` and explain why it exists.
 > When this was written, Jon Warbrick and Ben Harris were using
 > `ansible-gpg` which they had written to encrypt `ansible-vault`
 > passphrases using `gpg`.
