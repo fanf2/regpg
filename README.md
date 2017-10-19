@@ -13,7 +13,8 @@ Overview
 
     `regpg` is designed to store each secret in its own
     ASCII-armored PGP-encryped file, separate from non-secret
-    code and configuration
+    code and configuration. The only other file `regpg` needs
+    is a public keyring.
 
  *  simplified key management
 
