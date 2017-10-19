@@ -260,6 +260,13 @@ sub maybe_recrypt_all {
 #  check
 #
 
+sub check_clear {
+	for my $f ("@_", "@_~", "#@_#") {
+		return $f if -f $f;
+	}
+	return undef;
+}
+
 sub check_quiet {
 	my $fn = shift;
 	my @ring = @_;
@@ -270,8 +277,8 @@ sub check_quiet {
 	my %file; @file{@file} = (); delete @file{@ring};
 	@ring = keys %ring;
 	@file = keys %file;
-	my $clear = ($fn =~ m{^(.*)[.](asc|gpg)$} && -f $1)
-	    ? $1 : undef;
+	my $clear = $fn =~ m{^(.*)[.](asc|gpg)$} ?
+	    ? check_clear $1 : undef;
 	return ( ring => [ @ring ],
 		 file => [ @file ],
 		 diff => (!!@ring || !!@file),
