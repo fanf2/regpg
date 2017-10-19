@@ -1008,13 +1008,13 @@ Get a template OpenSSL CSR configuration file based on a certificate
 similar to the one you want. This example gets the request details
 from the certificate for C<dotat.at>:
 
-	$ regpg csrconf dotat.at tls.csr.conf
+    $ regpg csrconf dotat.at tls.csr.conf
 
 Edit F<tls.csr.conf> to the correct details for your server, then you
 can generate a key and CSR:
 
-	$ regpg genkey rsa tls.pem.asc
-	$ regpg gencsr tls.pem.asc tls.csr.conf tls.csr
+    $ regpg genkey rsa tls.pem.asc
+    $ regpg gencsr tls.pem.asc tls.csr.conf tls.csr
 
 =head2 Ansible without Vault
 
@@ -1027,14 +1027,14 @@ from a Jinja2 template that uses the F<gpg_d> filter plugin. The
 condition on the last line allows you to avoid decrypting secrets
 except when necessary.
 
-	- name: install ssh host keys
-	  copy:
-	    content="{{ item | gpg_d }}"
-	    dest="/etc/ssh/{{ item | basename | replace('.asc','') }}"
-	    mode=0600
-	  with_fileglob:
-	    - ssh_host_*_key.asc
-	  when: secrets | default(all) | default()
+    - name: install ssh host keys
+      copy:
+	content="{{ item | gpg_d }}"
+	dest="/etc/ssh/{{ item | basename | replace('.asc','') }}"
+	mode=0600
+      with_fileglob:
+	- ssh_host_*_key.asc
+      when: secrets | default(all) | default()
 
 There can be a problem when Ansible invokes F<gpg_d> multiple times
 concurrently, that you may be asked to enter your passphrase more than
@@ -1042,10 +1042,10 @@ once. You can avoid this by forcing Ansible to preload B<gpg-agent>
 immediately at startup. Do this by including F<gpg-preload.yml> at the
 start of your main playbook:
 
-	---
-	- include: gpg-preload.yml
-	  when: secrets | default(all) | default()
-	# etc...
+    ---
+    - include: gpg-preload.yml
+      when: secrets | default(all) | default()
+    # etc...
 
 =head1 VERSION
 
