@@ -780,6 +780,10 @@ Add your own key(s) to the B<regpg> keyring.
 A key is "yours" if you have its secret key and it has an
 identity matching your login name.
 
+It is a good idea to generate a new B<gpg> key specifically for use
+with B<regpg>. If you have multiple keys, B<addself> will add them
+all. You can then use B<delkey> to remove the unwanted ones.
+
 If none of your keys were previously on the B<regpg> keyring then you
 will not be able to B<recrypt> the secrets. You will need to get one
 of the existing keyholders to do that for you.

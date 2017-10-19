@@ -6,7 +6,9 @@ decryption keys
 ---------------
 
 Each person whose private key is listed in `regpg`'s `pubring.gpg` is
-responsible for keeping their secret key safe.
+responsible for keeping their secret key safe from prying eyes, and
+safely backed up. It is a good idea to generate a new key specifically
+for use with `regpg` - see "revocation" below.
 
 `regpg` requires the use of `gpg-agent`, which reduces the need to
 retype passphrases, which makes it more reasonable to have long random
@@ -44,6 +46,9 @@ We assume that `gpg` encryption is strong enough that we can
 promiscuously distribute encrypted secrets via version control and
 backups, to keep them safe from accidental lossage.
 
+If all the private decryption keys are lost then access to the secrets
+is lost. It is therefore vital to keep `gpg` private keys safe.
+
 
 avoiding accidental exposure
 ----------------------------
@@ -68,7 +73,7 @@ workstation compromise
 `regpg` takes a couple of measures to reduce the consequences of a
 compromised workstation.
 
-* `gpg-agent` is required (see above)
+* `gpg-agent` is required (see "decryption keys" above)
 
 * helper subcommands avoid writing secrets to disk
 
@@ -82,7 +87,12 @@ access to the repository, you can still decrypt secrets stored in old
 revisions.
 
 Revoking access to `regpg` secrets requires destroying the private
-part of the key that was removed from `pubring.gpg`.
+part of the key that was removed from `pubring.gpg`. Hence it is a
+good idea to use a `regpg`-specific key.
+
+If you can't be sure that someone no longer has access to their
+private key after you revoked their access, you will have to replace
+all the secrets.
 
 
 auditing
