@@ -45,7 +45,7 @@ regpg.html: regpg
 .SUFFIXES: .md .html
 
 .md.html:
-	markdown <$< >$@
+	util/markdown.pl $< $@
 
 release: ${DOCS}
 	util/release.sh ${DOCS}
