@@ -1,0 +1,14 @@
+html {
+    font-family: Optima, serif;
+    font-size: 11pt;
+}
+
+code, tt {
+    font-family: Monaco, fixed;
+    font-size: 90%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: Gill Sans, sans-serif;
+    font-weight: normal;
+}

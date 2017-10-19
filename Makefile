@@ -37,7 +37,9 @@ regpg.1: regpg
 	pod2man regpg regpg.1
 
 regpg.html: regpg
-	pod2html --noindex --title 'regpg reference manual' regpg >regpg.html
+	pod2html --noindex --css=doc/style.css \
+		--title 'regpg reference manual' \
+		regpg >regpg.html
 	rm -f pod2htm?.tmp
 
 .SUFFIXES: .md .html
