@@ -581,6 +581,8 @@ sub genpwd {
 	return 0;
 }
 
+# Note: 'keys' is described but not named in the manual
+# because it is automatically added to the hook list
 our %init = (
 	'keys' => \&init_keys,
 	'git' => \&init_git,
@@ -947,6 +949,16 @@ Every B<init> run ensures the B<regpg> public keyring exists. If it
 doesn't, the keyring is created using B<regpg> B<addself>.
 
 The hooks can be zero or more of:
+
+=over
+
+=item git
+
+=item ansible
+
+=item ansible-vault
+
+=back
 
 =over
 
