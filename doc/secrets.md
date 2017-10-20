@@ -51,14 +51,24 @@ We would also like to avoid decrypting secrets when we don't have to.
 Keeping secrets separate from non-secret files allows us to do most
 deployments without having to decrypt anything.
 
-Unfortunately there are situations where we can't keep things as
-simple as we would like, when we need to decrypt a key for reasons
-other than deployment. We might need to generate a new X.509 CSR, or
-adjust the timing metadata in a BIND-format DNSSEC private key.
+
+Situational awareness
+---------------------
+
+To reduce the risk of mistakes, `regpg` aims to keep things explicit:
+we know which files are encrypted, and when they get decrypted. There
+is a `check` subcommand so we can verify our understanding is correct.
+The data model is very simple.
 
 
 Helper subcommands
 ------------------
+
+Unfortunately there are situations where secrets have a more
+complicated life than we would like, when we need to decrypt a key for
+reasons other than deployment. We might need to generate a new X.509
+CSR, or adjust the timing metadata in a BIND-format DNSSEC private
+key.
 
 In those cases where our secrets need to live more complicated lives,
 we still want to keep the secrets off disk and off screen. It's often
