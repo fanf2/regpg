@@ -1074,8 +1074,7 @@ start of your main playbook:
 
 =head1 ACKNOWLEDGMENTS
 
-Thanks to Ben Harris and Jon Warbrick who gave me the idea for
-B<regpg>'s key management.
+Thanks to Jon Warbrick who gave me the idea for B<regpg>'s key management.
 
 =head1 SEE ALSO
 

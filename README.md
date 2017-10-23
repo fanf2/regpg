@@ -125,8 +125,7 @@ You can clone or browse the repository from:
 Acknowledgments
 ---------------
 
-Thanks to Ben Harris and Jon Warbrick who gave me the idea for
-`regpg`'s key management.
+Thanks to Jon Warbrick who gave me the idea for `regpg`'s key management.
 
 ---------------------------------------------------------------------------
 
