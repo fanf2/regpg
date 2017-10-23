@@ -63,7 +63,7 @@ Documentation
  *  [doc/threat-model.md](https://dotat.at/prog/regpg/doc/threat-model.html) -
     `regpg`'s threat model.
 
-If you use `regpg`, [let me know]<dot@dotat.at>!
+If you use `regpg`, let me know! Send me mail at <dot@dotat.at>.
 
 If you would like to submit a bug report or a patch, see
 [doc/contributing.md](https://dotat.at/prog/regpg/doc/contributing.html)
