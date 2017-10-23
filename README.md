@@ -130,7 +130,8 @@ You can clone or browse the repository from:
 Acknowledgments
 ---------------
 
-Thanks to Jon Warbrick who gave me the idea for `regpg`'s key management.
+Thanks to Jon Warbrick who gave me the idea for `regpg`'s key
+management, and David McBride for helpful discussions.
 
 ---------------------------------------------------------------------------
 
