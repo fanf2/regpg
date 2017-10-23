@@ -12,7 +12,8 @@ man1dest=	${DESTDIR}${man1dir}
 
 PROGS=		regpg
 
-markdown=	doc/rationale.md	\
+markdown=	doc/contributing.md	\
+		doc/rationale.md	\
 		doc/secrets.md		\
 		doc/threat-model.md	\
 		doc/tutorial.md
