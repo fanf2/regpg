@@ -261,7 +261,7 @@ sub maybe_recrypt_all {
 #
 
 sub check_clear {
-	for my $f ("@_", "@_~", "#@_#") {
+	for my $f ("@_", "@_~", "#@_#", ".@_.swp") {
 		return $f if -f $f;
 	}
 	return undef;
