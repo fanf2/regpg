@@ -261,10 +261,9 @@ sub maybe_recrypt_all {
 #
 
 sub check_clear {
-	for my $f ("@_", "@_~", "#@_#", ".@_.swp") {
-		return $f if -f $f;
-	}
-	return undef;
+	my ($file,$dir) = fileparse "@_";
+	return grep { -f $_ }
+	    "@_", "@_~", "$dir#$file#", "$dir.$file.swp";
 }
 
 sub check_quiet {
@@ -277,12 +276,13 @@ sub check_quiet {
 	my %file; @file{@file} = (); delete @file{@ring};
 	@ring = keys %ring;
 	@file = keys %file;
-	my $clear = $fn =~ m{^(.*)[.](asc|gpg)$}
-	    ? check_clear $1 : undef;
+	my @clear = $fn =~ m{^(.*)[.](asc|gpg)$}
+	    ? check_clear $1 : ();
 	return ( ring => [ @ring ],
 		 file => [ @file ],
 		 diff => (!!@ring || !!@file),
-		 clear => $clear );
+		 clear => [ @clear ],
+		 unsafe => (!!@clear) );
 }
 
 sub diff_del {
@@ -300,12 +300,12 @@ sub check_one {
 	my %ck = check_quiet $fn, @_;
 	return 0 if $opt{n};
 	print $fn,
-	    $ck{clear} ? "\t" . holy_crap : "",
+	    $ck{unsafe} ? "\t" . holy_crap(@{ $ck{clear} }) : "",
 	    $ck{diff} ? "\t" : "",
 	    diff_del(@{ $ck{file} }),
 	    diff_add(@{ $ck{ring} }),
 	    "\n";
-	return !!$ck{clear} || $ck{diff};
+	return $ck{unsafe} || $ck{diff};
 }
 
 sub check_long {
@@ -313,11 +313,10 @@ sub check_long {
 	my %ck = check_quiet $fn, @_;
 	return 0 if $opt{n};
 	print " checking: $fn\n";
-	printf "%s\n", holy_crap $ck{clear}
-	    if $ck{clear};
+	printf "%s\n", holy_crap $_ for @{ $ck{clear} };
 	print diff_del fingerprint $_ for @{ $ck{file} };
 	print diff_add fingerprint $_ for @{ $ck{ring} };
-	return !!$ck{clear} || $ck{diff};
+	return $ck{unsafe} || $ck{diff};
 }
 
 sub check_some {
