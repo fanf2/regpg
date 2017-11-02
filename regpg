@@ -240,7 +240,7 @@ sub fingerprint {
 sub find_all {
 	return sort map m{^([^\n]+)\n*$},
 	    safeslurp q(find . -type f |
-		xargs grep -l '^-----BEGIN PGP MESSAGE-----$');
+		xargs grep -l '^-----BEGIN PGP MESSAGE-----$' || true);
 }
 
 sub recrypt_one {
