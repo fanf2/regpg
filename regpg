@@ -78,11 +78,16 @@ sub stdio {
 	return !wantarray ? $stdio : $stdio ? () : @_;
 }
 
+sub getin {
+	return stdio $ARGV[0];
+}
+
 sub getout {
 	return stdio '--output', $ARGV[0];
 }
 
 sub getinout {
+	return $_[0]() if @ARGV == 1;
 	my $in = shift @ARGV;
 	return getout, stdio $in;
 }
@@ -493,12 +498,12 @@ sub recrypt {
 
 sub encrypt {
 	getargs min => 1, max => 2;
-	vexec @gpg_en, recipients, getinout;
+	vexec @gpg_en, recipients, getinout \&getout;
 }
 
 sub decrypt {
 	getargs min => 1, max => 2;
-	vexec @gpg_de, getinout;
+	vexec @gpg_de, getinout \&getin;
 }
 
 sub csrconf {
