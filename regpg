@@ -27,7 +27,7 @@ secrets:
 	regpg decrypt [options] <cryptfile.asc> [clearfile]
 	regpg recrypt [options] <cryptfile.asc>...
 helpers:
-	regpg csrconf [options] [certfile|hostname] [config]
+	regpg csrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
 	regpg genkey [options] <algorithm> <private.asc> [public]
 	regpg genpwd [options] [cryptfile.asc]
@@ -670,7 +670,7 @@ B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
 - helpers:
 
-B<regpg> B<csrconf> [I<options>] [I<certfile>>|<I<hostname>] [I<config>]
+B<regpg> B<csrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<config>]
 
 B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<config>> [I<request>]
 
@@ -880,7 +880,7 @@ OpenSSH, etc.
 
 =over
 
-=item B<regpg> B<csrconf> [I<certfile>>|<I<hostname>] [I<config>]
+=item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<config>]
 
 Convert an X.509 certificate into an B<openssl> B<req> configuration file
 which can be used with B<regpg> B<gencsr>.
