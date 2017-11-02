@@ -26,6 +26,7 @@ secrets:
 	regpg encrypt [options] [clearfile] <cryptfile.asc>
 	regpg decrypt [options] <cryptfile.asc> [clearfile]
 	regpg recrypt [options] <cryptfile.asc>...
+	regpg shred [options] <clearfile>...
 helpers:
 	regpg csrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
@@ -271,9 +272,20 @@ sub maybe_recrypt_all {
 #
 
 sub check_clear {
-	my ($file,$dir) = fileparse "@_";
+	my ($file,$dir,$ext) = fileparse "@_", qw(.asc .gpg);
+	return () unless $ext;
 	return grep { -f $_ }
-	    "@_", "@_~", "$dir#$file#", glob "$dir.$file.sw?";
+	    "$dir$file", "$dir$file~", "$dir#$file#", glob "$dir.$file.sw?";
+}
+
+sub shred_one {
+	vsystem 'shred', '-u', $_ for check_clear @_;
+}
+
+sub shred_some {
+	$opt{v} = 1;
+	shred_one $_ for @_;
+	return 0;
 }
 
 sub check_quiet {
@@ -286,8 +298,7 @@ sub check_quiet {
 	my %file; @file{@file} = (); delete @file{@ring};
 	@ring = keys %ring;
 	@file = keys %file;
-	my @clear = $fn =~ m{^(.*)[.](asc|gpg)$}
-	    ? check_clear $1 : ();
+	my @clear = check_clear $fn;
 	return ( ring => [ @ring ],
 		 file => [ @file ],
 		 diff => (!!@ring || !!@file),
@@ -496,6 +507,10 @@ sub recrypt {
 	for_files recrypt => \&recrypt_some;
 }
 
+sub shred {
+	for_files shred => \&shred_some;
+}
+
 sub encrypt {
 	getargs min => 1, max => 2;
 	vexec @gpg_en, recipients, getinout \&getout;
@@ -621,6 +636,7 @@ my %longer = (
 	'decrypt' => 'decrypt',
 	're' => 'recrypt',
 	'ck' => 'check',
+	'shred' => 'shred',
 	'csrconf' => 'csrconf',
 	'csr' => 'gencsr',
 	'key' => 'genkey',
@@ -667,6 +683,8 @@ B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile.asc>>
 B<regpg> B<decrypt> [I<options>] <I<cryptfile.asc>> [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
+
+B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - helpers:
 
@@ -753,6 +771,7 @@ These are the files that are recryped by the B<-r> option.
 If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
 and an adjacent file exists without the extension,
 it is called out as a potential cleartext file.
+You can use C<regpg shred> to destroy cleartext files.
 
 Keys that can decrypt a I<cryptfile>
 but are not present in the B<-k> I<pubring.gpg>
@@ -869,6 +888,15 @@ all files are re-encrypted.
 
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
+
+=item B<regpg> B<shred> <I<clearfile>>...
+
+Destroy cleartext files.
+
+If the B<-r> option is given,
+all cleartext files found by C<regpg check> are shredded.
+
+Note: You might want to test B<shred> with the B<-n> option first!
 
 =back
 
