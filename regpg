@@ -46,7 +46,7 @@ EOF
 }
 
 sub help {
-	exec "perldoc -F $0";
+	exec "perldoc -M Pod::Text::Overstrike -F $0";
 }
 
 our %opt;
@@ -903,7 +903,7 @@ for an encrypted private key.
 
 The CSR parameters (distinguished name, subjectAltName, etc)
 are given in the OpenSSL configuration file I<conf>.
-(See the L<req(1ssl)> man page for details.)
+(See the C<req(1ssl)> man page for details.)
 
 The private key I<priv.asc> should have been generated
 with B<regpg> B<genkey> B<rsa>.
@@ -936,6 +936,8 @@ The algorithm can be one of:
 =item ecdsa - same as ec256
 
 =item rsa - 2048 bit RSA
+
+Z<>
 
 =back
 
@@ -970,6 +972,8 @@ The hooks can be zero or more of:
 =item ansible
 
 =item ansible-vault
+
+Z<>
 
 =back
 
