@@ -273,7 +273,7 @@ sub maybe_recrypt_all {
 sub check_clear {
 	my ($file,$dir) = fileparse "@_";
 	return grep { -f $_ }
-	    "@_", "@_~", "$dir#$file#", "$dir.$file.swp";
+	    "@_", "@_~", "$dir#$file#", glob "$dir.$file.sw?";
 }
 
 sub check_quiet {
