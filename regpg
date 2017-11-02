@@ -211,6 +211,11 @@ sub self_keys {
 	    qw(gpg --list-secret-keys --with-colons), $ENV{USER};
 }
 
+sub clean_ids {
+	map s{^\d+\w/}{}, @_;
+	return @_;
+}
+
 sub add_keys {
 	# Export from the user's normal gpg setup. export-minimal
 	# removes extraneous signatures from the key, which avoids
@@ -439,7 +444,7 @@ sub init_keys {
 
 sub addkey {
 	getargs keymaker => 1, min => 1;
-	add_keys @ARGV;
+	add_keys clean_ids @ARGV;
 	maybe_recrypt_all;
 	return 0;
 }
@@ -454,7 +459,7 @@ sub delkey {
 	getargs keymaker => 1, min => 1;
 	# --expert persuades gpg to delete the key even if the secret
 	# key is available, when deleting one of the user's own keys
-	vsystem @gpg, '--expert', '--delete-key', @ARGV;
+	vsystem @gpg, '--expert', '--delete-key', clean_ids @ARGV;
 	maybe_recrypt_all;
 	return 0;
 }
