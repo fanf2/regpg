@@ -551,12 +551,12 @@ sub check {
 	return for_files zap => \&check_some;
 }
 
-sub recrypt {
-	return for_files recrypt => \&recrypt_some;
-}
-
 sub shred {
 	return for_files shred => \&shred_some;
+}
+
+sub recrypt {
+	return for_files recrypt => \&recrypt_some;
 }
 
 sub encrypt {
