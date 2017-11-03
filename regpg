@@ -157,7 +157,7 @@ sub pipespew {
 		die "write pipe to $_[0]: $!\n" if $!;
 		die "pipe to $_[0] failed\n";
 	}
-	return;
+	return 0;
 }
 
 # save stdout once
@@ -571,24 +571,32 @@ sub decrypt {
 	return vsystem @gpg_de, getinout \&getin;
 }
 
-sub pbcopy {
+my @pbcopy = qw(pbcopy);
+my @pbpaste = qw(pbpaste);
+
+sub xclip {
 	getargs min => 0, max => 1;
-	my @cmd = (canexec 'xclip') ? qw(xclip -i) : qw(pbcopy);
+	if (canexec 'xclip') {
+		@pbcopy = qw(xclip -i);
+		@pbpaste = qw(xclip -o);
+	}
+}
+
+sub pbcopy {
+	xclip;
 	my $cleartext = pipeslurp @gpg_de, getin;
-	pipespew $cleartext, @cmd;
+	pipespew $cleartext, @pbcopy;
 	print STDERR "Press ^C when you have used the secret...";
 	$SIG{INT} = sub {}; pause;
 	print STDERR "\n";
-	pipespew '', @cmd;
-	return 0;
+	return pipespew '', @pbcopy;
 }
 
 sub pbpaste {
-	getargs min => 0, max => 1;
-	my @cmd = (canexec 'xclip') ? qw(xclip -o) : qw(pbpaste);
-	my $cleartext = pipeslurp @cmd;
+	xclip;
+	my $cleartext = pipeslurp @pbpaste;
 	pipespew $cleartext, @gpg_en, recipients, getout;
-	return 0;
+	return pipespew '', @pbcopy;
 }
 
 sub edit {
