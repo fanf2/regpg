@@ -775,26 +775,26 @@ sub init {
 }
 
 my %longer = (
-	'--help' => 'help',
-	'add' => 'addkey',
-	'addself' => 'addself',
-	'del' => 'delkey',
-	'fetchkey' => 'fetchkey',
+	'--help'    => 'help',
+	'add'       => 'addkey',
+	'addself'   => 'addself',
+	'del'       => 'delkey',
+	'fetchkey'  => 'fetchkey',
 	'importkey' => 'importkey',
-	'ls' => 'lskeys',
-	'en' => 'encrypt',
-	'decrypt' => 'decrypt',
-	're' => 'recrypt',
-	'ck' => 'check',
-	'shred' => 'shred',
-	'edit' => 'edit',
-	'copy' => 'pbcopy',
-	'paste' => 'pbpaste',
-	'csrconf' => 'csrconf',
-	'csr' => 'gencsr',
-	'key' => 'genkey',
-	'pwd' => 'genpwd',
-	'init' => 'init',
+	'ls'        => 'lskeys',
+	'en'        => 'encrypt',
+	'decrypt'   => 'decrypt',
+	're'        => 'recrypt',
+	'ck'	    => 'check',
+	'shred'	    => 'shred',
+	'edit'	    => 'edit',
+	'copy'	    => 'pbcopy',
+	'paste'	    => 'pbpaste',
+	'csrconf'   => 'csrconf',
+	'gencsr'    => 'gencsr',
+	'genkey'    => 'genkey',
+	'genpwd'    => 'genpwd',
+	'init'	    => 'init',
     );
 
 usage unless @ARGV;
@@ -1135,8 +1135,6 @@ If I<config> is C<-> or is omitted then it is written to stdout.
 
 =item B<regpg> B<gencsr> <I<priv.asc>> <I<conf>> [I<req>]
 
-=item B<regpg> B<csr> <I<priv.asc>> <I<conf>> [I<req>]
-
 Generate an X.509 certificate signing request
 for an encrypted private key.
 
@@ -1153,8 +1151,6 @@ As well as being written to I<req>, the CSR is printed in text form
 if you give the B<-v> option.
 
 =item B<regpg> B<genkey> <I<algo>> <I<priv.asc>> [I<pub>]
-
-=item B<regpg> B<key> <I<algo>> <I<priv.asc>> [I<pub>]
 
 Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
 The PEM private key is encrypted and written to the file I<priv.asc>.
@@ -1181,8 +1177,6 @@ Z<>
 =back
 
 =item B<regpg> B<genpwd> [I<cryptfile.asc>]
-
-=item B<regpg> B<pwd> [I<cryptfile.asc>]
 
 Generate a 20 character password, encrypt it, and store it in I<cryptfile.asc>.
 
