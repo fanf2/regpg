@@ -72,6 +72,7 @@ sub getargs {
 	@gpg = (qw(gpg --no-default-keyring --keyring),$opt{k});
 	@gpg_de = qw(gpg --use-agent --batch --quiet --decrypt);
 	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
+	return;
 }
 
 sub stdio {
@@ -100,6 +101,7 @@ sub getinout {
 
 sub verbose {
 	print STDERR "@_\n" if $opt{v};
+	return;
 }
 
 sub vsystem {
@@ -116,6 +118,7 @@ sub vexec {
 
 sub vsystem_warn {
 	eval { vsystem @_ };
+	return;
 }
 
 sub pipeslurp {
@@ -148,6 +151,7 @@ sub pipespew {
 		die "write pipe to $_[0]: $!\n" if $!;
 		die "pipe to $_[0] failed\n";
 	}
+	return;
 }
 
 # save stdout once
@@ -161,6 +165,7 @@ sub tempclose {
 	    or die "chmod $tn: $!\n";
 	rename $tn => $fn
 	    or die "rename $tn => $fn: $!\n";
+	return;
 }
 
 sub pipespewto {
@@ -173,7 +178,7 @@ sub pipespewto {
 	open STDOUT, '>&', $th or die "dup: $!\n";
 	pipespew $data, @_;
 	open STDOUT, '>&', $stdout or die "dup: $!\n";
-	tempclose $th, $tn, $fn;
+	return tempclose $th, $tn, $fn;
 }
 
 sub spewto {
@@ -183,7 +188,7 @@ sub spewto {
 	return if $opt{n};
 	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
 	print $th $data;
-	tempclose $th, $tn, $fn;
+	return tempclose $th, $tn, $fn;
 }
 
 sub random_password {
@@ -192,6 +197,7 @@ sub random_password {
 	my $len = 15;
 	$len == sysread $fh, my $bytes, $len
 	    or die "read /dev/urandom: $!\n";
+	close $fh;
 	return encode_base64 $bytes;
 }
 
@@ -204,8 +210,8 @@ sub ring_keys {
 	my @out = @_ ? (safeslurp @_)
 	    : (safeslurp @gpg, qw(--list-keys --with-colons));
 	# get the key ID of each encryption-capable key or subkey
-	return map m{^(?:[^:]*:){4}([^:]*):},
-	    grep m{^(pub|sub|sec|ssb):.*:\w*e\w*:$}, @out;
+	return map { m{^(?:[^:]*:){4}([^:]*):} }
+	    grep { m{^(pub|sub|sec|ssb):.*:\w*e\w*:$} } @out;
 }
 
 sub recipients {
@@ -218,8 +224,7 @@ sub self_keys {
 }
 
 sub clean_ids {
-	map s{^\d+\w/}{}, @_;
-	return @_;
+	return map { s{^\d+\w/}{}r } @_;
 }
 
 sub add_keys {
@@ -230,7 +235,7 @@ sub add_keys {
 				--export-options export-minimal),
 				    @_;
 	# Import to this local keyring
-	pipespew $keys, @gpg, '--import';
+	return pipespew $keys, @gpg, '--import';
 }
 
 sub fingerprint {
@@ -244,16 +249,17 @@ sub fingerprint {
 }
 
 sub find_all {
-	return sort map m{^([^\n]+)\n*$},
+	my @all = sort map { m{^([^\n]+)\n*$} }
 	    safeslurp q(find . -type f |
 		xargs grep -l '^-----BEGIN PGP MESSAGE-----$' || true);
+	return @all;
 }
 
 sub recrypt_one {
 	my $fn = shift;
 	my @recipients = @_;
 	my $cleartext = pipeslurp @gpg_de, $fn;
-	pipespewto $fn, $cleartext, @gpg_en, @recipients;
+	return pipespewto $fn, $cleartext, @gpg_en, @recipients;
 }
 
 sub recrypt_some {
@@ -264,6 +270,7 @@ sub recrypt_some {
 
 sub maybe_recrypt_all {
 	recrypt_some find_all if $opt{r};
+	return;
 }
 
 ########################################################################
@@ -281,7 +288,8 @@ sub check_clear {
 sub check_quiet {
 	my $fn = shift;
 	my @ring = @_;
-	my @file = grep s{^.*ENC_TO\s+(\S+)\s+.*\n}{$1},
+	my $re = qr{^\S+\s+ENC_TO\s+(\S+)\s+.*\n};
+	my @file = map { s{$re}{$1}r } grep { m{$re} }
 	    pipeslurp @gpg, qw(--list-only --quiet --status-fd 1), $fn;
 	# diff key lists
 	my %ring; @ring{@ring} = (); delete @ring{@file};
@@ -297,10 +305,10 @@ sub check_quiet {
 }
 
 sub diff_del {
-	return map colored("-$_", "red"), @_;
+	return map { colored("-$_", "red") } @_;
 }
 sub diff_add {
-	return map colored("+$_", "green"), @_;
+	return map { colored("+$_", "green") } @_;
 }
 sub holy_crap {
 	return colored " CLEARTEXT @_", "bright_white on_bright_red";
@@ -402,7 +410,7 @@ gpg --use-agent --batch --quiet --decrypt vault.pwd
 SHELL
 
 sub ansible_cfg {
-	vsystem qw(ansible localhost -c local -m ini_file -a),
+	return vsystem qw(ansible localhost -c local -m ini_file -a),
 	    "section=$_[0] option=$_[1] value=$_[2] ".
 	    "dest=${keydir}ansible.cfg";
 }
@@ -412,7 +420,7 @@ sub init_preload {
 	my $yml = "${keydir}gpg-preload.yml";
 	pipespewto $asc, 'True', @gpg_en, recipients
 	    unless -f $asc;
-	spewto $yml, $gpg_preload;
+	return spewto $yml, $gpg_preload;
 }
 
 sub init_plugin {
@@ -420,12 +428,13 @@ sub init_plugin {
 	my $py = "$dir/gpg_d.py";
 	mkpath $dir;
 	spewto $py, $gpg_d;
-	ansible_cfg qw(defaults filter_plugins plugins/filter);
+	return ansible_cfg qw(defaults filter_plugins plugins/filter);
 }
 
 sub init_ansible {
 	init_preload;
 	init_plugin;
+	return;
 }
 
 sub init_ansible_vault {
@@ -434,7 +443,7 @@ sub init_ansible_vault {
 	pipespewto $pwd, random_password, @gpg_en, recipients;
 	spewto $open, $vault_open;
 	chmod 0777 & ~umask, $open;
-	ansible_cfg qw(defaults vault_password_file vault.open);
+	return ansible_cfg qw(defaults vault_password_file vault.open);
 }
 
 sub init_git {
@@ -450,12 +459,12 @@ sub init_git {
 			    or die "write $gitattr: $!\n";
 		}
 	}
-	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
+	return vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
 }
 
 sub init_keys {
 	return verbose "done init -k $opt{k}" if -f $opt{k};
-	add_keys self_keys;
+	return add_keys self_keys;
 }
 
 ########################################################################
@@ -487,7 +496,7 @@ sub delkey {
 
 sub lskeys {
 	getargs min => 0, max => 0;
-	vexec @gpg, '--fingerprint';
+	return vexec @gpg, '--fingerprint';
 }
 
 sub for_files {
@@ -505,25 +514,25 @@ sub for_files {
 }
 
 sub check {
-	for_files zap => \&check_some;
+	return for_files zap => \&check_some;
 }
 
 sub recrypt {
-	for_files recrypt => \&recrypt_some;
+	return for_files recrypt => \&recrypt_some;
 }
 
 sub shred {
-	for_files shred => \&shred_some;
+	return for_files shred => \&shred_some;
 }
 
 sub encrypt {
 	getargs min => 1, max => 2;
-	vexec @gpg_en, recipients, getinout \&getout;
+	return vexec @gpg_en, recipients, getinout \&getout;
 }
 
 sub decrypt {
 	getargs min => 1, max => 2;
-	vexec @gpg_de, getinout \&getin;
+	return vexec @gpg_de, getinout \&getin;
 }
 
 sub csrconf {
@@ -547,7 +556,7 @@ sub csrconf {
 	my $subject = $2;
 	my @san = $3 =~ m{$dns}g;
 	$subject =~ s{^\s+}{}mg;
-	my $san = join '', map "DNS.$_ = $san[$_]\n", keys @san;
+	my $san = join '', map { "DNS.$_ = $san[$_]\n" } keys @san;
 	my $conftext = <<CONF;
 [ req ]
 prompt = no
@@ -653,7 +662,7 @@ usage unless @ARGV;
 my $subcommand = shift;
 $subcommand = $longer{$subcommand}
     if exists $longer{$subcommand};
-if (grep $subcommand eq $_, values %longer) {
+if (grep { $subcommand eq $_ } values %longer) {
 	exit $::{$subcommand}();
 } else {
 	usage;
