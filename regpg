@@ -225,6 +225,39 @@ sub random_password {
 #  gpg wrappers
 #
 
+# When initializing a public keyring, gpg-2.1 will create a "keybox"
+# file which is incompatible with older versions of gpg. However, if
+# it is working with an existing old-style keyring it will maintain
+# compatibility. So, we use the following key to start the keyring,
+# then remove it after adding the keys we wanted. This is a revoked
+# expired signing-only key so I can't use it to subvert your secrets.
+my $dummy_key = <<'DUMMY';
+mQENBDpPyJsBCAC1kKuLLuRySgw2nx9lPPX9lHd2liYpqqxhS5uscubyP7qp11H+gms2Dr2zpciz
+pVpvIlF8l44xMwVbO7+rVpG1wnrCf6WklbmLR6vscJOwmSVh2uNA7wiKpU6W9aZAIX9cVF6tMa0K
+Dij8pWH4GAS5GvZcjaf1qAH1+B4M3iqviX0oyypn/8WU59hnnnMdD9CIUBUOrGqFeN+ZwQUYFs6R
+9+lkzjDfCF4xbBSM/+kd4WDfHE+0PXKfXdMh3JTONy9oz5FfIhDTzjFks5SuM/eXZmLbmORwYYN+
+LIHy3j12ErSOnnnMtdWPheP1Z8BGuaaeSpEG6wAw8+1v+e/qTxsBABEBAAGJASgEIAECABIFAjpP
+yMgLHQBkdW1teSBrZXkACgkQo/luLGExUxvY0wgAqUlFaqmMBXBcSSkEaM5UkcPOjcvy8anAub6H
+j5zfzQc6Cfj8e9hR8Y4S61RQ0GCfgeRJcIFCZpqQpk54J5OldcHMTmAGB9rYMoLxJtBfhUo8IYVi
+RQlJduhz8m7YK7pkp666uYD45q3NmRazIh30WMewAfw5FaakJXPoXglc8Q23m0YpiBOY4MVMDlqB
+V8JdjCXKYHWzIX5WXwJtDhiwuRcOUi6QoCOQC/C2ysdS2MizrYRwY0KPRLtBVH/pm1XfcdW08kX/
+R0dqHX9rWz7qr6AmWLRbadOUwfVFxROpMD4qMUXahRlaJdUcjM8IfJO/O84yfA20smkinl+3oWbZ
+fLACAAO0JUR1bW15IEtleSA8ZHVtbXlAdGhpcy1rZXktaXMuaW52YWxpZD6JAT4EEwECACgFAjpP
+yJsCGwMFCQABUYAGCwkIBwMCBhUIAgkKCwQWAgMBAh4BAheAAAoJEKP5bixhMVMbMYgIAJFC/5SD
+w6l9QTUvHGDhgswq5q+SkjlXrpWJ9kVYQxx7Bx9QFtCrfGtpHxDND+cJideX8CN4A+EdxYO8R+pQ
+I4Q4nsOIjTBsNYYcmh7YMHTfS3F+/UTpbGWLcImSvIhiKHhwVFoFxrgW9IlaiEsW+NngB1dXQeR7
+xyeUV/MDQrxlBKcNw2hhSf8tPfIn/5djX/Z57cNRDzZ9qAuajkk7ZZ/gE9ZCrBy0X5T5W0xdV15f
+GmsvCAWDR1oQyfvZEHIKhIAOHtlCrXAAamm0vyE5cWT8/W1rVvJ5/AcDJkWHZOw/LaDrT98PXFny
+hvY3JPI/XCUWAISA0xB6wjvImRZzOK+wAgAD
+DUMMY
+sub dummy_init {
+	return 1 if -f $opt{k};
+	return spewto $opt{k}, decode_base64 $dummy_key;
+}
+sub dummy_fini {
+	return vsystem @gpg, qw(--delete-key --batch --yes 0xA3F96E2C6131531B);
+}
+
 sub ring_keys {
 	my @out = @_ ? (safeslurp @_)
 	    : (safeslurp @gpg, qw(--list-keys --with-colons));
@@ -247,14 +280,20 @@ sub clean_ids {
 }
 
 sub add_keys {
-	# Export from the user's normal gpg setup. export-minimal
-	# removes extraneous signatures from the key, which avoids
-	# complaints about unavailable public keys when it is imported
-	my $keys = pipeslurp qw(gpg --export --armor
-				--export-options export-minimal),
-				    @_;
+	# Export from the user's normal gpg setup (except when subverted by
+	# init_ansible_gpg). We prefer to use gpg2 here, instead of the
+	# default gpg, so that we can downgrade from keybox files to more
+	# compatible old-style pubring files. export-minimal removes
+	# extraneous signatures from the key, which avoids complaints about
+	# unavailable public keys when it is imported.
+	my $gpg = (canexec 'gpg2') ? 'gpg2' : 'gpg';
+	my $keys = pipeslurp $gpg, qw(--export --armor
+			--export-options export-minimal), @_;
 	# Import to this local keyring
-	return pipespew $keys, @gpg, '--import';
+	my $skip = dummy_init;
+	pipespew $keys, @gpg, '--import';
+	dummy_fini unless $skip;
+	return 0;
 }
 
 sub fingerprint {
@@ -474,6 +513,7 @@ sub init_ansible_gpg {
 	my $old_scripts = "${keydir}ansible-gpg";
 	return verbose "$old_scripts not found" unless -d $old_scripts;
 	my $old_dir = "${keydir}.ansible-gpg";
+	# subvert add_keys to get keys from a file rather than a list of IDs
 	add_keys qw(--no-default-keyring --keyring), "$old_dir/pubring.gpg";
 	copy "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
 	init_ansible_vault;
