@@ -108,14 +108,9 @@ sub verbose {
 
 sub vsystem {
 	verbose "running @_";
-	return if $opt{n};
-	return if 0 == system @_;
+	return 0 if $opt{n};
+	return 0 if 0 == system @_;
 	die "failed: @_\n";
-}
-
-sub vexec {
-	vsystem @_;
-	exit $?;
 }
 
 sub vsystem_warn {
@@ -532,7 +527,7 @@ sub delkey {
 
 sub lskeys {
 	getargs min => 0, max => 0;
-	return vexec @gpg, '--fingerprint';
+	return vsystem @gpg, '--fingerprint';
 }
 
 sub for_files {
@@ -563,12 +558,12 @@ sub recrypt {
 
 sub encrypt {
 	getargs min => 0, max => 2;
-	return vexec @gpg_en, recipients, getinout \&getout;
+	return vsystem @gpg_en, recipients, getinout \&getout;
 }
 
 sub decrypt {
 	getargs min => 0, max => 2;
-	return vexec @gpg_de, getinout \&getin;
+	return vsystem @gpg_de, getinout \&getin;
 }
 
 sub pbcopy {
