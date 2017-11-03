@@ -5,7 +5,7 @@ use strict;
 
 use File::Basename;
 use File::Path;
-use File::Temp qw(tempfile);
+use File::Temp qw(mktemp tempfile);
 use Getopt::Std;
 use MIME::Base64;
 use POSIX;
@@ -26,10 +26,11 @@ secrets:
 	regpg encrypt [options] [clearfile] [cryptfile.asc]
 	regpg decrypt [options] [cryptfile.asc] [clearfile]
 	regpg recrypt [options] <cryptfile.asc>...
-	regpg shred [options] <clearfile>...
 helpers:
 	regpg copy [options] [cryptfile.asc]
 	regpg paste [options] [cryptfile.asc]
+	regpg edit [options] <cryptfile.asc>
+	regpg shred [options] <clearfile>...
 	regpg csrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
 	regpg genkey [options] <algorithm> <private.asc> [public]
@@ -586,6 +587,15 @@ sub pbpaste {
 	return 0;
 }
 
+sub edit {
+	getargs min => 1, max => 1;
+	my $tmp = mktemp "@ARGV.XXXXXXXX";
+	vsystem @gpg_de, '--output', $tmp, @ARGV;
+	vsystem_warn $ENV{EDITOR}, $tmp;
+	vsystem @gpg_en, recipients, '--output', @ARGV, $tmp;
+	shred_files $tmp;
+}
+
 sub csrconf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
@@ -704,6 +714,7 @@ my %longer = (
 	're' => 'recrypt',
 	'ck' => 'check',
 	'shred' => 'shred',
+	'edit' => 'edit',
 	'copy' => 'pbcopy',
 	'paste' => 'pbpaste',
 	'csrconf' => 'csrconf',
@@ -753,9 +764,15 @@ B<regpg> B<decrypt> [I<options>] [I<cryptfile.asc>] [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
-B<regpg> B<shred> [I<options>] <I<clearfile>>...
-
 - helpers:
+
+B<regpg> B<copy> [I<options>] [I<cryptfile.asc>]
+
+B<regpg> B<paste> [I<options>] [I<cryptfile.asc>]
+
+B<regpg> B<edit> [I<options>] <I<cryptfile.asc>>
+
+B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 B<regpg> B<csrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<config>]
 
@@ -962,23 +979,13 @@ all files are re-encrypted.
 You should use this after using B<addkey> or B<delkey>,
 if you did not pass the B<-r> option.
 
-=item B<regpg> B<shred> <I<clearfile>>...
-
-Destroy cleartext files and any related editor backup files.
-If C<shred(1)> is not available, the files are just deleted.
-
-If the B<-r> option is given,
-all cleartext files found by C<regpg check> are shredded.
-
-Note: You might want to test B<shred> with the B<-n> option first!
-
 =back
 
 =head2 Higher-level helpers
 
 The following subcommands combine the core B<regpg> B<encrypt> /
-B<decrypt> subcommands with secret handling tools from OpenSSL and
-OpenSSH, etc.
+B<decrypt> subcommands with other utilities such as secret handling
+tools from OpenSSL and OpenSSH.
 
 =over
 
@@ -999,6 +1006,22 @@ I<cryptfile.asc>.
 This uses B<pbpaste> on macOS or B<xclip> on X11.
 
 If I<cryptfile> is missing or C<-> then it is written to stdout.
+
+=item B<regpg> B<edit> <I<cryptfile.asc>>
+
+Decrypt I<cryptfile.asc> and run C<$EDITOR> on the cleartext file.
+When you have finished editing, the file is re-encrypted and the
+cleartext is shredded.
+
+=item B<regpg> B<shred> <I<clearfile>>...
+
+Destroy cleartext files and any related editor backup files.
+If C<shred(1)> is not available, the files are just deleted.
+
+If the B<-r> option is given,
+all cleartext files found by C<regpg check> are shredded.
+
+Note: You might want to test B<shred> with the B<-n> option first!
 
 =item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<config>]
 
