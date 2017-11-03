@@ -293,8 +293,8 @@ sub maybe_recrypt_all {
 #
 
 sub check_clear {
-	my ($file,$dir,$ext) = fileparse "@_", qw(.asc .gpg);
-	return () unless $ext;
+	my ($file,$dir,$ext) = fileparse @_;
+	return () if @_ > 1 and not $ext;
 	return grep { -f $_ }
 	    "$dir$file", "$dir$file~", "$dir#$file#", glob "$dir.$file.sw?";
 }
@@ -310,7 +310,7 @@ sub check_quiet {
 	my %file; @file{@file} = (); delete @file{@ring};
 	@ring = keys %ring;
 	@file = keys %file;
-	my @clear = check_clear $fn;
+	my @clear = check_clear $fn, qw(.asc .gpg);
 	return ( ring => [ @ring ],
 		 file => [ @file ],
 		 diff => (!!@ring || !!@file),
@@ -372,11 +372,11 @@ sub shred_files {
 sub shred_some {
 	$opt{v} = 1;
 	if (@ARGV) {
-		return shred_files @ARGV;
+		shred_files check_clear $_ for @ARGV;
 	} else {
-		shred_files check_clear $_ for @_;
-		return 0;
+		shred_files check_clear $_, qw(.asc .gpg) for @_;
 	}
+	return 0;
 }
 
 ########################################################################
@@ -964,8 +964,8 @@ if you did not pass the B<-r> option.
 
 =item B<regpg> B<shred> <I<clearfile>>...
 
-Destroy cleartext files. If C<shred(1)> is not available, the files
-are deleted.
+Destroy cleartext files and any related editor backup files.
+If C<shred(1)> is not available, the files are just deleted.
 
 If the B<-r> option is given,
 all cleartext files found by C<regpg check> are shredded.
