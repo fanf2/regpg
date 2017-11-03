@@ -23,8 +23,8 @@ keys:
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
 secrets:
-	regpg encrypt [options] [clearfile] <cryptfile.asc>
-	regpg decrypt [options] <cryptfile.asc> [clearfile]
+	regpg encrypt [options] [clearfile] [cryptfile.asc]
+	regpg decrypt [options] [cryptfile.asc] [clearfile]
 	regpg recrypt [options] <cryptfile.asc>...
 	regpg shred [options] <clearfile>...
 helpers:
@@ -560,12 +560,12 @@ sub shred {
 }
 
 sub encrypt {
-	getargs min => 1, max => 2;
+	getargs min => 0, max => 2;
 	return vexec @gpg_en, recipients, getinout \&getout;
 }
 
 sub decrypt {
-	getargs min => 1, max => 2;
+	getargs min => 0, max => 2;
 	return vexec @gpg_de, getinout \&getin;
 }
 
@@ -728,9 +728,9 @@ B<regpg> B<delkey> [I<options>] <I<keyname>>...
 
 - secrets:
 
-B<regpg> B<encrypt> [I<options>] [I<clearfile>] <I<cryptfile.asc>>
+B<regpg> B<encrypt> [I<options>] [I<clearfile>] [I<cryptfile.asc>]
 
-B<regpg> B<decrypt> [I<options>] <I<cryptfile.asc>> [I<clearfile>]
+B<regpg> B<decrypt> [I<options>] [I<cryptfile.asc>] [I<clearfile>]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
@@ -900,29 +900,33 @@ subcommands.
 
 =over
 
-=item B<regpg> B<encrypt> [I<clearfile>] <I<cryptfile.asc>>
+=item B<regpg> B<encrypt> [I<clearfile>] [I<cryptfile.asc>]
 
-=item B<regpg> B<en> [I<clearfile>] <I<cryptfile.asc>>
+=item B<regpg> B<en> [I<clearfile>] [I<cryptfile.asc>]
 
 Encrypt I<clearfile> to produce I<cryptfile.asc>.
 The encryption recipients are all the keys in the public key ring.
 
-If I<clearfile> is C<-> or is omitted then it is read from stdin.
+If I<clearfile> is C<-> or there is one argument then the cleartext is
+read from stdin.
 
-If I<cryptfile> is C<-> then it is written to stdout.
+If I<cryptfile> is C<-> or there are no arguments then the ciphertext
+is written to stdout.
 
 Note: conventionally the I<cryptfile> has a C<.asc> (for
 ASCII-armored) or C<.gpg> extension.
 
-=item B<regpg> B<decrypt> <I<cryptfile.asc>> [I<clearfile>]
+=item B<regpg> B<decrypt> [I<cryptfile.asc>] [I<clearfile>]
 
 Decrypt I<cryptfile.asc> to produce I<clearfile>.
 You must be running B<gpg-agent> which will be used
 to gain access to your private key for decryption.
 
-If I<cryptfile> is C<-> then it is read from stdin.
+If I<cryptfile> is C<-> or there are no arguments then the ciphertext
+is read from stdin.
 
-If I<clearfile> is C<-> or is omitted then it is written to stdout.
+If I<clearfile> is C<-> or there is one argument then the cleartext
+is written to stdout.
 
 Note: You can also just use C<gpg --decrypt>. The C<regpg decrypt>
 subcommand requires the GPG agent so it has consistent behaviour in
