@@ -22,6 +22,8 @@ keys:
 	regpg addself [options]
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
+	regpg fetchkey [options] <URI>...
+	regpg importkey [options] [keyfile]...
 secrets:
 	regpg encrypt [options] [clearfile] [cryptfile.asc]
 	regpg decrypt [options] [cryptfile.asc] [clearfile]
@@ -567,6 +569,23 @@ sub delkey {
 	return maybe_recrypt_all;
 }
 
+sub get_keys {
+	getargs keymaker => 1, min => 0, max => 1;
+	my $skip = dummy_init;
+	my $status = vsystem_warn @gpg, @_, @ARGV;
+	dummy_fini unless $skip;
+	return $status if $status;
+	return maybe_recrypt_all;
+}
+
+sub fetchkey {
+	return get_keys '--fetch-keys';
+}
+
+sub importkey {
+	return get_keys '--import';
+}
+
 sub lskeys {
 	getargs min => 0, max => 0;
 	return vsystem @gpg, '--fingerprint';
@@ -760,6 +779,8 @@ my %longer = (
 	'add' => 'addkey',
 	'addself' => 'addself',
 	'del' => 'delkey',
+	'fetchkey' => 'fetchkey',
+	'importkey' => 'importkey',
 	'ls' => 'lskeys',
 	'en' => 'encrypt',
 	'decrypt' => 'decrypt',
@@ -807,6 +828,10 @@ B<regpg> B<addself> [I<options>]
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
+
+B<regpg> B<fetchkey> [I<options>] <I<URI>>...
+
+B<regpg> B<importkey> [I<options>] [I<keyfile>]...
 
 - secrets:
 
@@ -975,6 +1000,24 @@ Delete keys from the B<regpg> keyring.
 
 A I<keyname> can be a key fingerprint or ID
 or a person's email address.
+
+If the B<-r> option is given,
+all files are recrypted after the key is added.
+
+=item B<regpg> B<fetchkey> <I<URI>>...
+
+Fetch keys from the given URIs
+and import them into the B<regpg> keyring.
+
+If the B<-r> option is given,
+all files are recrypted after the key is added.
+
+=item B<regpg> B<importkey> [I<keyfile>]...
+
+Import keys into the B<regpg> keyring that have previously been
+exported by B<gpg>.
+
+If no I<keyfile>s are given then keys are read from stdin.
 
 If the B<-r> option is given,
 all files are recrypted after the key is added.
