@@ -289,7 +289,7 @@ sub recrypt_some {
 
 sub maybe_recrypt_all {
 	recrypt_some find_all if $opt{r};
-	return;
+	return 0;
 }
 
 ########################################################################
@@ -511,14 +511,12 @@ sub init_keys {
 sub addkey {
 	getargs keymaker => 1, min => 1;
 	add_keys clean_ids @ARGV;
-	maybe_recrypt_all;
-	return 0;
+	return maybe_recrypt_all;
 }
 
 sub addself {
 	getargs keymaker => 1, min => 0, max => 0;
-	add_keys self_keys;
-	return 0;
+	return add_keys self_keys;
 }
 
 sub delkey {
@@ -526,8 +524,7 @@ sub delkey {
 	# --expert persuades gpg to delete the key even if the secret
 	# key is available, when deleting one of the user's own keys
 	vsystem @gpg, '--expert', '--delete-key', clean_ids @ARGV;
-	maybe_recrypt_all;
-	return 0;
+	return maybe_recrypt_all;
 }
 
 sub lskeys {
