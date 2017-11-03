@@ -278,16 +278,6 @@ sub check_clear {
 	    "$dir$file", "$dir$file~", "$dir#$file#", glob "$dir.$file.sw?";
 }
 
-sub shred_one {
-	vsystem 'shred', '-u', $_ for check_clear @_;
-}
-
-sub shred_some {
-	$opt{v} = 1;
-	shred_one $_ for @_;
-	return 0;
-}
-
 sub check_quiet {
 	my $fn = shift;
 	my @ring = @_;
@@ -346,6 +336,21 @@ sub check_some {
 	my $r = 0;
 	$r |= check_one $_, @ring_keys for @_;
 	return $r;
+}
+
+sub shred_files {
+	vsystem 'shred', '-u', $_ for @_;
+	return 0;
+}
+
+sub shred_some {
+	$opt{v} = 1;
+	if (@ARGV) {
+		return shred_files @ARGV;
+	} else {
+		shred_files check_clear $_ for @_;
+		return 0;
+	}
 }
 
 ########################################################################
