@@ -31,6 +31,10 @@ install: all
 	install -m 755 -d ${man1dest}
 	install -m 644 ${man1files} ${man1dest}/
 
+uninstall:
+	for f in ${PROGS}; do rm -f ${bindest}/$$f; done
+	for f in ${man1files}; do rm -f ${man1dest}/$$f; done
+
 clean:
 	rm -f ${DOCS}
 
