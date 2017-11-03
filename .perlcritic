@@ -1,0 +1,12 @@
+severity = 3
+verbose = %f:%l:%c: (%p)\t%m - %e\n
+
+[InputOutput::RequireBriefOpen]
+maximum_violations_per_document = 1
+
+[-CodeLayout::ProhibitHardTabs]
+[-ErrorHandling::RequireCheckingReturnValueOfEval]
+[-RegularExpressions::RequireExtendedFormatting]
+[-RegularExpressions::ProhibitComplexRegexes]
+[-Subroutines::RequireArgUnpacking]
+[-ValuesAndExpressions::ProhibitImplicitNewlines]

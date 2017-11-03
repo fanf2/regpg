@@ -12,7 +12,7 @@ use POSIX;
 use Term::ANSIColor;
 
 sub usage {
-	print STDERR <<EOF;
+	print STDERR <<'EOF';
 regpg - safely store server secrets
 usage:
 	regpg help
@@ -50,12 +50,12 @@ sub help {
 	exec "perldoc -M Pod::Text::Overstrike -F $0";
 }
 
-our %opt;
-our @gpg;
-our @gpg_de;
-our @gpg_en;
-our $keydir;
-our $keybase;
+my %opt;
+my @gpg;
+my @gpg_de;
+my @gpg_en;
+my $keydir;
+my $keybase;
 
 sub getargs {
 	my %arg = @_;
@@ -155,7 +155,7 @@ sub pipespew {
 }
 
 # save stdout once
-open my $stdout, '>&STDOUT' or die "dup: $!\n";
+open my $stdout, '>&STDOUT' or die "dup: $!\n"; ## no critic (RequireBriefOpen)
 
 sub tempclose {
 	my ($th,$tn,$fn) = @_;
@@ -366,7 +366,7 @@ sub shred_some {
 #  init
 #
 
-our $gpg_d = <<PYTHON;
+my $gpg_d = <<'PYTHON';
 import ansible
 import subprocess
 
@@ -389,7 +389,7 @@ class FilterModule(object):
         }
 PYTHON
 
-our $gpg_preload = <<YAML;
+my $gpg_preload = <<'YAML';
 ---
 - hosts: all
   tasks:
@@ -404,7 +404,7 @@ our $gpg_preload = <<YAML;
       delegate_to: localhost
 YAML
 
-our $vault_open = <<SHELL;
+my $vault_open = <<'SHELL';
 #!/bin/sh
 gpg --use-agent --batch --quiet --decrypt vault.pwd
 SHELL
@@ -557,7 +557,7 @@ sub csrconf {
 	my @san = $3 =~ m{$dns}g;
 	$subject =~ s{^\s+}{}mg;
 	my $san = join '', map { "DNS.$_ = $san[$_]\n" } keys @san;
-	my $conftext = <<CONF;
+	my $conftext = <<"CONF";
 [ req ]
 prompt = no
 distinguished_name = distinguished_name
@@ -591,7 +591,7 @@ sub gencsr {
 	return 0;
 }
 
-our %genkey = (
+my %genkey = (
 	dsa   => [qw(dsaparam -genkey -noout 1024)],
 	ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
 	ec256 => [qw(ecparam  -genkey -noout -name prime256v1)],
@@ -599,7 +599,7 @@ our %genkey = (
 	ec521 => [qw(ecparam  -genkey -noout -name secp521r1)],
 	rsa   => [qw(genrsa 2048)],
     );
-our @genkey = sort keys %genkey;
+my @genkey = sort keys %genkey;
 
 sub genkey {
 	getargs min => 2, max => 3;
@@ -621,13 +621,13 @@ sub genpwd {
 
 # Note: 'keys' is described but not named in the manual
 # because it is automatically added to the hook list
-our %init = (
+my %init = (
 	'keys' => \&init_keys,
 	'git' => \&init_git,
 	'ansible' => \&init_ansible,
 	'ansible-vault' => \&init_ansible_vault,
     );
-our @init = sort keys %init;
+my @init = sort keys %init;
 
 sub init {
 	getargs keymaker => 1, min => 0;
