@@ -116,11 +116,15 @@ sub vsystem {
 
 sub vsystem_warn {
 	eval { vsystem @_ };
-	return;
+	return $?;
 }
 
 sub canexec {
 	return scalar grep { -x "$_/@_" } split /:/, $ENV{PATH};
+}
+
+sub firstdir {
+	return (grep { -d $_ } @_)[0];
 }
 
 sub pipeslurp {
@@ -589,11 +593,14 @@ sub pbpaste {
 
 sub edit {
 	getargs min => 1, max => 1;
-	my $tmp = mktemp "@ARGV.XXXXXXXX";
+	my ($template,$dir) = fileparse "@ARGV.XXXXXXXX";
+	$dir = firstdir "/run/user/$<", "/dev/shm", $ENV{TMPDIR}, $dir, ".";
+	my $tmp = mktemp "$dir/$template";
 	vsystem @gpg_de, '--output', $tmp, @ARGV;
-	vsystem_warn $ENV{EDITOR}, $tmp;
-	vsystem @gpg_en, recipients, '--output', @ARGV, $tmp;
+	my $status = (vsystem_warn $ENV{EDITOR}, $tmp) ||
+	    (vsystem_warn @gpg_en, recipients, '--output', @ARGV, $tmp);
 	shred_files $tmp;
+	return $status;
 }
 
 sub csrconf {
