@@ -195,6 +195,20 @@ sub spewto {
 	return tempclose $th, $tn, $fn;
 }
 
+sub copy {
+	my $srcN = shift;
+	my $dstN = shift;
+	verbose "copy $srcN => $dstN";
+	sysopen my $srcH, $srcN, O_RDONLY
+	    or die "open < $srcN: $!\n";
+	sysopen my $dstH, $dstN, O_WRONLY|O_CREAT|O_EXCL, 0666 & ~umask
+	    or die "open > $dstN: $!\n";
+	local $/;
+	syswrite $dstH, <$srcH>;
+	close $dstH or die "write $dstN: $!\n";
+	return;
+}
+
 sub random_password {
 	open my $fh, '<', '/dev/urandom'
 	    or die "open /dev/urandom: $!\n";
@@ -411,9 +425,9 @@ my $gpg_preload = <<'YAML';
       delegate_to: localhost
 YAML
 
-my $vault_open = <<'SHELL';
+my $vault_script = <<'SHELL';
 #!/bin/sh
-gpg --use-agent --batch --quiet --decrypt vault.pwd
+gpg --use-agent --batch --quiet --decrypt vault.pwd.asc
 SHELL
 
 sub ansible_cfg {
@@ -445,12 +459,25 @@ sub init_ansible {
 }
 
 sub init_ansible_vault {
-	my $pwd = "${keydir}vault.pwd";
-	my $open = "${keydir}vault.open";
-	pipespewto $pwd, random_password, @gpg_en, recipients;
-	spewto $open, $vault_open;
-	chmod 0777 & ~umask, $open;
+	my $vault_pass = "${keydir}vault.pwd.asc";
+	my $vault_open = "${keydir}vault.open";
+	pipespewto $vault_pass, random_password, @gpg_en, recipients
+	    unless -f $vault_pass;
+	spewto $vault_open, $vault_script;
+	chmod 0777 & ~umask, $vault_open;
 	return ansible_cfg qw(defaults vault_password_file vault.open);
+}
+
+sub init_ansible_gpg {
+	my $old_scripts = "${keydir}ansible-gpg";
+	return verbose "$old_scripts not found" unless -d $old_scripts;
+	my $old_dir = "${keydir}.ansible-gpg";
+	add_keys qw(--no-default-keyring --keyring), "$old_dir/pubring.gpg";
+	copy "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
+	init_ansible_vault;
+	rmtree $old_scripts, $opt{v}, 1;
+	rmtree $old_dir, $opt{v}, 1;
+	return;
 }
 
 sub init_git {
@@ -632,6 +659,7 @@ my %init = (
 	'keys' => \&init_keys,
 	'git' => \&init_git,
 	'ansible' => \&init_ansible,
+	'ansible-gpg' => \&init_ansible_gpg,
 	'ansible-vault' => \&init_ansible_vault,
     );
 my @init = sort keys %init;
@@ -639,7 +667,8 @@ my @init = sort keys %init;
 sub init {
 	getargs keymaker => 1, min => 0;
 	$opt{v} = 1;
-	for my $init ('keys', @ARGV) {
+	unshift @ARGV, 'keys' unless grep { $_ eq 'ansible-gpg' } @ARGV;
+	for my $init (@ARGV) {
 		die "regpg init: hook $init is not in @init\n",
 		    unless exists $init{$init};
 		$init{$init}->();
@@ -1060,13 +1089,23 @@ Note: these Ansible hooks only use B<gpg>, so you don't need B<regpg>
 to run your playbooks. You only need B<regpg> for altering the public
 keyring and encrypted files.
 
+=item B<regpg> B<init> B<ansible-gpg>
+
+Convert an C<ansible-gpg> setup for use with B<regpg>,
+as if you had used C<regpg init ansible-vault>.
+
+This copies the keys from F<.ansible-gpg/pubring.gpg> into
+F<pubring.gpg>, renames F<.ansible-gpg/vault_passphrase.gpg> to
+F<vault.pwd.gpg>, reconfigures Ansible, and finally removes the
+remaining F<ansible-gpg> files.
+
 =item B<regpg> B<init> B<ansible-vault>
 
 Configure Ansible Vault for use with B<regpg>.
 An F<ansible.cfg> file is created if necessary.
 
-This creates an encrypted vault password F<vault.pwd> and a wrapper
-script F<vault.open> to decrypt the password using B<gpg>.
+This creates an encrypted vault password F<vault.pwd.asc> and a
+wrapper script F<vault.open> to decrypt the password using B<gpg>.
 
 You can then use B<ansible-vault> as usual, and when it needs the
 vault password it will be automatically decrypted.
