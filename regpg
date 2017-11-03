@@ -89,7 +89,7 @@ sub getout {
 }
 
 sub getinout {
-	return $_[0]() if @ARGV == 1;
+	return $_[0]() if @ARGV < 2;
 	my $in = shift @ARGV;
 	return getout, stdio $in;
 }
