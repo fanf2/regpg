@@ -38,6 +38,9 @@ uninstall:
 clean:
 	rm -f ${DOCS}
 
+test:
+	perlcritic --profile .perlcritic regpg
+
 regpg.1: regpg
 	pod2man regpg regpg.1
 
