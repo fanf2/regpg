@@ -99,6 +99,7 @@ subcommands.
 * Ansible 2.2
 * OpenSSH 6.7
 * OpenSSL 1.0.1
+* `xclip` 0.12
 
 
 Downloads

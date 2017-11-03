@@ -28,6 +28,8 @@ secrets:
 	regpg recrypt [options] <cryptfile.asc>...
 	regpg shred [options] <clearfile>...
 helpers:
+	regpg copy [options] [cryptfile.asc]
+	regpg paste [options] [cryptfile.asc]
 	regpg csrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
 	regpg genkey [options] <algorithm> <private.asc> [public]
@@ -569,6 +571,26 @@ sub decrypt {
 	return vexec @gpg_de, getinout \&getin;
 }
 
+sub pbcopy {
+	getargs min => 0, max => 1;
+	my @cmd = (canexec 'xclip') ? qw(xclip -i) : qw(pbcopy);
+	my $cleartext = pipeslurp @gpg_de, getin;
+	pipespew $cleartext, @cmd;
+	print STDERR "Press ^C when you have used the secret...";
+	$SIG{INT} = sub {}; pause;
+	print STDERR "\n";
+	pipespew '', @cmd;
+	return 0;
+}
+
+sub pbpaste {
+	getargs min => 0, max => 1;
+	my @cmd = (canexec 'xclip') ? qw(xclip -o) : qw(pbpaste);
+	my $cleartext = pipeslurp @cmd;
+	pipespew $cleartext, @gpg_en, recipients, getout;
+	return 0;
+}
+
 sub csrconf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
@@ -687,6 +709,8 @@ my %longer = (
 	're' => 'recrypt',
 	'ck' => 'check',
 	'shred' => 'shred',
+	'copy' => 'pbcopy',
+	'paste' => 'pbpaste',
 	'csrconf' => 'csrconf',
 	'csr' => 'gencsr',
 	'key' => 'genkey',
@@ -962,6 +986,24 @@ B<decrypt> subcommands with secret handling tools from OpenSSL and
 OpenSSH, etc.
 
 =over
+
+=item B<regpg> B<copy> [I<cryptfile.asc>]
+
+Decrypt I<cryptfile.asc> and copy the cleartext to the clipboard. When
+you have used the secret, press ^C and B<regpg> will clear the clipboard.
+
+This uses B<pbcopy> on macOS or B<xclip> on X11.
+
+If I<cryptfile> is missing or C<-> then it is read from stdin.
+
+=item B<regpg> B<paste> [I<cryptfile.asc>]
+
+Encrypt the contents of the clipboard and paste the ciphertext into
+I<cryptfile.asc>.
+
+This uses B<pbpaste> on macOS or B<xclip> on X11.
+
+If I<cryptfile> is missing or C<-> then it is written to stdout.
 
 =item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<config>]
 
