@@ -86,6 +86,18 @@ ed25519` and `dnssec-settime`. In these cases you have to decrypt to
 disk, and there is no `regpg` helper, so you know what is happening.
 
 
+Mild peril
+----------
+
+Although we prefer not to expose secrets to terminal windows or
+clipboards, sometimes that is the easiest way to get the job done.
+So `regpg` tries to be pragmatic rather than dogmatic: if you really
+must edit your secrets by hand, `regpg` will at least try to keep the
+temporary file in RAM, and shred it when it has finished. And if you
+need to copy/psate, `regpg` will clear the clipboard when you have
+finished with it.
+
+
 Just a gpg helper
 -----------------
 
