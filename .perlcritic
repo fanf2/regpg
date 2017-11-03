@@ -1,11 +1,12 @@
 severity = 3
 verbose = %f:%l:%c: (%p)\t%m - %e\n
 
-[InputOutput::RequireBriefOpen]
-maximum_violations_per_document = 1
+[References::ProhibitDoubleSigils]
+severity = 3
 
 [-CodeLayout::ProhibitHardTabs]
 [-ErrorHandling::RequireCheckingReturnValueOfEval]
+[-InputOutput::RequireBriefOpen]
 [-RegularExpressions::RequireExtendedFormatting]
 [-RegularExpressions::ProhibitComplexRegexes]
 [-Subroutines::RequireArgUnpacking]

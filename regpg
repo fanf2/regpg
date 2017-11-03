@@ -155,7 +155,7 @@ sub pipespew {
 }
 
 # save stdout once
-open my $stdout, '>&STDOUT' or die "dup: $!\n"; ## no critic (RequireBriefOpen)
+open my $stdout, '>&STDOUT' or die "dup: $!\n";
 
 sub tempclose {
 	my ($th,$tn,$fn) = @_;
@@ -197,7 +197,6 @@ sub random_password {
 	my $len = 15;
 	$len == sysread $fh, my $bytes, $len
 	    or die "read /dev/urandom: $!\n";
-	close $fh;
 	return encode_base64 $bytes;
 }
 
@@ -505,9 +504,9 @@ sub for_files {
 	if (@ARGV and $opt{r}) {
 		die "regpg: either -r or arguments, not both\n";
 	} elsif (@ARGV) {
-		return &$sub(@ARGV);
+		return $sub->(@ARGV);
 	} elsif ($opt{r} or $zap eq 'zap') {
-		return &$sub(find_all);
+		return $sub->(find_all);
 	} else {
 		die "regpg: use -r to really $zap all files\n";
 	}
