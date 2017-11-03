@@ -212,7 +212,7 @@ sub copy {
 sub random_password {
 	open my $fh, '<', '/dev/urandom'
 	    or die "open /dev/urandom: $!\n";
-	my $len = 15;
+	my $len = 30;
 	$len == sysread $fh, my $bytes, $len
 	    or die "read /dev/urandom: $!\n";
 	return encode_base64 $bytes;
