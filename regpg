@@ -1024,9 +1024,9 @@ Z<>
 
 =back
 
-=item B<regpg> B<genpwd> <I<cryptfile.asc>>
+=item B<regpg> B<genpwd> [I<cryptfile.asc>]
 
-=item B<regpg> B<pwd> <I<cryptfile.asc>>
+=item B<regpg> B<pwd> [I<cryptfile.asc>]
 
 Generate a 20 character password, encrypt it, and store it in I<cryptfile.asc>.
 
