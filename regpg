@@ -121,6 +121,10 @@ sub vsystem_warn {
 	return;
 }
 
+sub canexec {
+	return scalar grep { -x "$_/@_" } split /:/, $ENV{PATH};
+}
+
 sub pipeslurp {
 	verbose "pipe from @_";
 	return if $opt{n};
@@ -346,7 +350,11 @@ sub check_some {
 }
 
 sub shred_files {
-	vsystem 'shred', '-u', $_ for @_;
+	if (canexec 'shred') {
+		vsystem 'shred', '-u', $_ for @_;
+	} else {
+		unlink $_ or die "unlink $_: $!\n" for @_;
+	}
 	return 0;
 }
 
@@ -904,7 +912,8 @@ if you did not pass the B<-r> option.
 
 =item B<regpg> B<shred> <I<clearfile>>...
 
-Destroy cleartext files.
+Destroy cleartext files. If C<shred(1)> is not available, the files
+are deleted.
 
 If the B<-r> option is given,
 all cleartext files found by C<regpg check> are shredded.
@@ -1133,6 +1142,6 @@ management, and David McBride for helpful discussions.
 
 =head1 SEE ALSO
 
-gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1), ssh-keygen(1)
+gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1), shred(1), ssh-keygen(1)
 
 =cut
