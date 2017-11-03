@@ -362,9 +362,9 @@ sub check_some {
 
 sub shred_files {
 	if (canexec 'shred') {
-		vsystem 'shred', '-u', $_ for @_;
+		vsystem 'shred', '-u', $_ for check_clear @_;
 	} else {
-		unlink $_ or die "unlink $_: $!\n" for @_;
+		unlink $_ or die "unlink $_: $!\n" for check_clear @_;
 	}
 	return 0;
 }
@@ -372,9 +372,9 @@ sub shred_files {
 sub shred_some {
 	$opt{v} = 1;
 	if (@ARGV) {
-		shred_files check_clear $_ for @ARGV;
+		shred_files $_ for @ARGV;
 	} else {
-		shred_files check_clear $_, qw(.asc .gpg) for @_;
+		shred_files $_, qw(.asc .gpg) for @_;
 	}
 	return 0;
 }
