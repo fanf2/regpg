@@ -39,6 +39,7 @@ helpers:
 	regpg genpwd [options] [cryptfile.asc]
 setup:
 	regpg init [options] [hook]...
+	regpg conv <command> [options] <args>...
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
@@ -511,19 +512,6 @@ sub init_ansible_vault {
 	return ansible_cfg qw(defaults vault_password_file vault.open);
 }
 
-sub init_ansible_gpg {
-	my $old_scripts = "${keydir}ansible-gpg";
-	return verbose "$old_scripts not found" unless -d $old_scripts;
-	my $old_dir = "${keydir}.ansible-gpg";
-	# subvert add_keys to get keys from a file rather than a list of IDs
-	add_keys qw(--no-default-keyring --keyring), "$old_dir/pubring.gpg";
-	copyfile "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
-	init_ansible_vault;
-	rmtree $old_scripts, $opt{v}, 1;
-	rmtree $old_dir, $opt{v}, 1;
-	return;
-}
-
 sub init_git {
 	my $a = safeslurp qw(git check-attr diff), $opt{k};
 	if ($a eq "$opt{k}: diff: unspecified\n") {
@@ -543,6 +531,35 @@ sub init_git {
 sub init_keys {
 	return verbose "done init -k $opt{k}" if -f $opt{k};
 	return add_keys self_keys;
+}
+
+########################################################################
+#
+#  conversion
+#
+
+sub conv_ansible_gpg {
+	$opt{v} = 1;
+	getargs keymaker => 1, min => 0, max => 0;
+	my $old_scripts = "${keydir}ansible-gpg";
+	return verbose "$old_scripts not found" unless -d $old_scripts;
+	my $old_dir = "${keydir}.ansible-gpg";
+	# subvert add_keys to get keys from a file rather than a list of IDs
+	add_keys qw(--no-default-keyring --keyring), "$old_dir/pubring.gpg";
+	copyfile "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
+	init_ansible_vault;
+	rmtree $old_scripts, $opt{v}, 1;
+	rmtree $old_dir, $opt{v}, 1;
+	return;
+}
+
+sub conv_ansible_vault {
+	getargs min => 1, max => 2;
+	# we don't like `ansible-vault decrypt --output -` because
+	# it is noisy on stderr, so we use this hack instead
+	$ENV{PAGER} = 'cat';
+	my $cleartext = pipeslurp qw(ansible-vault view), shift @ARGV;
+	return pipespew $cleartext, @gpg_en, recipients, getout;
 }
 
 ########################################################################
@@ -723,19 +740,18 @@ sub gencsr {
 	return 0;
 }
 
-my %genkey = (
-	dsa   => [qw(dsaparam -genkey -noout 1024)],
-	ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
-	ec256 => [qw(ecparam  -genkey -noout -name prime256v1)],
-	ec384 => [qw(ecparam  -genkey -noout -name secp384r1)],
-	ec521 => [qw(ecparam  -genkey -noout -name secp521r1)],
-	rsa   => [qw(genrsa 2048)],
-    );
-my @genkey = sort keys %genkey;
-
 sub genkey {
 	getargs min => 2, max => 3;
 	my ($algo,$priv,$pub) = @ARGV;
+	my %genkey = (
+		dsa   => [qw(dsaparam -genkey -noout 1024)],
+		ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
+		ec256 => [qw(ecparam  -genkey -noout -name prime256v1)],
+		ec384 => [qw(ecparam  -genkey -noout -name secp384r1)],
+		ec521 => [qw(ecparam  -genkey -noout -name secp521r1)],
+		rsa   => [qw(genrsa 2048)],
+	    );
+	my @genkey = sort keys %genkey;
 	die "regpg genkey: algorithm $algo is not in @genkey\n",
 	    unless exists $genkey{$algo};
 	my $key = pipeslurp 'openssl', @{ $genkey{$algo} };
@@ -751,27 +767,36 @@ sub genpwd {
 	return 0;
 }
 
-# Note: 'keys' is described but not named in the manual
-# because it is automatically added to the hook list
-my %init = (
-	'keys' => \&init_keys,
-	'git' => \&init_git,
-	'ansible' => \&init_ansible,
-	'ansible-gpg' => \&init_ansible_gpg,
-	'ansible-vault' => \&init_ansible_vault,
-    );
-my @init = sort keys %init;
-
 sub init {
 	getargs keymaker => 1, min => 0;
 	$opt{v} = 1;
-	unshift @ARGV, 'keys' unless grep { $_ eq 'ansible-gpg' } @ARGV;
-	for my $init (@ARGV) {
+	# Note: 'keys' is described but not named in the manual
+	# because it is automatically added to the hook list
+	my %init = (
+		'keys' => \&init_keys,
+		'git' => \&init_git,
+		'ansible' => \&init_ansible,
+		'ansible-vault' => \&init_ansible_vault,
+	    );
+	my @init = sort keys %init;
+	for my $init ('keys', @ARGV) {
 		die "regpg init: hook $init is not in @init\n",
 		    unless exists $init{$init};
 		$init{$init}->();
 	}
 	return 0;
+}
+
+sub conv {
+	my %conv = (
+		'ansible-gpg' => \&conv_ansible_gpg,
+		'ansible-vault' => \&conv_ansible_vault,
+	    );
+	my @conv = sort keys %conv;
+	my $conv = shift @ARGV;
+	die "regpg conv: $conv is not in @conv\n",
+		    unless exists $conv{$conv};
+	return $conv{$conv}->();
 }
 
 $::{'--help'} = $::{help};
@@ -785,7 +810,7 @@ $::{re}	      = $::{recrypt};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck csrconf decrypt del delkey
+	qw(add addkey addself check ck conv csrconf decrypt del delkey
 	   edit en encrypt fetchkey gencsr genkey genpwd --help help
 	   importkey init ls lskeys pbcopy pbpaste re recrypt shred)) {
 	exit $::{$subcommand}();
@@ -849,6 +874,8 @@ B<regpg> B<genpwd> [I<options>] [I<cryptfile.asc>]
 
 B<regpg> B<init> [I<options>] [I<hook>]...
 
+B<regpg> B<conv> <I<command>> [I<options>] <I<args>>...
+
 =head1 DESCRIPTION
 
 The B<regpg> program is a thin wrapper around B<gpg> for looking after
@@ -899,7 +926,7 @@ Verbose mode. This mainly prints the B<gpg> commands.
 
 =head1 SUBCOMMANDS
 
-Most subcommands have abbreviated synonyms.
+Several subcommands have abbreviated synonyms.
 
 =over
 
@@ -1229,16 +1256,6 @@ Note: these Ansible hooks only use B<gpg>, so you don't need B<regpg>
 to run your playbooks. You only need B<regpg> for altering the public
 keyring and encrypted files.
 
-=item B<regpg> B<init> B<ansible-gpg>
-
-Convert an C<ansible-gpg> setup for use with B<regpg>,
-as if you had used C<regpg init ansible-vault>.
-
-This copies the keys from F<.ansible-gpg/pubring.gpg> into
-F<pubring.gpg>, renames F<.ansible-gpg/vault_passphrase.gpg> to
-F<vault.pwd.gpg>, reconfigures Ansible, and finally removes the
-remaining F<ansible-gpg> files.
-
 =item B<regpg> B<init> B<ansible-vault>
 
 Configure Ansible Vault for use with B<regpg>.
@@ -1255,6 +1272,33 @@ B<regpg> to run B<ansible-playbook> nor B<ansible-vault>. You only
 need B<regpg> for altering the public keyring.
 
 =back
+
+=back
+
+=head2 Converting to regpg
+
+The B<conv> subcommand has a number of sub-sub-commands which help you
+convert from other setups to B<regpg>.
+
+=over
+
+=item B<regpg> B<conv> B<ansible-gpg>
+
+Convert an C<ansible-gpg> setup for use with B<regpg>,
+as if you had used C<regpg init ansible-vault>.
+
+This copies the keys from F<.ansible-gpg/pubring.gpg> into the
+B<regpg> keyring, renames F<.ansible-gpg/vault_passphrase.gpg> to
+F<vault.pwd.gpg>, reconfigures Ansible, and finally removes the
+remaining F<ansible-gpg> files.
+
+=item B<regpg> B<conv> B<ansible-vault> <I<vaultfile>> [I<cryptfile.asc>]
+
+Decrypt I<vaultfile> using B<ansible-vault> and re-encrypt the
+cleartext using B<regpg>.
+
+If I<cryptfile> is C<-> or omitted then the ciphertext
+is written to stdout.
 
 =back
 
