@@ -199,7 +199,7 @@ sub spewto {
 	return tempclose $th, $tn, $fn;
 }
 
-sub copy {
+sub copyfile {
 	my $srcN = shift;
 	my $dstN = shift;
 	verbose "copy $srcN => $dstN";
@@ -517,7 +517,7 @@ sub init_ansible_gpg {
 	my $old_dir = "${keydir}.ansible-gpg";
 	# subvert add_keys to get keys from a file rather than a list of IDs
 	add_keys qw(--no-default-keyring --keyring), "$old_dir/pubring.gpg";
-	copy "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
+	copyfile "$old_dir/vault_passphrase.gpg" => "${keydir}vault.pwd.asc";
 	init_ansible_vault;
 	rmtree $old_scripts, $opt{v}, 1;
 	rmtree $old_dir, $opt{v}, 1;
@@ -638,7 +638,7 @@ sub xclip {
 	}
 }
 
-sub pbcopy {
+sub copy {
 	xclip;
 	my $cleartext = pipeslurp @gpg_de, getin;
 	pipespew $cleartext, @pbcopy;
@@ -648,7 +648,7 @@ sub pbcopy {
 	return pipespew '', @pbcopy;
 }
 
-sub pbpaste {
+sub paste {
 	xclip;
 	my $cleartext = pipeslurp @pbpaste;
 	pipespew $cleartext, @gpg_en, recipients, getout;
@@ -774,34 +774,20 @@ sub init {
 	return 0;
 }
 
-my %longer = (
-	'--help'    => 'help',
-	'add'       => 'addkey',
-	'addself'   => 'addself',
-	'del'       => 'delkey',
-	'fetchkey'  => 'fetchkey',
-	'importkey' => 'importkey',
-	'ls'        => 'lskeys',
-	'en'        => 'encrypt',
-	'decrypt'   => 'decrypt',
-	're'        => 'recrypt',
-	'ck'	    => 'check',
-	'shred'	    => 'shred',
-	'edit'	    => 'edit',
-	'copy'	    => 'pbcopy',
-	'paste'	    => 'pbpaste',
-	'csrconf'   => 'csrconf',
-	'gencsr'    => 'gencsr',
-	'genkey'    => 'genkey',
-	'genpwd'    => 'genpwd',
-	'init'	    => 'init',
-    );
+$::{'--help'} = $::{help};
+$::{ck}	      = $::{check};
+$::{add}      = $::{addkey};
+$::{del}      = $::{delkey};
+$::{ls}	      = $::{lskeys};
+$::{en}	      = $::{encrypt};
+$::{re}	      = $::{recrypt};
 
 usage unless @ARGV;
 my $subcommand = shift;
-$subcommand = $longer{$subcommand}
-    if exists $longer{$subcommand};
-if (grep { $subcommand eq $_ } values %longer) {
+if (grep { $subcommand eq $_ }
+	qw(--help add addkey addself check ck copy csrconf decrypt
+	   del delkey edit en encrypt fetchkey gencsr genkey genpwd
+	   help importkey init ls lskeys paste re recrypt shred)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
