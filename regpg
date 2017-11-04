@@ -29,9 +29,9 @@ secrets:
 	regpg decrypt [options] [cryptfile.asc] [clearfile]
 	regpg recrypt [options] <cryptfile.asc>...
 helpers:
-	regpg copy [options] [cryptfile.asc]
-	regpg paste [options] [cryptfile.asc]
 	regpg edit [options] <cryptfile.asc>
+	regpg pbcopy [options] [cryptfile.asc]
+	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 	regpg csrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
@@ -638,7 +638,7 @@ sub xclip {
 	}
 }
 
-sub copy {
+sub pbcopy {
 	xclip;
 	my $cleartext = pipeslurp @gpg_de, getin;
 	pipespew $cleartext, @pbcopy;
@@ -648,7 +648,7 @@ sub copy {
 	return pipespew '', @pbcopy;
 }
 
-sub paste {
+sub pbpaste {
 	xclip;
 	my $cleartext = pipeslurp @pbpaste;
 	pipespew $cleartext, @gpg_en, recipients, getout;
@@ -785,9 +785,9 @@ $::{re}	      = $::{recrypt};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(--help add addkey addself check ck copy csrconf decrypt
-	   del delkey edit en encrypt fetchkey gencsr genkey genpwd
-	   help importkey init ls lskeys paste re recrypt shred)) {
+	qw(add addkey addself check ck csrconf decrypt del delkey
+	   edit en encrypt fetchkey gencsr genkey genpwd --help help
+	   importkey init ls lskeys pbcopy pbpaste re recrypt shred)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -829,11 +829,11 @@ B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
 - helpers:
 
-B<regpg> B<copy> [I<options>] [I<cryptfile.asc>]
-
-B<regpg> B<paste> [I<options>] [I<cryptfile.asc>]
-
 B<regpg> B<edit> [I<options>] <I<cryptfile.asc>>
+
+B<regpg> B<pbcopy> [I<options>] [I<cryptfile.asc>]
+
+B<regpg> B<pbpaste> [I<options>] [I<cryptfile.asc>]
 
 B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
@@ -1070,7 +1070,14 @@ tools from OpenSSL and OpenSSH.
 
 =over
 
-=item B<regpg> B<copy> [I<cryptfile.asc>]
+=item B<regpg> B<edit> <I<cryptfile.asc>>
+
+Decrypt I<cryptfile.asc> and run C<$EDITOR> on the cleartext file.
+The cleartext is placed on a C<tmpfs> in RAM when possible.
+When you have finished editing, the file is re-encrypted and the
+cleartext is shredded.
+
+=item B<regpg> B<pbcopy> [I<cryptfile.asc>]
 
 Decrypt I<cryptfile.asc> and copy the cleartext to the clipboard. When
 you have used the secret, press ^C and B<regpg> will clear the clipboard.
@@ -1079,7 +1086,7 @@ This uses B<pbcopy> on macOS or B<xclip> on X11.
 
 If I<cryptfile> is missing or C<-> then it is read from stdin.
 
-=item B<regpg> B<paste> [I<cryptfile.asc>]
+=item B<regpg> B<pbpaste> [I<cryptfile.asc>]
 
 Encrypt the contents of the clipboard and paste the ciphertext into
 I<cryptfile.asc>. The clipboard is cleared afterwards.
@@ -1087,13 +1094,6 @@ I<cryptfile.asc>. The clipboard is cleared afterwards.
 This uses B<pbpaste> on macOS or B<xclip> on X11.
 
 If I<cryptfile> is missing or C<-> then it is written to stdout.
-
-=item B<regpg> B<edit> <I<cryptfile.asc>>
-
-Decrypt I<cryptfile.asc> and run C<$EDITOR> on the cleartext file.
-The cleartext is placed on a C<tmpfs> in RAM when possible.
-When you have finished editing, the file is re-encrypted and the
-cleartext is shredded.
 
 =item B<regpg> B<shred> <I<clearfile>>...
 
