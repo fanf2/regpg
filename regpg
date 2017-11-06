@@ -76,9 +76,10 @@ sub getargs {
 	    unless -f $opt{k} or $arg{keymaker};
 	$opt{k} = "./$opt{k}" unless $opt{k} =~ m{/};
 	($keybase,$keydir) = fileparse $opt{k};
-	@gpg = (qw(gpg --no-default-keyring --keyring), $opt{k});
+	@gpg = (qw(gpg --trust-model=always
+		   --no-default-keyring --keyring), $opt{k});
 	@gpg_de = (qw(gpg --use-agent --batch --quiet --decrypt));
-	@gpg_en = (@gpg, qw(--trust-model=always --armor --encrypt));
+	@gpg_en = (@gpg, qw(--armor --encrypt));
 	return;
 }
 
