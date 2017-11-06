@@ -26,9 +26,7 @@ ok -d $T::work, 'created working directory';
 ################################################################
 
 for my $key (qw(one two)) {
-	my @cmd = qw(gpg --gen-key --batch --quiet);
-	open my $p, '|-', @cmd or die "pipe to @cmd: $!\n";
-	print $p <<"GENKEY";
+	my $stdin = <<"GENKEY";
 Key-Type: RSA
 Key-Usage: encrypt,sign
 Key-Length: 2048
@@ -38,7 +36,8 @@ Name-Email: regpg-$key\@testing.example
 %transient-key
 %commit
 GENKEY
-	ok close $p, "generated key $key";
+	ok T::run($stdin => qw(gpg --gen-key --batch --quiet)),
+	    "generated key $key";
 }
 
 ################################################################
