@@ -7,6 +7,7 @@ use Exporter qw(import);
 use File::Temp qw(tempfile);
 use FindBin;
 use POSIX;
+use Test::More;
 
 our $gnupg;
 our $regpg;
@@ -37,7 +38,7 @@ BEGIN {
 
 sub run {
 	my $stdin = shift;
-	my $r = {};
+	my $r = { stdin => $stdin };
 
 	open my $si, '<&STDIN'  or die "dup: $!\n";
 	open my $so, '>&STDOUT' or die "dup: $!\n";
@@ -81,18 +82,33 @@ sub run {
 	return $r;
 }
 
+sub note_lines {
+	my $tag = shift;
+	my $text = shift;
+	$text =~ s{^(.*)$}{$tag: $1}gm;
+	note $text;
+}
+
+sub note_stdio {
+	my $r = shift;
+	note_lines IN => $r->{stdin};
+	note_lines OUT => $r->{stdout};
+	note_lines ERR => $r->{stderr};
+	return $r;
+}
+
 sub fails {
 	my $name = shift;
 	my $r = run @_;
-	Test::More::isnt $r->{status}, 0, $name;
-	return $r;
+	isnt $r->{status}, 0, $name;
+	return note_stdio $r;
 }
 
 sub works {
 	my $name = shift;
 	my $r = run @_;
-	Test::More::is $r->{status}, 0, $name;
-	return $r;
+	is $r->{status}, 0, $name;
+	return note_stdio $r;
 }
 
 __PACKAGE__
