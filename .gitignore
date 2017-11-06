@@ -2,3 +2,5 @@
 regpg.1
 dist
 dust
+t/gnupg
+t/work

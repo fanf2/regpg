@@ -37,9 +37,11 @@ uninstall:
 
 clean:
 	rm -f ${DOCS}
+	rm -rf t/gnupg t/work
 
 test:
 	perlcritic --profile .perlcritic regpg
+	prove -I t/lib
 
 regpg.1: regpg
 	pod2man regpg regpg.1
