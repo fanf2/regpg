@@ -33,7 +33,8 @@ helpers:
 	regpg pbcopy [options] [cryptfile.asc]
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
-	regpg csrconf [options] <certfile>|<hostname> [config]
+generators:
+	regpg gencsrconf [options] <certfile>|<hostname> [config]
 	regpg gencsr [options] <private.asc> <config> [request]
 	regpg genkey [options] <algorithm> <private.asc> [public]
 	regpg genpwd [options] [cryptfile.asc]
@@ -684,7 +685,7 @@ sub edit {
 	return $status;
 }
 
-sub csrconf {
+sub gencsrconf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
 	my ($source,$conffile,$cert) = @ARGV;
@@ -810,9 +811,10 @@ $::{re}	      = $::{recrypt};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck conv csrconf decrypt del delkey
-	   edit en encrypt fetchkey gencsr genkey genpwd --help help
-	   importkey init ls lskeys pbcopy pbpaste re recrypt shred)) {
+	qw(add addkey addself check ck conv decrypt del delkey edit
+	   en encrypt fetchkey gencsrconf gencsr genkey genpwd
+	   --help help importkey init ls lskeys pbcopy pbpaste
+	   re recrypt shred)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -862,7 +864,9 @@ B<regpg> B<pbpaste> [I<options>] [I<cryptfile.asc>]
 
 B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
-B<regpg> B<csrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<config>]
+- generators:
+
+B<regpg> B<gencsrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<config>]
 
 B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<config>> [I<request>]
 
@@ -1091,9 +1095,8 @@ if you did not pass the B<-r> option.
 
 =head2 Higher-level helpers
 
-The following subcommands combine the core B<regpg> B<encrypt> /
-B<decrypt> subcommands with other utilities such as secret handling
-tools from OpenSSL and OpenSSH.
+The following subcommands provide more convenient access to secrets,
+at the cost of some safety.
 
 =over
 
@@ -1131,6 +1134,16 @@ If the B<-r> option is given,
 all cleartext files found by C<regpg check> are shredded.
 
 Note: You might want to test B<shred> with the B<-n> option first!
+
+=back
+
+=head2 Secret generators
+
+The following subcommands combine the core B<regpg> B<encrypt> /
+B<decrypt> subcommands with secret handling tools from OpenSSL and
+OpenSSH, etc.
+
+=over
 
 =item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<config>]
 
