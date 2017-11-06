@@ -9,14 +9,24 @@ use FindBin;
 use POSIX;
 use Test::More;
 
-our $gnupg;
 our $regpg;
+our $gnupg;
 our $work;
 
+our $status;
+our $stdin;
+our $stdout;
+our $stderr;
+
 our @EXPORT = qw(
-	$gnupg
 	$regpg
+	$gnupg
 	$work
+
+	$status
+	$stdin
+	$stdout
+	$stderr
 
 	fails
 	run
@@ -26,8 +36,8 @@ our @EXPORT = qw(
 BEGIN {
 	my $dir = "$FindBin::Bin";
 
-	$gnupg = "$dir/gnupg";
 	$regpg = "$dir/../regpg";
+	$gnupg = "$dir/gnupg";
 	$work  = "$dir/work";
 
 	chdir $work; # ignore failure
@@ -35,10 +45,8 @@ BEGIN {
 	$ENV{GNUPGHOME} = "$gnupg";
 };
 
-
 sub run {
-	my $stdin = shift;
-	my $r = { stdin => $stdin };
+	$stdin = shift;
 
 	open my $si, '<&STDIN'  or die "dup: $!\n";
 	open my $so, '>&STDOUT' or die "dup: $!\n";
@@ -58,19 +66,23 @@ sub run {
 	close $ho;
 	close $he;
 
-	$r->{status} = system @_;
+	$status = system @_;
 
 	open STDIN,  '<&', $si or die "dup: $!\n";
 	open STDOUT, '>&', $so or die "dup: $!\n";
 	open STDERR, '>&', $se or die "dup: $!\n";
+
+	close $si;
+	close $so;
+	close $se;
 
 	local $/ = undef;
 
 	open my $ro, '<', $no or die "open $no: $!\n";
 	open my $re, '<', $ne or die "open $ne: $!\n";
 
-	$r->{stdout} = <$ro>;
-	$r->{stderr} = <$re>;
+	$stdout = <$ro>;
+	$stderr = <$re>;
 
 	close $ro;
 	close $re;
@@ -78,8 +90,6 @@ sub run {
 	unlink $ni;
 	unlink $no;
 	unlink $ne;
-
-	return $r;
 }
 
 sub note_lines {
@@ -90,25 +100,23 @@ sub note_lines {
 }
 
 sub note_stdio {
-	my $r = shift;
-	note_lines IN => $r->{stdin};
-	note_lines OUT => $r->{stdout};
-	note_lines ERR => $r->{stderr};
-	return $r;
+	note_lines IN  => $stdin;
+	note_lines OUT => $stdout;
+	note_lines ERR => $stderr;
 }
 
 sub fails {
 	my $name = shift;
-	my $r = run @_;
-	isnt $r->{status}, 0, $name;
-	return note_stdio $r;
+	run @_;
+	isnt $status, 0, $name;
+	note_stdio;
 }
 
 sub works {
 	my $name = shift;
-	my $r = run @_;
-	is $r->{status}, 0, $name;
-	return note_stdio $r;
+	run @_;
+	is $status, 0, $name;
+	note_stdio;
 }
 
 __PACKAGE__

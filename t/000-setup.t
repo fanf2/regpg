@@ -26,7 +26,8 @@ ok -d $work, 'created working directory';
 ################################################################
 
 for my $key (qw(one two)) {
-	my $stdin = <<"GENKEY";
+	works "generated key $key",
+	    <<"GENKEY" => qw(gpg --gen-key --batch --quiet);
 Key-Type: RSA
 Key-Usage: encrypt,sign
 Key-Length: 2048
@@ -36,8 +37,6 @@ Name-Email: regpg-$key\@testing.example
 %transient-key
 %commit
 GENKEY
-	works "generated key $key",
-	    $stdin => qw(gpg --gen-key --batch --quiet);
 }
 
 ################################################################
