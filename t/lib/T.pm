@@ -3,7 +3,7 @@ package T;
 use strict;
 use warnings;
 
-use Exporter;
+use Exporter qw(import);
 use File::Temp qw(tempfile);
 use FindBin;
 use POSIX;
@@ -17,7 +17,9 @@ our @EXPORT = qw(
 	$regpg
 	$work
 
+	fails
 	run
+	works
     );
 
 BEGIN {
@@ -79,6 +81,19 @@ sub run {
 	return $r;
 }
 
+sub fails {
+	my $name = shift;
+	my $r = run @_;
+	Test::More::isnt $r->{status}, 0, $name;
+	return $r;
+}
+
+sub works {
+	my $name = shift;
+	my $r = run @_;
+	Test::More::is $r->{status}, 0, $name;
+	return $r;
+}
 
 __PACKAGE__
 __END__

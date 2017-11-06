@@ -12,16 +12,16 @@ use T;
 
 chdir $FindBin::Bin;
 
-rmtree $T::gnupg;
-mkpath $T::gnupg;
-chmod 0700, $T::gnupg;
+rmtree $gnupg;
+mkpath $gnupg;
+chmod 0700, $gnupg;
 
-ok -d $T::gnupg, 'created gnupg home';
+ok -d $gnupg, 'created gnupg home';
 is 0777 & (stat _)[2], 0700, 'permissions on gnupg home';
 
-rmtree $T::work;
-mkpath $T::work;
-ok -d $T::work, 'created working directory';
+rmtree $work;
+mkpath $work;
+ok -d $work, 'created working directory';
 
 ################################################################
 
@@ -36,8 +36,8 @@ Name-Email: regpg-$key\@testing.example
 %transient-key
 %commit
 GENKEY
-	ok T::run($stdin => qw(gpg --gen-key --batch --quiet)),
-	    "generated key $key";
+	works "generated key $key",
+	    $stdin => qw(gpg --gen-key --batch --quiet);
 }
 
 ################################################################

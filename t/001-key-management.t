@@ -7,10 +7,8 @@ use Test::More;
 
 use T;
 
-print STDERR "$T::regpg\n";
-
-ok 0 == (system $T::regpg, qw(addkey regpg-one@testing.example)),
-    'import key one';
+works 'import key one',
+    '' => $regpg, qw(addkey regpg-one@testing.example);
 
 done_testing;
 exit;
