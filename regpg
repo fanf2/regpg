@@ -661,9 +661,7 @@ sub pbcopy {
 	my $cleartext = pipeslurp @gpg_de, getin;
 	pipespew $cleartext, @pbcopy;
 	print STDERR "Press ^C when you have used the secret...";
-	local $SIG{INT} = sub {};
-	pause;
-	$SIG{INT} = 'DEFAULT';
+	do { local $SIG{INT} = sub {}; pause; };
 	print STDERR "\n";
 	return pipespew '', @pbcopy;
 }
