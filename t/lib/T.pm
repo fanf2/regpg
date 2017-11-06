@@ -11,6 +11,7 @@ use Test::More;
 
 our $regpg;
 our $gnupg;
+our $gpgconf;
 our $work;
 
 our $status;
@@ -21,6 +22,7 @@ our $stderr;
 our @EXPORT = qw(
 	$regpg
 	$gnupg
+	$gpgconf
 	$work
 
 	$status
@@ -28,9 +30,11 @@ our @EXPORT = qw(
 	$stdout
 	$stderr
 
-	fails
 	run
+	fails
 	works
+
+	gpg_batch_yes
     );
 
 BEGIN {
@@ -38,6 +42,7 @@ BEGIN {
 
 	$regpg = "$dir/../regpg";
 	$gnupg = "$dir/gnupg";
+	$gpgconf = "$gnupg/gpg.conf";
 	$work  = "$dir/work";
 
 	chdir $work; # ignore failure
@@ -90,6 +95,12 @@ sub run {
 	unlink $ni;
 	unlink $no;
 	unlink $ne;
+}
+
+sub gpg_batch_yes {
+	open my $h, '>', $gpgconf or die "open $gpgconf: $!\n";
+	print $h "batch\nyes\nno-tty\n";
+	close $h;
 }
 
 sub note_lines {
