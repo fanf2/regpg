@@ -13,7 +13,7 @@ my $kd = 'dummy@this-key-is.invalid';
 
 sub checklist {
 	my %k = @_;
-	works 'list keys', '' => $regpg, qw(ls);
+	works 'list keys', '' => $regpg, qw(lskeys);
 	for my $k (@{$k{like}}) {
 		my $qk = quotemeta $k;
 		like $stdout, qr{$qk}, "list contains $k";
@@ -47,6 +47,28 @@ unlink $gpgconf;
 subtest 'list keys (two)' => sub {
 	checklist like => [ $k2 ],
 	    unlike => [ $k1, $kd ];
+};
+
+my $so = $stdout;
+my $se = $stderr;
+subtest 'ls synonym', => sub {
+	works 'ls', '' => $regpg, 'ls';
+	is $stdout, $so, 'stdout matches';
+	is $stderr, $se, 'stderr matches';
+};
+
+subtest 'add synonym', => sub {
+	works 'add', '' => $regpg, 'add', $k1;
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
+
+subtest 'del synonym', => sub {
+	gpg_batch_yes;
+	works 'del', '' => $regpg, 'del', $k2;
+	unlink $gpgconf;
+	checklist like => [ $k1 ],
+	    unlike => [ $k2, $kd ];
 };
 
 done_testing;
