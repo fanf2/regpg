@@ -7,11 +7,6 @@ use Test::More;
 
 use T;
 
-my $pgpmsg =
-    qr{^-----BEGIN[ ]PGP[ ]MESSAGE-----\n
-       .*\n
-       -----END[ ]PGP[ ]MESSAGE-----\n$}sx;
-
 my $cleartext = 'sooper sekrit';
 
 works 'encrypt pipe in / pipe out',
