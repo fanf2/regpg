@@ -656,6 +656,7 @@ sub pbcopy {
 sub pbpaste {
 	xclip;
 	my $cleartext = pipeslurp @pbpaste;
+	die 'regpg: clipboard is empty' if $cleartext eq '';
 	pipespew $cleartext, @gpg_en, recipients, getout;
 	return pipespew '', @pbcopy;
 }
