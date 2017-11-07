@@ -120,7 +120,7 @@ sub canexec {
 }
 
 sub firstdir {
-	return (grep { -d $_ } @_)[0];
+	return (grep { defined $_ and -d $_ } @_)[0];
 }
 
 sub pipeslurp {
