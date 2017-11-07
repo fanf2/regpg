@@ -24,8 +24,8 @@ keys:
 	regpg delkey [options] <keyname>...
 	regpg importkey [options] [keyfile]...
 secrets:
-	regpg encrypt [options] [clearfile] [cryptfile.asc]
-	regpg decrypt [options] [cryptfile.asc] [clearfile]
+	regpg encrypt [options] [[clearfile] cryptfile.asc]
+	regpg decrypt [options] [cryptfile.asc [clearfile]]
 	regpg recrypt [options] <cryptfile.asc>...
 helpers:
 	regpg edit [options] <cryptfile.asc>
@@ -33,9 +33,9 @@ helpers:
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 generators:
-	regpg gencsrconf [options] <certfile>|<hostname> [config]
-	regpg gencsr [options] <private.asc> <config> [request]
-	regpg genkey [options] <algorithm> <private.asc> [public]
+	regpg gencsrconf [options] [<certfile>|<hostname> [csr.conf]]
+	regpg gencsr [options] <private.asc> <csr.conf> [csr]
+	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
 	regpg genpwd [options] [cryptfile.asc]
 setup:
 	regpg init [options] [hook]...
@@ -839,9 +839,9 @@ B<regpg> B<importkey> [I<options>] [I<keyfile>]...
 
 - secrets:
 
-B<regpg> B<encrypt> [I<options>] [I<clearfile>] [I<cryptfile.asc>]
+B<regpg> B<encrypt> [I<options>] [[I<clearfile>] I<cryptfile.asc>]
 
-B<regpg> B<decrypt> [I<options>] [I<cryptfile.asc>] [I<clearfile>]
+B<regpg> B<decrypt> [I<options>] [I<cryptfile.asc> [I<clearfile>]]
 
 B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
@@ -857,11 +857,11 @@ B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
 
-B<regpg> B<gencsrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<config>]
+B<regpg> B<gencsrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<csr.conf>]
 
-B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<config>> [I<request>]
+B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<csr.conf>> [I<csr>]
 
-B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<public>]
+B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
 B<regpg> B<genpwd> [I<options>] [I<cryptfile.asc>]
 
@@ -1031,9 +1031,9 @@ subcommands.
 
 =over
 
-=item B<regpg> B<encrypt> [I<clearfile>] [I<cryptfile.asc>]
+=item B<regpg> B<encrypt> [[I<clearfile>] I<cryptfile.asc>]
 
-=item B<regpg> B<en> [I<clearfile>] [I<cryptfile.asc>]
+=item B<regpg> B<en> [[I<clearfile>] [<cryptfile.asc>]
 
 Encrypt I<clearfile> to produce I<cryptfile.asc>.
 The encryption recipients are all the keys in the public key ring.
@@ -1047,7 +1047,7 @@ is written to stdout.
 Note: conventionally the I<cryptfile> has a C<.asc> (for
 ASCII-armored) or C<.gpg> extension.
 
-=item B<regpg> B<decrypt> [I<cryptfile.asc>] [I<clearfile>]
+=item B<regpg> B<decrypt> [I<cryptfile.asc> [I<clearfile>]]
 
 Decrypt I<cryptfile.asc> to produce I<clearfile>.
 You must be running B<gpg-agent> which will be used
@@ -1128,7 +1128,7 @@ OpenSSH, etc.
 
 =over
 
-=item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<config>]
+=item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<csr.conf>]
 
 Convert an X.509 certificate into an B<openssl> B<req> configuration file
 which can be used with B<regpg> B<gencsr>.
@@ -1142,10 +1142,10 @@ If I<certfile> is C<-> or is omitted then it is read from stdin.
 
 If I<config> is C<-> or is omitted then it is written to stdout.
 
-=item B<regpg> B<gencsr> <I<priv.asc>> <I<conf>> [I<req>]
+=item B<regpg> B<gencsr> <I<private.asc>> <I<csr.conf>> [I<csr>]
 
-Generate an X.509 certificate signing request
-for an encrypted private key.
+Generate an X.509 certificate signing request for an encrypted private
+key.
 
 The CSR parameters (distinguished name, subjectAltName, etc)
 are given in the OpenSSL configuration file I<conf>.
@@ -1159,7 +1159,7 @@ If I<req> is C<-> or is omitted then it is written to stdout.
 As well as being written to I<req>, the CSR is printed in text form
 if you give the B<-v> option.
 
-=item B<regpg> B<genkey> <I<algo>> <I<priv.asc>> [I<pub>]
+=item B<regpg> B<genkey> <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
 Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
 The PEM private key is encrypted and written to the file I<priv.asc>.
