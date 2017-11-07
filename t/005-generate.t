@@ -99,12 +99,12 @@ like $stderr, qr{usage:}, 'usage';
 my $csr = qr{\A-----BEGIN CERTIFICATE REQUEST-----};
 
 works 'gencsr pipe',
-    '' => $regpg, 'gencsr', 'tls.pem.asc', 'tls.csr.conf';
+    '' => $regpg, qw(gencsr tls.pem.asc tls.csr.conf);
 like $stdout, $csr, 'regpg stdout is cert request';
 is $stderr, '', 'regpg stderr quiet';
 
 works 'gencsr file',
-    '' => $regpg, 'gencsr', 'tls.pem.asc', 'tls.csr.conf', 'tls.csr';
+    '' => $regpg, qw(gencsr tls.pem.asc tls.csr.conf tls.csr);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
 ok -f 'tls.csr', 'gencsr wrote file';
@@ -115,6 +115,17 @@ works 'openssl likes csr',
 like $stdout, qr{CN=dotat[.]at}, 'openssl found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'openssl found SAN';
 is $stderr, '', 'openssl stderr quiet';
+
+works 'gencsr verbose pipe',
+    '' => $regpg, qw(gencsr -v tls.pem.asc tls.csr.conf);
+like $stdout, $csr, 'verbose stdout cert';
+like $stderr, qr{pipe to openssl req}, 'regpg stderr noisy';
+
+works 'gencsr verbose file',
+    '' => $regpg, qw(gencsr -v tls.pem.asc tls.csr.conf tls.csr);
+like $stdout, qr{CN=dotat[.]at}, 'verbose found CN';
+like $stdout, qr{DNS:www[.]dotat[.]at}, 'verbose found SAN';
+like $stderr, qr{running openssl req}, 'regpg stderr noisy';
 
 fails 'gencsr one arg',
     '' => $regpg, qw(gencsr one);
@@ -129,6 +140,7 @@ works 'genpwd pipe',
 like $stdout, $pgpmsg, 'genpwd output encrypted';
 is $stderr, '', 'regpg stderr quiet';
 
+unlink 'pwd.asc';
 works 'genpwd file',
     '' => $regpg, qw(genpwd pwd.asc);
 is $stdout, '', 'regpg stdout quiet';
