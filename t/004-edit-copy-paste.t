@@ -10,6 +10,9 @@ use T;
 sub canexec {
 	return scalar grep { -x "$_/@_" } split /:/, $ENV{PATH};
 }
+sub canxclip {
+	return defined $ENV{DISPLAY} && canexec 'xclip';
+}
 
 works 'create encrypted file',
     'foo bar zig' => $regpg, 'encrypt', 'file.asc';
@@ -44,13 +47,13 @@ SKIP: {
 	    'secret' => 'pbcopy';
 }
 SKIP: {
-	skip 'no xclip', 1 unless canexec 'xclip';
+	skip 'no xclip', 1 unless canxclip;
 	works 'xclip -i',
 	    'secret' => 'xclip', '-i';
 }
 SKIP: {
 	skip 'no pbpaste/xclip', 9 unless canexec 'pbpaste'
-				    or canexec 'xclip';
+				    or canxclip;
 	works 'repgp pbpaste',
 	    '' => $regpg, 'pbpaste';
 	like $stdout, $pgpmsg, 'regpg stdout encrypted';
@@ -70,13 +73,13 @@ SKIP: {
 	    'secret' => 'pbcopy';
 }
 SKIP: {
-	skip 'no xclip', 1 unless canexec 'xclip';
+	skip 'no xclip', 1 unless canxclip;
 	works 'xclip -i',
 	    'secret' => 'xclip', '-i';
 }
 SKIP: {
 	skip 'no pbpaste/xclip', 6 unless canexec 'pbpaste'
-				    or canexec 'xclip';
+				    or canxclip;
 	works 'repgp pbpaste file',
 	    '' => $regpg, 'pbpaste', 'paste.asc';
 	is $stdout, '', 'regpg stdout quiet';
