@@ -37,7 +37,7 @@ our @EXPORT = qw(
 	works
 	slurp
 	spew
-
+	canexec
 	gpg_batch_yes
     );
 
@@ -148,6 +148,10 @@ sub slurp {
 
 sub gpg_batch_yes {
 	spew $gpgconf, "batch\nyes\nno-tty\n";
+}
+
+sub canexec {
+	return scalar grep { -x "$_/@_" } split /:/, $ENV{PATH};
 }
 
 __PACKAGE__

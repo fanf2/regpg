@@ -7,9 +7,6 @@ use Test::More;
 
 use T;
 
-sub canexec {
-	return scalar grep { -x "$_/@_" } split /:/, $ENV{PATH};
-}
 sub canxclip {
 	return defined $ENV{DISPLAY} && canexec 'xclip';
 }
