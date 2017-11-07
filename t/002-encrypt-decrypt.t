@@ -68,8 +68,10 @@ works 'en short synonym',
 like $stdout, $pgpmsg, 'en stdout encrypted';
 is $stderr, '', 'en stderr quiet';
 
-fails 'en short synonym',
+fails 'de short synonym',
     $ciphertext => $regpg, 'de';
+
+unlink 'secret.asc', 'secret', 'secout';
 
 done_testing;
 exit;
