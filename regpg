@@ -857,7 +857,7 @@ B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
 
-B<regpg> B<gencsrconf> [I<options>] <I<certfile>>|<I<hostname>> [I<csr.conf>]
+B<regpg> B<gencsrconf> [I<options>] [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
 
 B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<csr.conf>> [I<csr>]
 
