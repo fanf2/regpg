@@ -124,5 +124,7 @@ subtest 'importkey file', => sub {
 	    unlike => [ $kd ];
 };
 
+unlink 'export';
+
 done_testing;
 exit;

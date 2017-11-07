@@ -87,18 +87,10 @@ sub stdio {
 	return !wantarray ? $stdio : $stdio ? () : @_;
 }
 
-sub getin {
-	return stdio $ARGV[0];
-}
-
 sub getout {
-	return stdio '--output', $ARGV[0];
-}
-
-sub getinout {
-	return $_[0]() if @ARGV < 2;
-	my $in = shift @ARGV;
-	return getout, stdio $in;
+	return @ARGV == 0 ? ()
+	     : @ARGV == 1 ? ('--output', @ARGV)
+	     : die 'Internal error';
 }
 
 ########################################################################
@@ -629,12 +621,14 @@ sub recrypt {
 
 sub encrypt {
 	getargs min => 0, max => 2;
-	return vsystem @gpg_en, recipients, getinout \&getout;
+	my @in = (@ARGV > 1) ? (shift @ARGV) : ();
+	return vsystem @gpg_en, recipients, getout, @in;
 }
 
 sub decrypt {
 	getargs min => 0, max => 2;
-	return vsystem @gpg_de, getinout \&getin;
+	my @in = (@ARGV > 0) ? (shift @ARGV) : ();
+	return vsystem @gpg_de, getout, @in;
 }
 
 my @pbcopy = qw(pbcopy);
@@ -650,7 +644,7 @@ sub xclip {
 
 sub pbcopy {
 	xclip;
-	my $cleartext = pipeslurp @gpg_de, getin;
+	my $cleartext = pipeslurp @gpg_de, stdio @ARGV;
 	pipespew $cleartext, @pbcopy;
 	print STDERR "Press ^C when you have used the secret...";
 	do { local $SIG{INT} = sub {}; pause; };
