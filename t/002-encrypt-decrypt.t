@@ -94,9 +94,11 @@ is slurp('secout'), $cleartext, 'decrypt two correct output';
 
 fails 'encrypt three arguments',
     '' => $regpg, qw(encrypt one two three);
+like $stderr, qr{usage:}, 'usage';
 
 fails 'decrypt three arguments',
     '' => $regpg, qw(decrypt one two three);
+like $stderr, qr{usage:}, 'usage';
 
 works 'en short synonym',
     $cleartext => $regpg, 'en';
