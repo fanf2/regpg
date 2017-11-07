@@ -124,5 +124,17 @@ fails 'gencsr four args',
     '' => $regpg, qw(gencsr one two three four);
 like $stderr, qr{usage:}, 'usage';
 
+works 'genpwd pipe',
+    '' => $regpg, qw(genpwd);
+like $stdout, $pgpmsg, 'genpwd output encrypted';
+is $stderr, '', 'regpg stderr quiet';
+
+works 'genpwd file',
+    '' => $regpg, qw(genpwd pwd.asc);
+is $stdout, '', 'regpg stdout quiet';
+is $stderr, '', 'regpg stderr quiet';
+ok -f 'pwd.asc', 'genpwd wrote file';
+like slurp('pwd.asc'), $pgpmsg, 'genpwd file encrypted';
+
 done_testing;
 exit;
