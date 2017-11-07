@@ -71,5 +71,23 @@ subtest 'del synonym', => sub {
 	    unlike => [ $k2, $kd ];
 };
 
+subtest 'del all', => sub {
+	gpg_batch_yes;
+	works 'del', '' => $regpg, 'del', $k1;
+	unlink $gpgconf;
+	checklist like => [ ],
+	    unlike => [ $k1, $k2, $kd ];
+	ok -z 'pubring.gpg', 'empty keyring';
+};
+
+subtest 'dummy re-init of empty keyring', => sub {
+	works 'add', '' => $regpg, 'add', '-v', $k1;
+	like $stderr, qr{--delete-key}, 'delete dummy key';
+	like $stderr, qr{0xA3F96E2C6131531B}, 'dummy key id';
+	checklist like => [ $k1 ],
+	    unlike => [ $k2, $kd ];
+};
+
+
 done_testing;
 exit;

@@ -256,7 +256,7 @@ GmsvCAWDR1oQyfvZEHIKhIAOHtlCrXAAamm0vyE5cWT8/W1rVvJ5/AcDJkWHZOw/LaDrT98PXFny
 hvY3JPI/XCUWAISA0xB6wjvImRZzOK+wAgAD
 DUMMY
 sub dummy_init {
-	return 1 if -f $opt{k};
+	return 1 if -f $opt{k} and -s $opt{k};
 	return spewto $opt{k}, decode_base64 $dummy_key;
 }
 sub dummy_fini {
