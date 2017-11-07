@@ -104,30 +104,30 @@ sub gpg_batch_yes {
 }
 
 sub note_lines {
+	my $ok = shift;
 	my $tag = shift;
 	my $text = shift;
 	$text =~ s{^(.*)$}{$tag: $1}gm;
-	note $text;
+	$ok ? note $text : diag $text;
 }
 
 sub note_stdio {
-	note_lines IN  => $stdin;
-	note_lines OUT => $stdout;
-	note_lines ERR => $stderr;
+	my $ok = shift;
+	note_lines $ok, IN  => $stdin;
+	note_lines $ok, OUT => $stdout;
+	note_lines $ok, ERR => $stderr;
 }
 
 sub fails {
 	my $name = shift;
 	run @_;
-	isnt $status, 0, $name;
-	note_stdio;
+	note_stdio isnt $status, 0, $name;
 }
 
 sub works {
 	my $name = shift;
 	run @_;
-	is $status, 0, $name;
-	note_stdio;
+	note_stdio is $status, 0, $name;
 }
 
 __PACKAGE__
