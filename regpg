@@ -402,11 +402,10 @@ sub check_some {
 
 sub shred_files {
 	if (canexec 'shred') {
-		vsystem 'shred', '-u', $_ for check_clear @_;
+		return vsystem 'shred', '-u', check_clear @_;
 	} else {
-		unlink $_ or die "unlink $_: $!\n" for check_clear @_;
+		return vsystem 'rm', check_clear @_;
 	}
-	return 0;
 }
 
 sub shred_some {
