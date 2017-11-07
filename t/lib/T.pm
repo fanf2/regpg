@@ -33,6 +33,8 @@ our @EXPORT = qw(
 	run
 	fails
 	works
+	slurp
+	spew
 
 	gpg_batch_yes
     );
@@ -97,12 +99,6 @@ sub run {
 	unlink $ne;
 }
 
-sub gpg_batch_yes {
-	open my $h, '>', $gpgconf or die "open $gpgconf: $!\n";
-	print $h "batch\nyes\nno-tty\n";
-	close $h;
-}
-
 sub note_lines {
 	my $ok = shift;
 	my $tag = shift;
@@ -128,6 +124,23 @@ sub works {
 	my $name = shift;
 	run @_;
 	note_stdio is $status, 0, $name;
+}
+
+sub spew {
+	my $fn = shift;
+	open my $fh, '>', $fn or die "open > $fn: $!\n";
+	print $fh @_;
+}
+
+sub slurp {
+	my $fn = shift;
+	local $/ = undef;
+	open my $fh, '<', $fn or die "open < $fn: $!\n";
+	return <$fh>;
+}
+
+sub gpg_batch_yes {
+	spew $gpgconf, "batch\nyes\nno-tty\n";
 }
 
 __PACKAGE__
