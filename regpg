@@ -1128,19 +1128,21 @@ OpenSSH, etc.
 
 =over
 
-=item B<regpg> B<csrconf> <I<certfile>>|<I<hostname>> [I<csr.conf>]
+=item B<regpg> B<gencsrconf> [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
 
 Convert an X.509 certificate into an B<openssl> B<req> configuration file
 which can be used with B<regpg> B<gencsr>.
 
-You can use B<csrconf> with an existing certificate file I<certfile>
+You can use B<gencsrconf> with an existing certificate file I<certfile>
 to help with renewals, or you can fetch a web server's certificate
 from I<hostname> to create an example configuration to adapt for a new
 certificate request. See the L</EXAMPLES> below.
 
-If I<certfile> is C<-> or is omitted then it is read from stdin.
+If I<certfile> is C<-> or there are no arguments then it is read from
+stdin.
 
-If I<config> is C<-> or is omitted then it is written to stdout.
+If I<csr.conf> is C<-> or there is one argument then it is written to
+stdout.
 
 =item B<regpg> B<gencsr> <I<private.asc>> <I<csr.conf>> [I<csr>]
 
@@ -1148,22 +1150,23 @@ Generate an X.509 certificate signing request for an encrypted private
 key.
 
 The CSR parameters (distinguished name, subjectAltName, etc)
-are given in the OpenSSL configuration file I<conf>.
+are given in the OpenSSL configuration file I<csr.conf>.
 (See the C<req(1ssl)> man page for details.)
 
-The private key I<priv.asc> should have been generated
+The private key I<private.asc> should have been generated
 with B<regpg> B<genkey> B<rsa>.
 
-If I<req> is C<-> or is omitted then it is written to stdout.
+If I<csr> is C<-> or is omitted then it is written to stdout.
 
-As well as being written to I<req>, the CSR is printed in text form
+As well as being written to I<csr>, the CSR is printed in text form
 if you give the B<-v> option.
 
 =item B<regpg> B<genkey> <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
 Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
-The PEM private key is encrypted and written to the file I<priv.asc>.
-If a I<pub> filename is given, an B<ssh> public key is written to it.
+The PEM private key is encrypted and written to the file
+I<private.asc>. If an I<ssh.pub> filename is given, an B<ssh> public
+key is written there.
 
 The algorithm can be one of:
 
