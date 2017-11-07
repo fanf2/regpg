@@ -645,9 +645,11 @@ sub pbcopy {
 	xclip;
 	my $cleartext = pipeslurp @gpg_de, stdio @ARGV;
 	pipespew $cleartext, @pbcopy;
-	print STDERR "Press ^C when you have used the secret...";
-	do { local $SIG{INT} = sub {}; pause; };
-	print STDERR "\n";
+	unless ($opt{n}) {
+		print STDERR "Press ^C when you have used the secret...";
+		do { local $SIG{INT} = sub {}; pause; };
+		print STDERR "\n";
+	}
 	return pipespew '', @pbcopy;
 }
 
