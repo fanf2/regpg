@@ -88,6 +88,22 @@ subtest 'dummy re-init of empty keyring', => sub {
 	    unlike => [ $k2, $kd ];
 };
 
+subtest 'add both', => sub {
+	open my $trunc, '>', 'pubring.gpg';
+	checklist like => [ ], unlike => [ $k1, $k2, $kd ];
+	works 'add', '' => $regpg, 'add', $k1, $k2;
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
+
+subtest 'addself', => sub {
+	open my $trunc, '>', 'pubring.gpg';
+	checklist like => [ ], unlike => [ $k1, $k2, $kd ];
+	local $ENV{USER} = 'testing.example';
+	works 'addself', '' => $regpg, 'addself', '-v';
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
 
 done_testing;
 exit;
