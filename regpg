@@ -546,7 +546,13 @@ sub conv_ansible_gpg {
 }
 
 sub conv_ansible_vault {
-	getargs min => 1, max => 2;
+	getargs min => 0, max => 2;
+	if (@ARGV == 0) {
+		print "regpg conv ansible-vault candidate files:\n";
+		print safeslurp q(find . -type f |
+			xargs grep -l '[$]ANSIBLE_VAULT;' | sort);
+		return 0;
+	}
 	# we don't like `ansible-vault decrypt --output -` because
 	# it is noisy on stderr, so we use this hack instead
 	local $ENV{PAGER} = 'cat';
@@ -1282,13 +1288,16 @@ B<regpg> keyring, renames F<.ansible-gpg/vault_passphrase.gpg> to
 F<vault.pwd.gpg>, reconfigures Ansible, and finally removes the
 remaining F<ansible-gpg> files.
 
-=item B<regpg> B<conv> B<ansible-vault> <I<vaultfile>> [I<cryptfile.asc>]
+=item B<regpg> B<conv> B<ansible-vault> [<I<vaultfile>> [I<cryptfile.asc>]]
 
 Decrypt I<vaultfile> using B<ansible-vault> and re-encrypt the
 cleartext using B<regpg>.
 
 If I<cryptfile> is C<-> or omitted then the ciphertext
 is written to stdout.
+
+If both arguments are omitted then B<regpg> searches for
+B<ansible-vault> files that may need conversion.
 
 =back
 
