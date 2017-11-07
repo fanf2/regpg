@@ -13,6 +13,7 @@ our $regpg;
 our $gnupg;
 our $gpgconf;
 our $work;
+our $pgpmsg;
 
 our $status;
 our $stdin;
@@ -24,6 +25,7 @@ our @EXPORT = qw(
 	$gnupg
 	$gpgconf
 	$work
+	$pgpmsg
 
 	$status
 	$stdin
@@ -46,6 +48,11 @@ BEGIN {
 	$gnupg = "$dir/gnupg";
 	$gpgconf = "$gnupg/gpg.conf";
 	$work  = "$dir/work";
+
+	$pgpmsg =
+	    qr{^-----BEGIN[ ]PGP[ ]MESSAGE-----\n
+	       .*\n
+	       -----END[ ]PGP[ ]MESSAGE-----\n$}sx;
 
 	chdir $work; # ignore failure
 
