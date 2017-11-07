@@ -89,18 +89,37 @@ subtest 'dummy re-init of empty keyring', => sub {
 };
 
 subtest 'add both', => sub {
-	open my $trunc, '>', 'pubring.gpg';
-	checklist like => [ ], unlike => [ $k1, $k2, $kd ];
+	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'add', '' => $regpg, 'add', $k1, $k2;
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
 
 subtest 'addself', => sub {
-	open my $trunc, '>', 'pubring.gpg';
-	checklist like => [ ], unlike => [ $k1, $k2, $kd ];
+	unlink 'pubring.gpg', 'pubring.gpg~';
 	local $ENV{USER} = 'testing.example';
-	works 'addself', '' => $regpg, 'addself', '-v';
+	works 'addself', '' => $regpg, 'addself';
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
+
+works 'export keys', '' => qw{gpg --export};
+my $export = $stdout;
+open my $f, '>export' or die "open";
+print $f $export;
+close $f;
+
+subtest 'importkey pipe', => sub {
+	unlink 'pubring.gpg', 'pubring.gpg~';
+	works 'importkey',
+	    $export => $regpg, 'importkey';
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
+subtest 'importkey file', => sub {
+	unlink 'pubring.gpg', 'pubring.gpg~';
+	works 'importkey',
+	    '' => $regpg, 'importkey', 'export';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
