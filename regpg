@@ -562,8 +562,9 @@ sub conv_ansible_vault {
 
 sub conv_stgza {
 	getargs min => 0, max => 2;
-	# surprisingly this is better in shell
+	# like @gpg_de but passphrase on stdin instead of via agent
 	my @gpg_dp = qw(gpg --decrypt --quiet --batch --passphrase-fd 0);
+	# surprisingly this is better as a long shell pipeline
 	my $decrypt = "@gpg_de secrets.pwd.asc | @gpg_dp secrets.tar.gz.asc";
 	if (@ARGV) {
 		my @tar = (qw(tar Oxzf -), shift @ARGV);
