@@ -77,7 +77,7 @@ sub getargs {
 	($keybase,$keydir) = fileparse $opt{k};
 	@gpg = (qw(gpg --no-greeting --keyid-format=long --trust-model=always
 		       --no-default-keyring --keyring), $opt{k});
-	@gpg_de = (qw(gpg --use-agent --batch --quiet --decrypt));
+	@gpg_de = (qw(gpg --decrypt --quiet --batch --use-agent));
 	@gpg_en = (@gpg, qw(--armor --encrypt));
 	return;
 }
@@ -560,6 +560,21 @@ sub conv_ansible_vault {
 	return pipespew $cleartext, @gpg_en, recipients, getout;
 }
 
+sub conv_stgza {
+	getargs min => 0, max => 2;
+	# surprisingly this is better in shell
+	my @gpg_dp = qw(gpg --decrypt --quiet --batch --passphrase-fd 0);
+	my $decrypt = "@gpg_de secrets.pwd.asc | @gpg_dp secrets.tar.gz.asc";
+	if (@ARGV) {
+		my @tar = (qw(tar Oxzf -), shift @ARGV);
+		my @encrypt = (@gpg_en, recipients, getout);
+		return vsystem "$decrypt | @tar | @encrypt";
+	} else {
+		my @tar = $opt{v} ? qw(tar tvzf -) : qw(tar tzf -);
+		return vsystem "$decrypt | @tar";
+	}
+}
+
 ########################################################################
 #
 #  subcommands
@@ -786,6 +801,7 @@ sub conv {
 	my %conv = (
 		'ansible-gpg' => \&conv_ansible_gpg,
 		'ansible-vault' => \&conv_ansible_vault,
+		'stgza' => \&conv_stgza,
 	    );
 	my @conv = sort keys %conv;
 	my $conv = shift @ARGV;
@@ -1301,6 +1317,21 @@ is written to stdout.
 
 If both arguments are omitted then B<regpg> searches for
 B<ansible-vault> files that may need conversion.
+
+=item B<regpg> B<conv> B<stgza> [<I<member>> [I<cryptfile.asc>]]
+
+Convert from a symmetrically-encrypted F<secrets.tar.gz.asc> using its
+B<regpg>-encrypted passphrase from F<secrets.pwd.asc>. (These filenames
+are hard-coded to match old tooling.)
+
+The I<member> is the name of a file inside F<secrets.tar.gz.asc> to
+extract and re-encrypt with B<regpg>.
+
+If I<cryptfile> is C<-> or omitted then the ciphertext is written
+to stdout.
+
+With no argument, B<regpg> lists the contents of
+F<secrets.tar.gz.asc>.
 
 =back
 
