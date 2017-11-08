@@ -39,8 +39,9 @@ Overview
     SSH private keys in one step, and for wrangling X.509
     certificates.
 
-    There are also some quick `init` commands to get `regpg`
-    hooked up with `ansible` and `git`.
+    There are also some quick `init` commands to get `regpg` hooked up
+    with `ansible` and `git`, and some `conv` commands to help you
+    migrate to `regpg` from other tools.
 
 
 Documentation
