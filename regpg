@@ -571,7 +571,7 @@ sub conv_stgza {
 		return vsystem "$decrypt | @tar | @encrypt";
 	} else {
 		my @tar = $opt{v} ? qw(tar tvzf -) : qw(tar tzf -);
-		return vsystem "$decrypt | @tar";
+		return vsystem "$decrypt | @tar | sort";
 	}
 }
 
