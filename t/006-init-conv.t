@@ -79,5 +79,34 @@ SKIP: {
 	like $stdout, qr{All assertions passed}, 'gpg_d plugin worked';
 }
 
+SKIP: {
+	skip 'ansible-revault', 18 unless canexec 'ansible-vault';
+
+	unlink 'secret', 'secret.asc';
+	works 'init ansible-vault', '' => $regpg, qw(init ansible-vault);
+	ok -f 'vault.open', 'init created vault.open';
+	ok -f 'vault.pwd.asc', 'init created vault.pwd.asc';
+	spew 'secret', 'otterly badgered';
+	works 'ansible-vault encrypt',
+	    '' => qw(ansible-vault encrypt secret);
+	isnt slurp('secret'), 'otterly badgered', 'file is now encrypted';
+	works 'ansible-vault decrypt',
+	    '' => qw(ansible-vault decrypt --output - secret);
+	is $stdout, 'otterly badgered', 'vault can be decrypted';
+	works 'regpg ansible-vault list',
+	    '' => qw(regpg conv ansible-vault);
+	is $stderr, '', 'regpg stderr is quiet';
+	like $stdout, qr{secret}, 'lists encrypted file';
+	works 'regpg ansible-vault convert',
+	    '' => qw(regpg conv ansible-vault secret secret.asc);
+	is $stderr, '', 'regpg stderr is quiet';
+	is $stdout, '', 'regpg stdout is quiet';
+	ok -f 'secret.asc', 'conv created file';
+	like slurp('secret.asc'), $pgpmsg, 'from vault to pgp';
+	works 'decrypt converted file',
+	    '' => qw(regpg decrypt secret.asc);
+	is $stdout, 'otterly badgered', 'correctly decrypted';
+}
+
 done_testing;
 exit;
