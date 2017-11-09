@@ -18,6 +18,8 @@ case $N in
 	;;
 esac
 
+make clean all test
+
 perl -pi -e 's{regpg-\d+(\.\d+)+(\.X)?}{'$V'}' $files
 
 git commit -a -m $V
