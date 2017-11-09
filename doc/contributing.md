@@ -16,3 +16,25 @@ explicitly that your work is also CC0, or include a Signed-off-by:
 line to certify that you wrote it or otherwise have the right to pass
 it on as a open-source patch, according to the Developer's Certificate
 of Origin 1.1 <https://developercertificate.org>
+
+
+release process
+---------------
+
+* make a signed tag for the new version
+
+        ./util/reversion 1.2
+
+* build and sign release tarballs in `./dist/`
+
+        make release
+
+* set an unknown patch level post release
+
+        ./util/reversion 1.2.X
+
+* publish
+
+        make upload
+
+You can `make release` any time to get patchlevel tarballs in `./dust/`
