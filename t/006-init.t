@@ -72,13 +72,11 @@ localhost ansible_connection=local
 INVENTORY
 
 SKIP: {
-	skip 'ansible-nope', 4 unless canexec 'ansible'
-	    and canexec 'ansible-playbook';
+	skip 'ansible-nope', 3 unless canexec 'ansible-playbook';
 
 	works 'init ansible', '' => $regpg, qw(init ansible);
 	works 'try ansible', '' => qw(ansible-playbook gpg-preload.yml);
-	like $stdout, qr{gpg agent is available}, 'first task';
-	like $stdout, qr{gpg agent is ready}, 'second task';
+	like $stdout, qr{All assertions passed}, 'gpg_d plugin worked';
 }
 
 done_testing;
