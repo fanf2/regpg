@@ -1382,7 +1382,7 @@ start of your main playbook:
 
 =head1 VERSION
 
-  This is regpg-0.80.X <https://dotat.at/prog/regpg/>
+  This is regpg-0.88 <https://dotat.at/prog/regpg/>
 
   Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
   at Cambridge University Information Services.
