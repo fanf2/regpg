@@ -551,7 +551,7 @@ sub conv_ansible_vault {
 	}
 	# `ansible-vault decrypt --output -` is noisy on stderr
 	open my $stderr, '>&STDERR' or die "dup: $!\n";
-	open STDERR, '>/dev/null' or die "open /dev/null: $!\n";
+	open STDERR, '>', '/dev/null' or die "open /dev/null: $!\n";
 	my $cleartext = pipeslurp qw(ansible-vault decrypt --output -), shift @ARGV;
 	open STDERR, '>&', $stderr or die "dup: $!\n";
 	return pipespew $cleartext, @gpg_en, recipients, getout;
