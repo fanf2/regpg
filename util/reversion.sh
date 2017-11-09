@@ -9,8 +9,16 @@ case $# in
 	;;
 esac
 
-perl -pi -e 's{regpg-\d+(\.\d+)+}{'$V'}' \
-	README.md regpg
+case $N in
+(*.X)	files="regpg"
+	skip=:
+	;;
+(*)	files="regpg README.md"
+	skip=
+	;;
+esac
+
+perl -pi -e 's{regpg-\d+(\.\d+)+(\.X)?}{'$V'}' $files
 
 git commit -a -m $V
-git tag -s -m $V $V
+$skip git tag -s -m $V $V
