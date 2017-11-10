@@ -22,6 +22,7 @@ keys:
 	regpg addself [options]
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
+	regpg exportkey [options] [keyname]...
 	regpg importkey [options] [keyfile]...
 secrets:
 	regpg encrypt [options] [[clearfile] cryptfile.asc]
@@ -597,8 +598,13 @@ sub delkey {
 	return maybe_recrypt_all;
 }
 
+sub exportkey {
+	getargs min => 0;
+	return vsystem @gpg, qw(--export --armor), clean_ids @ARGV;
+}
+
 sub importkey {
-	getargs keymaker => 1, min => 0, max => 1;
+	getargs keymaker => 1, min => 0;
 	my $skip = dummy_init;
 	my $status = vsystem_warn @gpg, '--import', @ARGV;
 	dummy_fini unless $skip;
@@ -810,18 +816,21 @@ sub conv {
 
 $::{'--help'} = $::{help};
 $::{ck}	      = $::{check};
+$::{ls}	      = $::{lskeys};
 $::{add}      = $::{addkey};
 $::{del}      = $::{delkey};
-$::{ls}	      = $::{lskeys};
+$::{import}   = $::{importkey};
+$::{export}   = $::{exportkey};
 $::{en}	      = $::{encrypt};
 $::{re}	      = $::{recrypt};
 
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck conv decrypt del delkey edit
-	   en encrypt gencsrconf gencsr genkey genpwd --help help
-	   importkey init ls lskeys pbcopy pbpaste re recrypt shred)) {
+	qw(add addkey addself check ck conv decrypt del delkey
+	   edit en encrypt export exportkey gencsrconf gencsr
+	   genkey genpwd --help help import importkey init ls
+	   lskeys pbcopy pbpaste re recrypt shred)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -848,6 +857,8 @@ B<regpg> B<addself> [I<options>]
 B<regpg> B<addkey> [I<options>] <I<keyname>>...
 
 B<regpg> B<delkey> [I<options>] <I<keyname>>...
+
+B<regpg> B<exportkey> [I<options>] [I<keyname>]...
 
 B<regpg> B<importkey> [I<options>] [I<keyfile>]...
 
@@ -1026,7 +1037,17 @@ or a person's email address.
 If the B<-r> option is given,
 all files are recrypted after the key is added.
 
+=item B<regpg> B<exportkey> [I<keyname>]...
+
+=item B<regpg> B<export> [I<keyname>]...
+
+Export keys from the B<regpg> keyring.
+
+If no I<keyname>s are given then all keys are exported.
+
 =item B<regpg> B<importkey> [I<keyfile>]...
+
+=item B<regpg> B<import> [I<keyfile>]...
 
 Import keys into the B<regpg> keyring that have previously been
 exported by B<gpg>.

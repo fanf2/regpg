@@ -24,9 +24,9 @@ sub checklist {
 	}
 }
 
-works 'import key one', '' => $regpg, 'addkey', $k1;
-is $stdout, '', 'import stdout is quiet';
-like $stderr, qr{imported}, 'import stderr is noisy';
+works 'add key one', '' => $regpg, 'addkey', $k1;
+is $stdout, '', 'add stdout is quiet';
+like $stderr, qr{imported}, 'add stderr is noisy';
 
 subtest 'list keys (one)' => sub {
 	checklist like => [ $k1 ],
@@ -103,16 +103,34 @@ subtest 'addself', => sub {
 	    unlike => [ $kd ];
 };
 
-works 'export keys', '' => qw{gpg --export};
-my $export = $stdout;
-open my $f, '>export' or die "open";
-print $f $export;
-close $f;
+my $pubkey = qr{-----BEGIN PGP PUBLIC KEY BLOCK-----};
+subtest 'export all', => sub {
+	works 'export keys',
+	    '' => $regpg, 'exportkey';
+	is $stderr, '', 'export stderr is quiet';
+	like $stdout, $pubkey, 'exported public key';
+	spew 'export', $stdout;
+};
+subtest 'export one', => sub {
+	works 'export key one',
+	    '' => $regpg, 'exportkey', $k1;
+	is $stderr, '', 'export stderr is quiet';
+	like $stdout, $pubkey, 'exported public key';
+	spew 'one', $stdout;
+};
+subtest 'export two', => sub {
+	works 'export key two',
+	    '' => $regpg, 'exportkey', $k2;
+	is $stderr, '', 'export stderr is quiet';
+	like $stdout, $pubkey, 'exported public key';
+	spew 'two', $stdout;
+};
 
 subtest 'importkey pipe', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'importkey',
-	    $export => $regpg, 'importkey';
+	    slurp('export') => $regpg, 'importkey';
+	like $stderr, qr{imported}, 'import stderr is noisy';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
@@ -120,6 +138,15 @@ subtest 'importkey file', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'importkey',
 	    '' => $regpg, 'importkey', 'export';
+	like $stderr, qr{imported}, 'import stderr is noisy';
+	checklist like => [ $k1, $k2 ],
+	    unlike => [ $kd ];
+};
+subtest 'importkey files', => sub {
+	unlink 'pubring.gpg', 'pubring.gpg~';
+	works 'importkey',
+	    '' => $regpg, qw(importkey one two);
+	like $stderr, qr{imported}, 'import stderr is noisy';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
