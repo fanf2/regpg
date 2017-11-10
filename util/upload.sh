@@ -1,4 +1,7 @@
 #!/bin/sh
+
+set -eux
+
 git push --tags github master
 git push --tags dotat master
 git push --tags uis master

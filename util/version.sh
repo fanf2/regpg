@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eux
+
 case $# in
 (1)	N=$1
 	V=regpg-$N
