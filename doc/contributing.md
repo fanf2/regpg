@@ -23,7 +23,7 @@ release process
 
 * make a signed tag for the new version
 
-        ./util/reversion 1.2
+        ./util/version 1.2
 
 * build and sign release tarballs in `./dist/`
 
@@ -31,7 +31,7 @@ release process
 
 * set an unknown patch level post release
 
-        ./util/reversion 1.2.X
+        ./util/version 1.2.X
 
 * publish
 
