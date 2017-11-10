@@ -1362,7 +1362,7 @@ Get a template OpenSSL CSR configuration file based on a certificate
 similar to the one you want. This example gets the request details
 from the certificate for C<dotat.at>:
 
-    $ regpg csrconf dotat.at tls.csr.conf
+    $ regpg gencsrconf dotat.at tls.csr.conf
 
 Edit F<tls.csr.conf> to the correct details for your server, then you
 can generate a key and CSR:
