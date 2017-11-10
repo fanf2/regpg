@@ -12,4 +12,4 @@ rsync -ilrt regpg regpg.asc *.html dist doc \
 	chiark:public-html/prog/regpg/
 
 git checkout regpg
-rm -f index.html
+rm -f index.html regpg.asc
