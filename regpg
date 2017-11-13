@@ -691,7 +691,7 @@ sub edit {
 	my ($template,$dir) = fileparse "@ARGV.XXXXXXXX";
 	$dir = firstdir "/run/user/$<", "/dev/shm", $ENV{TMPDIR}, $dir, ".";
 	my $tmp = mktemp "$dir/$template";
-	vsystem @gpg_de, '--output', $tmp, @ARGV;
+	vsystem @gpg_de, '--output', $tmp, @ARGV if -f "@ARGV";
 	my $status = (vsystem_warn $ENV{EDITOR}, $tmp) ||
 	    (vsystem_warn @gpg_en, recipients, '--output', @ARGV, $tmp);
 	shred_files $tmp;
@@ -1120,10 +1120,10 @@ at the cost of some safety.
 
 =item B<regpg> B<edit> <I<cryptfile.asc>>
 
-Decrypt I<cryptfile.asc> and run C<$EDITOR> on the cleartext file.
-The cleartext is placed on a C<tmpfs> in RAM when possible.
-When you have finished editing, the file is re-encrypted and the
-cleartext is shredded.
+Decrypt I<cryptfile.asc> (if it exists) and run C<$EDITOR> on the
+cleartext file. The cleartext is placed on a C<tmpfs> in RAM when
+possible. When you have finished editing, the file is re-encrypted and
+the cleartext is shredded.
 
 =item B<regpg> B<pbcopy> [I<cryptfile.asc>]
 

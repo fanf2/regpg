@@ -19,18 +19,41 @@ spew 'editor', <<'EDITOR';
 perl -pi -e 's{ bar }{ pub }' "$@"
 EDITOR
 chmod 0755, 'editor';
-$ENV{EDITOR} = './editor';
 
+$ENV{EDITOR} = './editor';
 gpg_batch_yes;
 works 'edit encrypted file',
     '' => $regpg, 'edit', 'file.asc';
 is $stdout, '', 'edit stdout quiet';
 is $stderr, '', 'edit stderr quiet';
 unlink $gpgconf;
+undef $ENV{EDITOR};
 
 works 'decrypt edited file',
     '' => $regpg, 'decrypt', 'file.asc';
 is $stdout, 'foo pub zig', 'correctly edited file';
+is $stderr, '', 'decrypt stderr quiet';
+
+spew 'editor', <<'EDITOR';
+#!/bin/sh
+printf 'new file' >"$*"
+EDITOR
+chmod 0755, 'editor';
+unlink 'newfile.asc';
+
+$ENV{EDITOR} = './editor';
+gpg_batch_yes;
+works 'edit new file',
+    '' => $regpg, 'edit', 'newfile.asc';
+is $stdout, '', 'edit stdout quiet';
+is $stderr, '', 'edit stderr quiet';
+unlink $gpgconf;
+undef $ENV{EDITOR};
+
+ok -f 'newfile.asc', 'edit created file';
+works 'decrypt new edited file',
+    '' => $regpg, 'decrypt', 'newfile.asc';
+is $stdout, 'new file', 'edit created correct file';
 is $stderr, '', 'decrypt stderr quiet';
 
 TODO: {
