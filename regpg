@@ -1376,10 +1376,13 @@ After running B<regpg> B<init> B<ansible>, here are a couple of ways
 you can use B<gpg> in your Ansible playbooks.
 
 This Ansible task installs B<ssh> host private keys that have been
-encrypted with B<regpg>. The private key file B<content=> is generated
+encrypted with B<regpg>. The private key file C<content=> is generated
 from a Jinja2 template that uses the F<gpg_d> filter plugin. The
-condition on the last line allows you to avoid decrypting secrets
-except when necessary.
+C<with_fileglob:> loop translates relative filenames to absolute
+filenames according to Ansible's search path, so C<with_fileglob:> is
+useful with F<gpg_d> even when a task is decrypting only one file. The
+C<when:> condition on the last line allows you to avoid decrypting
+secrets except when necessary.
 
     - name: install ssh host keys
       copy:
