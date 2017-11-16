@@ -1,0 +1,37 @@
+.container {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  perspective: 1000px;
+}
+
+#sheets {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  transform:
+	translateX( 200px )
+	translateY( 100px )
+	rotateY( -30deg )
+	rotateX(  -5deg );
+}
+
+#sheets img {
+  margin: 0;
+  width: 400px;
+  height: 400px;
+  display: block;
+  position: absolute;
+}
+
+#sheets .g0 { transform: translateZ(     0px ); opacity: 1.0; }
+#sheets .g1 { transform: translateZ(  -200px ); opacity: 0.45; }
+#sheets .g2 { transform: translateZ(  -400px ); opacity: 0.40; }
+#sheets .g3 { transform: translateZ(  -600px ); opacity: 0.35; }
+#sheets .g4 { transform: translateZ(  -800px ); opacity: 0.30; }
+#sheets .g5 { transform: translateZ( -1000px ); opacity: 0.25; }
+#sheets .g6 { transform: translateZ( -1200px ); opacity: 0.20; }
+#sheets .g7 { transform: translateZ( -1400px ); opacity: 0.15; }
+#sheets .g8 { transform: translateZ( -1600px ); opacity: 0.10; }
+#sheets .g9 { transform: translateZ( -1800px ); opacity: 0.05; }
