@@ -16,9 +16,10 @@ markdown=	doc/contributing.md	\
 		doc/rationale.md	\
 		doc/secrets.md		\
 		doc/threat-model.md	\
-		doc/tutorial.md
+		doc/tutorial.md		\
+		README.md
 
-htmlfiles=	regpg.html README.html ${markdown:.md=.html}
+htmlfiles=	regpg.html index.html ${markdown:.md=.html}
 man1files=	regpg.1
 
 DOCS=		${htmlfiles} ${man1files}
@@ -51,6 +52,9 @@ regpg.html: regpg
 		--title 'regpg reference manual' \
 		regpg >regpg.html
 	rm -f pod2htm?.tmp
+
+index.html: README.html
+	logo/iframe.pl <README.html >index.html
 
 .SUFFIXES: .md .html
 
