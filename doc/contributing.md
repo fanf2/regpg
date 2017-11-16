@@ -8,6 +8,10 @@ All the files in this distribution have the CC0 licence:
 > You may do anything with this. It has no warranty.  
 > <https://creativecommons.org/publicdomain/zero/1.0/>
 
+The logo is licenced according to the GPLv2 or later, since it is
+based on the GnuPG logo. It is maintained in this git repository but
+is not included in the distribution files.
+
 If you have any comments, suggestions, or bug reports, please email
 them to me at either address above.
 
