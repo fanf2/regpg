@@ -1,30 +1,32 @@
 .container {
-  perspective: 1000px;
+    width: 150px;
+    height: 125px;
+    perspective: 400px;
 }
 
 #sheets {
-  transform-style: preserve-3d;
-  transform:
-	translateX( -40px )
-	translateY( 40px )
-	rotateY( -10deg )
+    transform-style: preserve-3d;
+    transform:
+	translateX( 0px )
+	translateY( 25px )
+	rotateY( -15deg )
 	rotateX( -10deg );
 }
 
 #sheets img {
-  width: 100px;
-  height: 100px;
-  display: block;
-  position: absolute;
+    width: 100px;
+    height: 100px;
+    display: block;
+    position: absolute;
 }
 
 #sheets .g0 { transform: translateZ(    0px ); opacity: 1.0; }
-#sheets .g1 { transform: translateZ(  -20px ); opacity: 0.45; }
-#sheets .g2 { transform: translateZ(  -40px ); opacity: 0.40; }
-#sheets .g3 { transform: translateZ(  -60px ); opacity: 0.35; }
-#sheets .g4 { transform: translateZ(  -80px ); opacity: 0.30; }
-#sheets .g5 { transform: translateZ( -100px ); opacity: 0.25; }
-#sheets .g6 { transform: translateZ( -120px ); opacity: 0.20; }
-#sheets .g7 { transform: translateZ( -140px ); opacity: 0.15; }
-#sheets .g8 { transform: translateZ( -160px ); opacity: 0.10; }
-#sheets .g9 { transform: translateZ( -180px ); opacity: 0.05; }
+#sheets .g1 { transform: translateZ(  -40px ); opacity: 0.45; }
+#sheets .g2 { transform: translateZ(  -80px ); opacity: 0.40; }
+#sheets .g3 { transform: translateZ( -120px ); opacity: 0.35; }
+#sheets .g4 { transform: translateZ( -160px ); opacity: 0.30; }
+#sheets .g5 { transform: translateZ( -200px ); opacity: 0.25; }
+#sheets .g6 { transform: translateZ( -240px ); opacity: 0.20; }
+#sheets .g7 { transform: translateZ( -280px ); opacity: 0.15; }
+#sheets .g8 { transform: translateZ( -320px ); opacity: 0.10; }
+#sheets .g9 { transform: translateZ( -360px ); opacity: 0.05; }
