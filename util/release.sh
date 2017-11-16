@@ -3,7 +3,7 @@
 set -eux
 
 V=$(git describe --tags --dirty=.X | perl -pe 's{-(\d+)-g}{.$1.}')
-for f in $(git ls-files | fgrep -v .git) "$@"
+for f in $(git ls-files | egrep -v 'logo/|\.git') "$@"
 do	mkdir -p $V/$(dirname $f)
 	cp $f $V/$f
 done
