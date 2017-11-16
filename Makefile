@@ -53,7 +53,7 @@ regpg.html: regpg
 		regpg >regpg.html
 	rm -f pod2htm?.tmp
 
-index.html: README.html
+index.html: README.html logo/iframe.pl
 	logo/iframe.pl <README.html >index.html
 
 .SUFFIXES: .md .html
