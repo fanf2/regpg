@@ -10,8 +10,6 @@ man1dir=	${mandir}/man1
 bindest=	${DESTDIR}${bindir}
 man1dest=	${DESTDIR}${man1dir}
 
-PROGS=		regpg
-
 markdown=	doc/contributing.md	\
 		doc/rationale.md	\
 		doc/secrets.md		\
@@ -23,6 +21,8 @@ htmlfiles=	regpg.html ${markdown:.md=.html}
 man1files=	regpg.1
 
 DOCS=		${htmlfiles} ${man1files}
+
+PROGS=		regpg
 
 all: ${DOCS}
 
@@ -64,5 +64,8 @@ index.html: README.html logo/iframe.pl
 release: ${DOCS}
 	util/release.sh ${DOCS}
 
-upload: ${DOCS} index.html
+uptalk:
+	for subdir in talks/*; do ${MAKE} -C $$subdir all tidy; done
+
+upload: ${DOCS} index.html uptalk
 	util/upload.sh
