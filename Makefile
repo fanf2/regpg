@@ -19,7 +19,7 @@ markdown=	doc/contributing.md	\
 		doc/tutorial.md		\
 		README.md
 
-htmlfiles=	regpg.html index.html ${markdown:.md=.html}
+htmlfiles=	regpg.html ${markdown:.md=.html}
 man1files=	regpg.1
 
 DOCS=		${htmlfiles} ${man1files}
@@ -64,5 +64,5 @@ index.html: README.html logo/iframe.pl
 release: ${DOCS}
 	util/release.sh ${DOCS}
 
-upload: all
+upload: ${DOCS} index.html
 	util/upload.sh
