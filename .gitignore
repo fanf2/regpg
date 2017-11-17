@@ -1,5 +1,8 @@
-*.html
+doc/*.html
 regpg.1
+regpg.html
+index.html
+README.html
 dist
 dust
 t/gnupg

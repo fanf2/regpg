@@ -37,7 +37,7 @@ uninstall:
 	for f in ${man1files}; do rm -f ${man1dest}/$$f; done
 
 clean:
-	rm -f ${DOCS}
+	rm -f ${DOCS} index.html
 	rm -rf t/gnupg t/work
 
 test:
