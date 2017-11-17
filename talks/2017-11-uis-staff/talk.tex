@@ -1,0 +1,354 @@
+% This file is included by notes.tex and slides.tex
+
+\usepackage[german,greek,english,british]{babel}
+\usepackage{pgf}
+\usepackage{color}
+\usepackage{eurosym}
+\usepackage{hyperref}
+\usepackage{pifont} % dingbats
+\usepackage{calc} % for frame column width calculations
+\usepackage{tikz}
+\usepackage[normalem]{ulem} % for strikeout
+\usepackage{url}
+\usepackage[utf8x]{inputenc}
+
+\frenchspacing
+\setlength{\parindent}{0pt}
+
+\DeclareUrlCommand\email{%
+  \def\UrlLeft{<}%
+  \def\UrlRight{>}%
+  \urlstyle{tt}%
+}
+\newcommand\code[1]{\texttt{#1}}
+
+\newcommand\notes[1]{\mode<article>{#1}}
+
+\newcommand\hardbreak{\notes{\pagebreak}}
+
+\newcommand\gap[1]{\mode<beamer>{\vspace{#1}}}
+
+\newcommand\git{\code{git}}
+\newcommand\gpg{\code{gpg}}
+\newcommand\regpg{\code{regpg}}
+\newcommand\ssh{\code{ssh}}
+
+% args: size, file, URL
+\newcommand\image[3][]{
+  \mode<beamer>{
+    \includegraphics[#1]{#2}\\
+    \tiny\textcolor{gray}{\url{#3}}
+  }
+}
+
+% args: title, body
+\newcommand\slide[2]{
+  \frame{\frametitle{#1}#2}
+}
+
+% args: (optional) image width, image file, image URL, slide title
+\newcommand\slideI[4][10cm]{
+  \slide{#4}{
+    \centering
+    \image[width=#1]{#2}{#3}
+  }
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% common metadata
+
+\author[Tony~Finch]{
+  Tony~Finch \\
+  \email{fanf2@cam.ac.uk} \\
+  \email{gitmaster@uis.cam.ac.uk}
+}
+
+\institute{%
+  Network Systems (RNB 1N52)%
+}
+
+\titlegraphic{%
+  \raisebox{1pt}{%
+    \includegraphics[height=20pt]{univ.jpg}%
+  }\\
+  University Information Services%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% title page
+
+\title{
+  \regpg
+}
+\subtitle{
+  safely store server secrets
+}
+\date{Tuesday 21st November 2017}
+
+\begin{document}
+
+\frame{\maketitle}
+
+\notes{
+  \begin{abstract}
+    The \regpg program is a thin wrapper around \gpg for encrypting
+    secrets so they can be stored and shared using \git and decrypted
+    when Ansible deploys them to servers.
+  \end{abstract}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+\notes {
+  This talk is in two main sections.
+}
+
+\slide{agenda}{
+
+  \begin{columns}[T]
+
+    \notes{
+      I will start off by explaining some of the context and thinking
+      behind \regpg by unpacking its slogan backwards.
+    }
+
+    \column{3cm}
+    \begin{itemize}
+    \item Context
+      \begin{itemize}
+      \item secrets?
+      \item server?
+      \item store?
+      \item safely?
+      \item \regpg?
+      \end{itemize}
+    \end{itemize}
+
+    \notes{
+      Then I'll give a demo of \regpg's main features, in roughly the same
+      order as its reference manual.
+    }
+
+    \column{3.5cm}
+    \begin{itemize}
+    \item Demo
+      \begin{itemize}
+      \item keys
+      \item secrets
+      \item X.509 / TLS
+      \item Ansible
+      \item conversion
+      \end{itemize}
+    \end{itemize}
+
+  \end{columns}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Context}
+
+\notes{
+
+  In the first part, we'll discuss what \regpg is and what it is not.
+}
+
+\slideI[6cm]{keys.jpg}{
+  https://www.flickr.com/photos/fuzzy/3196534149
+}{secrets}
+
+\notes{
+
+  The secrets we are working with are cryptographic keys
+  \begin{itemize}
+  \item private keys
+  \item bearer tokens
+  \item shared secrets
+  \end{itemize}
+
+  We have hundreds of them. They need to be shared with the right
+  people and kept secret from the wrong people.
+
+  It's a key distribution problem.
+}
+
+\slideI[8cm]{encrypt-all-the-things.png}{
+}{secrets - encryption}
+
+\notes{
+
+  We can massively reduce the size of the problem by encrypting
+  the secrets with a small number of master secrets.
+
+  For example, I used to encrypt secrets using the root password.
+
+  This reduces the key distribution to previously solved problems:
+
+  \begin{itemize}
+  \item password distribution
+  \item non-secret file distribution (i.e. git)
+  \end{itemize}
+
+}
+
+\slideI[10cm]{shamir-rivest-adleman.jpg}{
+}{secrets - Shamir / Rivest / Adleman}
+
+\notes{
+
+  But we can do better with public key cryptography.
+
+  Each person keeps their own private key - there's no need to
+  distribute any master secrets. We know how to do this because we
+  already do it for \ssh keys.
+
+  We distribute the public keys of each person who can decrypt, which
+  gives us a kind of auditable record of who has access to secrets.
+
+  We can revoke a person's access if we can destroy all the copies of
+  their private key, without having to replace all the secrets.
+
+  You only need the public keys to encrypt a secret, which means an
+  automated system can manage its own keys without having access to
+  all the other secrets in a repository.
+
+}
+
+\slideI[8cm]{server.jpg}{
+  https://www.flickr.com/photos/evilnick/183967344
+}{server}
+
+\notes{
+
+  The specific kinds of secrets we are dealing with are used by
+  servers to authenticate themselves -
+
+  \begin{itemize}
+  \item \ssh host private keys
+  \item TLS private keys
+  \item API keys
+  \item DNS TSIG shared secrets
+  \item etc.
+  \end{itemize}
+
+  These have to be available unencrypted on the server.
+
+  We're not dealing with user passwords.
+
+  We're not trying to be a password manager.
+
+}
+
+\slideI[9cm]{files.jpg}{
+  https://www.flickr.com/photos/lnx/7297731
+}{server - files}
+
+\notes{
+
+  It's often the case that each server secret is in a file by itself -
+  that's true for \ssh and TLS and DNS keys.
+
+  \regpg works best when each secret is in a file by itself. You can
+  use filenames to identify secrets without having to decrypt them.
+
+  Keeping secrets strictly separate from non-secret code and
+  configuration helps \git \code{diff} to works better.
+
+  \regpg does not have any hooks into \git for automatically
+  decrypting and \code{diff}ing secrets because secrets are blobs of
+  random data for which \code{diff} is useless.
+
+}
+
+\slideI[11cm]{library.jpg}{
+  https://www.flickr.com/photos/23605686@N05/6921691127
+}{store}
+
+\notes{
+
+  \regpg is for encrypting files for storage when they are not in use,
+  and decrypting them for deployment to production.
+
+  The other verb that might have fitted in this place is ``share'',
+  but \regpg is not directly about sharing.
+
+  \regpg stores secrets in a way that works with \git or other version
+  control systems, but \regpg does not get involved with \git. You use
+  \git for sharing secrets in the same way you us it for sharing code
+  or configuration.
+
+  I have tried a few times to write wrappers that get clever with \git
+  and they have usually been dismal failures. \regpg does not get
+  clever with \git.
+
+}
+
+\slideI[5cm]{hazmat.jpg}{
+  https://www.flickr.com/photos/mamboman/3698344360
+}{safely - hazmat containment}
+
+\notes{
+
+  There are a couple of aspects to being safe with \regpg, and both of
+  them relate to dissatisfaction with \code{ansible-vault}.
+
+  The first is safe cryptography.
+
+  \regpg keeps well away from any low-level primitives. I did a code
+  review of \code{ansible-vault} and it uses a cryptographic library
+  that literally has ``HAZMAT'' in its name. And, totally predictably,
+  \code{ansible-vault} has really bad crypto.
+
+  Instead, \regpg relies on \gpg for cryptography. \gpg is terrible
+  software in many ways, but it is widely available, it has reasonably
+  competent crypto, and it is also used by \git and Debian.
+
+}
+
+\slideI[10cm]{checklist.jpg}{
+  https://www.flickr.com/photos/109570752@N02/15118828431
+}{safely - situational awareness}
+
+\notes{
+
+  The other aspect to being safe is psychological safety.
+
+  \regpg allows you to make it clear in your Ansible playbook which
+  files should be encrypted, helps you to find out which files
+  actually are or are not encrypted, and tells you when things are
+  inconsistent.
+
+  This is unlike \code{ansible-vault} which does not let you say
+  whether something should be encrypted, and encourages you to encrypt
+  and decrypt in place, and doesn't complain either way, so you can
+  easily expose secrets by mistake.
+
+  \regpg tries to be really easy to understand. It isn't very chatty,
+  but it also does not hide things from you. I want you to feel
+  confident that you know how it works and what it is doing.
+
+}
+
+\slideI[8cm]{re3d.png}{
+}{\regpg\ - \url{https://dotat.at/prog/regpg/}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\slideI[9cm]{what.jpg}
+       {https://www.flickr.com/photos/debord/4932655275}
+       {Questions?}
+
+%
+
+\notes{
+  \bibliography{talk}
+  \bibliographystyle{plain}
+}
+
+\end{document}
+
+% eof
