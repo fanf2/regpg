@@ -64,6 +64,12 @@ Documentation
  *  [doc/threat-model.md](https://dotat.at/prog/regpg/doc/threat-model.html) -
     `regpg`'s threat model.
 
+ *  talks/2017-11-uis-staff/
+    [script](https://dotat.at/prog/regpg/talks/2017-11-uis-staff/notes.pdf) and
+    [slides](https://dotat.at/prog/regpg/talks/2017-11-uis-staff/slides.pdf) -
+    a presentation I gave to my colleagues which reprises some of the
+    above in a different form
+
 If you use `regpg`, let me know! Send me mail at <dot@dotat.at>.
 
 If you would like to submit a bug report or a patch, see
