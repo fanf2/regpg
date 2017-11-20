@@ -540,7 +540,7 @@ sub conv_ansible_gpg {
 	init_ansible_vault;
 	rmtree $old_scripts, $opt{v}, 1;
 	rmtree $old_dir, $opt{v}, 1;
-	return;
+	return 0;
 }
 
 sub conv_ansible_vault {
