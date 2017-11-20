@@ -33,11 +33,16 @@ fails 'shred requires -r',
 is $stdout, '', 'shred stdout quiet';
 like $stderr, qr{ use -r }, 'shred stderr saye use -r';
 
+works 'create encrypted file2',
+    'secret2' => $regpg, 'encrypt', 'file2.asc';
+
 works 'shred -r',
     '' => $regpg, 'shred', '-r';
 is $stdout, '', 'shred stdout quiet';
 like $stderr, qr{running .*/file}, 'shred stderr verbosity';
 isnt -f 'file1', 'shred removed cleartext file1';
+
+unlink 'file2.asc';
 
 gpg_batch_yes;
 works 'delete a key', '' => $regpg, 'del', $k2;

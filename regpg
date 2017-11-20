@@ -403,10 +403,11 @@ sub check_some {
 
 sub shred_files {
 	if (canexec 'shred') {
-		return vsystem 'shred', '-u', check_clear @_;
+		vsystem 'shred', '-u', $_ for check_clear @_;
 	} else {
-		return vsystem 'rm', check_clear @_;
+		vsystem 'rm', '-f', check_clear @_;
 	}
+	return;
 }
 
 sub shred_some {
