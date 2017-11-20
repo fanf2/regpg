@@ -108,7 +108,6 @@
 }
 
 \slide{agenda}{
-
   \begin{columns}[T]
 
     \notes{
@@ -116,15 +115,18 @@
       behind \regpg by unpacking its slogan backwards.
     }
 
-    \column{3cm}
+    \column{5cm}
     \begin{itemize}
+    \Large
     \item Context
       \begin{itemize}
+      \Large
       \item secrets?
       \item server?
       \item store?
       \item safely?
-      \item \regpg?
+      \item gpg?
+      \item re?
       \end{itemize}
     \end{itemize}
 
@@ -133,12 +135,15 @@
       order as its reference manual.
     }
 
-    \column{3.5cm}
+    \column{5cm}
     \begin{itemize}
+    \Large
     \item Demo
       \begin{itemize}
+      \Large
       \item keys
       \item secrets
+      \item recrypt
       \item X.509 / TLS
       \item Ansible
       \item conversion
@@ -177,7 +182,8 @@
 }
 
 \slideI[8cm]{encrypt-all-the-things.png}{
-}{secrets - encryption}
+  https://richardskingdom.net/wp-content/uploads/2014/04/encrypt-all-the-things.png
+}{secrets -- encryption}
 
 \notes{
 
@@ -196,7 +202,8 @@
 }
 
 \slideI[10cm]{shamir-rivest-adleman.jpg}{
-}{secrets - Shamir / Rivest / Adleman}
+  https://claudiodinardo.com/content/images/2017/08/shamir-rivest-adleman.jpg
+}{secrets -- Shamir / Rivest / Adleman}
 
 \notes{
 
@@ -235,7 +242,8 @@
   \item etc.
   \end{itemize}
 
-  These have to be available unencrypted on the server.
+  These secrets have to be available unencrypted on the server, so we
+  want it to be convenient to decrypt and install them.
 
   We're not dealing with user passwords.
 
@@ -245,7 +253,7 @@
 
 \slideI[9cm]{files.jpg}{
   https://www.flickr.com/photos/lnx/7297731
-}{server - files}
+}{server -- files}
 
 \notes{
 
@@ -266,12 +274,13 @@
 
 \slideI[11cm]{library.jpg}{
   https://www.flickr.com/photos/23605686@N05/6921691127
-}{store}
+}{store -- not share}
 
 \notes{
 
-  \regpg is for encrypting files for storage when they are not in use,
-  and decrypting them for deployment to production.
+  \regpg is for encrypting files for storage in version control when
+  they are not in use, and decrypting them for deployment to
+  production.
 
   The other verb that might have fitted in this place is ``share'',
   but \regpg is not directly about sharing.
@@ -289,7 +298,7 @@
 
 \slideI[5cm]{hazmat.jpg}{
   https://www.flickr.com/photos/mamboman/3698344360
-}{safely - hazmat containment}
+}{safely -- hazmat containment}
 
 \notes{
 
@@ -311,7 +320,7 @@
 
 \slideI[10cm]{checklist.jpg}{
   https://www.flickr.com/photos/109570752@N02/15118828431
-}{safely - situational awareness}
+}{safely -- situational awareness}
 
 \notes{
 
@@ -333,10 +342,655 @@
 
 }
 
+\slideI[10cm]{gnupg.png}{
+  https://commons.wikimedia.org/wiki/File:Gnupg_logo.svg
+}{gpg}
+
+\notes{
+
+  \regpg is a thin wrapper around \gpg to adapt it for our purposes.
+
+  It's a very thin wrapper. You don't need \regpg to decrypt secrets
+  -- you can still use normal \code{gpg -d} to decrypt them.
+
+  \regpg simplifies \gpg in two ways.
+
+  Firstly, \regpg gets rid of \gpg's key management and replaces it
+  with Jon Warbrick's scheme.
+
+  There are no key servers, no web of trust, no key signing parties.
+  Instead we just use \git to exchange public keys.
+
+  Secondly, \regpg provides several little helpers to make it easier
+  to use \gpg-encrypted secrets with other tools such as OpenSSL,
+  OpenSSH, and Ansible.
+
+}
+
 \slideI[8cm]{re3d.png}{
-}{\regpg\ - \url{https://dotat.at/prog/regpg/}}
+  https://dotat.at/prog/regpg/
+}{regpg}
+
+\notes{
+
+  Why is it called ``\regpg''? Where does the ``re'' come from?
+
+  Partly named after its \code{recrypt} subcommand which we will see
+  shortly.
+
+  In \gpg, the term ``recipients'' means those who can decrypt a
+  message. \regpg is all about managing a list of recipients and
+  repeatably and reliably encrypting files to those recipients.
+
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Demo}
+
+\slide{dependencies}{
+  \begin{columns}[T]
+
+    \column{5cm}
+    \begin{itemize}
+    \Large
+    \item prerequisites
+      \begin{itemize}
+      \Large
+      \item perl
+      \item gnupg
+      \item gnupg-agent
+      \item pinentry-*
+      \end{itemize}
+    \end{itemize}
+
+    \column{5cm}
+    \begin{itemize}
+    \Large
+    \item helpers
+      \begin{itemize}
+      \Large
+      \item ansible
+      \item git
+      \item openssl
+      \item openssh-client
+      \item xclip
+      \end{itemize}
+    \end{itemize}
+
+  \end{columns}
+}
+
+\notes{
+
+  The prerequisites are required for \regpg's core functionality; the
+  helpers are optional but some \regpg features won't work without
+  them.
+
+  These are Debian package names. If anyone is able to help with
+  installation instructions on other systems, please let me know!
+
+  The \code{pinentry} program is used by \code{gpg-agent} to prompt
+  you for your passphrase. There are multiple versions -- I use
+  \code{pinentry-gtk2} but there are also \code{-gnome3} and
+  \code{-qt} and \code{-curses} versions.
+}
+
+\slide{check \code{gpg-agent}}{
+
+  \Large
+
+  \begin{itemize}
+  \item \code{echo \$GPG\char`_AGENT\char`_INFO }
+  \item \code{eval \$(gpg-agent --daemon) }
+  \end{itemize}
+
+}
+
+\notes{
+
+  You should find that \code{gnupg-agent} is started automatically
+  when you log in.
+
+}
+
+\slide{quick install}{
+
+  \large
+
+  \begin{itemize}
+  \item \code{cd \char`~/bin}
+  \item \code{curl -O https://dotat.at/prog/regpg/regpg}
+  \end{itemize}
+
+}
+
+\slide{generate key}{
+
+  \Large
+
+  \begin{itemize}
+  \item Generate a key just for \regpg
+  \item Separate from your other \gpg keys (if any)
+  \end{itemize}
+
+  \begin{itemize}
+  \item \code{gpg --gen-key}
+  \end{itemize}
+
+  \begin{itemize}
+  \item Answer the quiz
+  \end{itemize}
+}
+
+\slideI[10cm]{crash1.jpg}{
+  https://www.flickr.com/photos/eugenuity/34113551603
+}{generate key -- demo}
+
+\slide{manage keys}{
+
+  \Large
+
+  \begin{itemize}
+  \item addkey
+  \item addself \textcolor{red}{$ \Longleftarrow $}
+  \item delkey \textcolor{red}{$ \Longleftarrow $}
+  \item exportkey
+  \item importkey
+  \item lskeys \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+}
+
+\slideI[10cm]{crash2.jpg}{
+  https://www.flickr.com/photos/bantam10/3068761016
+}{manage keys -- demo}
+
+\notes{
+
+  \begin{itemize}
+  \item mkdir demo
+  \item cd demo
+  \item regpg addself
+  \item ls
+  \end{itemize}
+
+  \regpg has made a public key ring (and a backup file, because \gpg
+  loves backup files)
+
+  The ``addself'' subcommand adds keys which match your login name and
+  for which you have the private key.
+
+  This is the only configuration file for \regpg
+
+  Normally you would put this at the top of your Ansible setup next to
+  your \code{ansible.cfg} and inventory etc.
+
+  \begin{itemize}
+  \item regpg lskeys
+  \item regpg ls
+  \item regpg del fanf9
+  \item regpg ls
+  \item regpg add fanf9
+  \item regpg ls
+  \end{itemize}
+
+  One bit of magic going on here is that \regpg ensures that \gpg uses
+  the backwards compatible keyring format, even if you are using \gpg
+  2.1.
+
+}
+
+\slide{secrets}{
+
+  \Large
+
+  \begin{itemize}
+  \item encrypt \textcolor{red}{$ \Longleftarrow $}
+  \item decrypt \textcolor{red}{$ \Longleftarrow $}
+  \item recrypt
+  \item edit \textcolor{red}{$ \Longleftarrow $}
+  \item pbcopy
+  \item pbpaste
+  \item shred \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+
+  \begin{itemize}
+  \item check \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+
+}
+
+\notes{
+
+  The pasteboard commands use the names from Mac OS X, but if you use
+  them on Linux it will use \code{xclip} instead.
+
+}
+
+\slideI[10cm]{crash3.jpg}{
+  https://www.flickr.com/photos/zapthedingbat/516726771
+}{secrets -- demo}
+
+\notes{
+
+  \begin{itemize}
+  \item echo secret one >foo
+  \item regpg encrypt foo foo.asc
+  \end{itemize}
+
+  Note \regpg does not need a passphrase to encrypt, just the public keys.
+
+  The \code{.asc} extension is the ugly but conventional name for a
+  PGP-encrypted ASCII-armored file. (ASCII armoring is like Base64.)
+
+  \begin{itemize}
+  \item regpg check
+  \end{itemize}
+
+  The ``check'' subcommand looks for encrypted files by recursively
+  grepping for the ``BEGIN PGP MESSAGE'' ASCII-armoring.
+
+  \regpg warns us that we have left behind an unencrypted file.
+  (It uses a simple heuristic based on filenames.)
+
+  \begin{itemize}
+  \item regpg shred foo
+  \item regpg ck
+  \item regpg decrypt foo.asc
+  \end{itemize}
+
+  \regpg asks for your passphrase to decrypt the first time
+
+  \begin{itemize}
+  \item regpg decrypt foo.asc
+  \end{itemize}
+
+  The \code{gpg-agent} has stashed the passphrase so we don't need to
+  keep typing it.
+
+  \begin{itemize}
+  \item regpg edit foo.asc
+  \end{itemize}
+
+  You should not normally need to edit an encrypted file by hand, but
+  if you do, \regpg tries to make it safer by keeping temporary files
+  in a RAM disk (at least on Linux - there's no ramfs on Mac OS) and
+  shredding them afterwards.
+
+  \begin{itemize}
+  \item echo secret three | regpg en bar.asc
+  \end{itemize}
+
+  \regpg is friendly to pipelines.
+
+  \begin{itemize}
+  \item regpg ck
+  \item touch foo bar
+  \item regpg ck
+  \item regpg shred -r
+  \item regpg ck
+  \end{itemize}
+
+  Several \regpg subcommands take a \code{-r} option which recurses
+  over all the files found by \code{regpg check}
+
+}
+
+\slide{recrypt}{
+
+  \Large
+
+  \begin{itemize}
+  \item delkey \textcolor{red}{$ \Longleftarrow $}
+  \item importkey \textcolor{red}{$ \Longleftarrow $}
+  \item lskeys \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+
+  \begin{itemize}
+  \item recrypt \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+
+  \begin{itemize}
+  \item check \textcolor{red}{$ \Longleftarrow $}
+  \end{itemize}
+
+}
+
+\slideI[6cm]{crash4.jpg}{
+  https://www.flickr.com/photos/parkstreetparrot/6531496943
+}{recrypt -- demo}
+
+\notes{
+
+  \begin{itemize}
+  \item curl https://dotat.at/fanf.gpg | regpg importkey
+  \item regpg ls
+  \item regpg ck
+  \end{itemize}
+
+  \regpg says a key has been added to the keyring and lists which
+  files need to be decrypted and re-encrypted so that every recipient
+  listed in the keyring can decrypt them
+
+  \begin{itemize}
+  \item regpg recrypt -r
+  \item regpg ck
+  \end{itemize}
+
+  Again the \code{-r} option means recursively apply the command to
+  all the files listed by \code{regpg check}
+
+  \begin{itemize}
+  \item regpg del fanf2
+  \item regpg ls
+  \item regpg ck
+  \item regpg re -r
+  \end{itemize}
+
+  The \code{-r} option can be applied to the key management subcommands
+  to combine them with the ``recrypt'' subcommand
+
+  \begin{itemize}
+  \item curl https://dotat.at/fanf.gpg | regpg importkey -r
+  \item regpg ls
+  \item regpg ck
+  \item regpg del -r fanf2
+  \item regpg ls
+  \item regpg ck
+  \end{itemize}
+
+}
+
+\slide{generate TLS / ssh}{
+
+  \Large
+
+  \begin{itemize}
+  \item gencsrconf \textcolor{red}{$ \Longleftarrow $}
+  \item gencsr \textcolor{red}{$ \Longleftarrow $}
+  \item genkey \textcolor{red}{$ \Longleftarrow $}
+  \item genpwd
+  \end{itemize}
+
+}
+
+\notes{
+
+  It turns out that OpenSSL and OpenSSH have mostly the same key
+  format, so \regpg uses the same ``genkey'' command for both of them.
+
+}
+
+\slideI[10cm]{crash5.jpg}{
+  https://www.flickr.com/photos/zapthedingbat/516726771
+}{generate TLS / ssh -- demo}
+
+\notes{
+
+  \begin{itemize}
+  \item regpg genkey rsa id\char`_rsa.asc id\char`_rsa.pub
+  \end{itemize}
+
+  For ssh keypairs, give it a key algorithm, and private and public
+  key files.
+
+  \begin{itemize}
+  \item regpg genkey rsa tls.pem.asc
+  \end{itemize}
+
+  For TLS give it the algorithm and private key file name.
+
+  I always find it difficult to remember how to make a certificate
+  signing request, so \regpg provides some help.
+
+  First, get a configuration file from an existing certificate, either
+  from a file or a web server:
+
+  \begin{itemize}
+  \item regpg gencsrconf cam.ac.uk tls.csr.conf
+  \item vi tls.csr.conf
+  \item regpg gencsr tls.pem.asc tls.csr.conf tls.csr
+  \end{itemize}
+
+  You should commit your CSR so you can re-use it next time if none of
+  the details of yur certificate have changed.
+
+  You should commit your CSR configuration file to keep a convenient
+  record of changes to your CSR.
+
+}
+
+\slide{set up hooks}{
+
+  \Large
+
+  \begin{itemize}
+  \item init \textcolor{red}{$ \Longleftarrow $}
+  \item init git \textcolor{red}{$ \Longleftarrow $}
+  \item init ansible \textcolor{red}{$ \Longleftarrow $}
+  \item init ansible-vault
+  \end{itemize}
+
+}
+
+\notes{
+
+  All these commands are itempotent, and unlike other \regpg commands,
+  they are quite verbose.
+
+}
+
+\slideI[10cm]{crash6.jpg}{
+  https://www.flickr.com/photos/walkingsf/8143196966
+}{set up hooks -- demo}
+
+\notes{
+
+  \begin{itemize}
+  \item regpg init
+  \end{itemize}
+
+  Does nothing if there is a \code{pubring.gpg} file
+
+  \begin{itemize}
+  \item rm pubring.gpg*
+  \item regpg init
+  \end{itemize}
+
+  If there is no keyring, it does ``addself'' verbosely.
+
+  There is a tiny hook for git, which lets you see the history of
+  \code{pubring.gpg} more easily.
+
+  (It does not do anything for secret files since it isn't useful to
+  diff cryptographic secrets.)
+
+  \begin{itemize}
+  \item git init
+  \item git add .
+  \item git commit -m 'initial commit'
+  \item git log --patch pubring.gpg
+  \item regpg init git
+  \item git log --patch pubring.gpg
+  \item git status
+  \end{itemize}
+
+  There are two parts to this hook, a \code{.gitattributes} file which
+  you should commit, and some local repository configuration which
+  cannot be committed.
+
+  \begin{itemize}
+  \item git add .gitattributes
+  \item git commit -m 'regpg init git'
+  \end{itemize}
+
+  Whenever you newly clone a repository, you should run
+  \code{regpg init git} inside it to set up the local configuration.
+
+  \begin{itemize}
+  \item curl https://dotat.at/fanf.gpg | regpg importkey
+  \item git diff
+  \end{itemize}
+
+  This feature is really important for auditing changes to your
+  \code{pubring.gpg} file, because that's your access control list.
+
+  OK, let's try out Ansible
+
+  \begin{itemize}
+  \item echo [defaults] $>$ansible.cfg
+  \item echo hostfile = inventory $>>$ansible.cfg
+  \item echo localhost ansible\texttt{\char`_}connection=local $>$inventory
+  \item ansible -m debug -a msg=hi localhost
+  \item git add .
+  \item git commit -m 'start ansible'
+  \end{itemize}
+
+  OK, we have a basic Ansible setup.
+
+  \begin{itemize}
+  \item regpg init ansible
+  \item cat ansible.cfg
+  \end{itemize}
+
+  \regpg added a plugin for decrypting secrets. This is 20 lines of
+  python that just invokes \code{gpg --decrypt} -- the plugin does not
+  use \regpg.
+
+  \begin{itemize}
+  \item cat gpg-preload.yml
+  \end{itemize}
+
+  \regpg added a plugin for preloading \code{gpg-agent}. You can use
+  this to make gpg ask you for your passphrase just once -- there is a
+  race condition which can make it asking for every host.
+
+  \begin{itemize}
+  \item ansible-playbook gpg-preload.yml
+  \end{itemize}
+
+  \begin{itemize}
+  \item git add .
+  \item git commit -m 'regpg init ansible'
+  \end{itemize}
+
+  There's an example of how to use this setup at the end of the \regpg
+  man page.
+
+  \begin{itemize}
+  \item regpg help
+  \end{itemize}
+
+  The thing to note here is that I am using
+  \code{with\char`_fileglob:} to make ansible search for files using
+  its usual search path. The \code{gpg\char`_d} plugin does no
+  searching.
+
+  I am using this setup at the moment for my systems. It's optimized
+  for simplicity of implementation, though it can be a bit annoying.
+  I'm interested in feedback if you think something more elaborate
+  would be worth the effort.
+
+}
+
+\slide{converters}{
+
+  \Large
+
+  \begin{itemize}
+  \item conv ansible-gpg \textcolor{red}{$ \Longleftarrow $}
+  \item conv ansible-vault \textcolor{red}{$ \Longleftarrow $}
+  \item conv stgza
+  \end{itemize}
+
+}
+
+\slideI[6cm]{xform.jpg}{
+  https://www.flickr.com/photos/eltpics/15367149536
+}{converters -- demo}
+
+\notes{
+
+  I'm going to set up \regpg for use with \code{ansible-vault} which
+  is only recommended if you want to convert from \code{ansible-vault}
+  to \regpg.
+
+  \begin{itemize}
+  \item regpg init ansible-vault
+  \item git status
+  \item cat ansible.cfg
+  \end{itemize}
+
+  Now we have a setup similar to Jon Warbrick's \code{ansible-gpg}
+
+  \begin{itemize}
+  \item echo hello wombats >wombat
+  \item ansible-vault encrypt wombat
+  \item cat wombat
+  \item vi echidna.yml
+  \item ansible-playbook echidna.yml
+  \end{itemize}
+
+% ---
+% - hosts: all
+%   tasks:
+%     - debug:
+%         msg: "{{ item }}"
+%       with\char`_file:
+%         - wombat
+
+  Ansible is automatically decrypting things for us.
+
+  Let's convert this file to a normal \regpg setup.
+
+  \begin{itemize}
+  \item regpg conv ansible-vault
+  \item regpg conv ansible-vault wombat wombat.asc
+  \item vi echidna.yml
+  \end{itemize}
+
+% ---
+% - hosts: all
+%   tasks:
+%     - debug:
+%         msg: "{{ item | gpg_d }}"
+%       with_fileglob:
+%         - wombat.asc
+
+  \begin{itemize}
+  \item regpg ck
+  \item regpg shred -r
+  \end{itemize}
+
+  There's another conversion command which helps with conversion from
+  \code{ansible-gpg}
+
+  \begin{itemize}
+  \item git clone git://git.uis.cam.ac.uk/uis/u/jw35/ansible-gpg.git
+  \item cd ansible-gpg
+  \item ls -la
+  \item file .ansible-gpg/pubring.gpg
+  \end{itemize}
+
+  The \code{ansible-gpg} repo comes with a demo setup. Note that the
+  pubring is in incompatible \gpg 2.1 keybox format.
+
+  \begin{itemize}
+  \item regpg conv ansible-gpg
+  \item git status
+  \item file pubring.gpg
+  \item regpg conv ansible-vault
+  \end{itemize}
+
+  This is now the setup that you get from \code{regpg init ansible-vault}
+  and it allows you to convert your setup one file at a time.
+
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Done!}
 
 \slideI[9cm]{what.jpg}
        {https://www.flickr.com/photos/debord/4932655275}

@@ -1,7 +1,7 @@
 .POSIX:
 
 BIBTEX= bibtex
-PDFLATEX= pdflatex
+PDFLATEX= pdflatex -halt-on-error
 
 all: slides.pdf notes.pdf
 
