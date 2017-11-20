@@ -802,6 +802,7 @@ sub init {
 }
 
 sub conv {
+	getargs keymaker => 1, min => 0;
 	my %conv = (
 		'ansible-gpg' => \&conv_ansible_gpg,
 		'ansible-vault' => \&conv_ansible_vault,
@@ -809,8 +810,9 @@ sub conv {
 	    );
 	my @conv = sort keys %conv;
 	my $conv = shift @ARGV;
-	die "regpg conv: $conv is not in @conv\n",
-		    unless exists $conv{$conv};
+	die "regpg conv: choose one of @conv\n",
+	    unless defined $conv
+	    and exists $conv{$conv};
 	return $conv{$conv}->();
 }
 
