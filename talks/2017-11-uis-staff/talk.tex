@@ -190,7 +190,8 @@
   We can massively reduce the size of the problem by encrypting
   the secrets with a small number of master secrets.
 
-  For example, I used to encrypt secrets using the root password.
+  For example, before \regpg\ I used to encrypt secrets using the root
+  password.
 
   This reduces the key distribution to previously solved problems:
 
@@ -209,7 +210,7 @@
 
   But we can do better with public key cryptography.
 
-  Each person keeps their own private key - there's no need to
+  Each person keeps their own private key -- there's no need to
   distribute any master secrets. We know how to do this because we
   already do it for \ssh keys.
 
@@ -232,7 +233,7 @@
 \notes{
 
   The specific kinds of secrets we are dealing with are used by
-  servers to authenticate themselves -
+  servers to authenticate themselves --
 
   \begin{itemize}
   \item \ssh host private keys
@@ -257,7 +258,7 @@
 
 \notes{
 
-  It's often the case that each server secret is in a file by itself -
+  It's often the case that each server secret is in a file by itself --
   that's true for \ssh and TLS and DNS keys.
 
   \regpg\ works best when each secret is in a file by itself. You can
@@ -614,7 +615,7 @@
 
   You should not normally need to edit an encrypted file by hand, but
   if you do, \regpg\ tries to make it safer by keeping temporary files
-  in a RAM disk (at least on Linux - there's no ramfs on Mac OS) and
+  in a RAM disk (at least on Linux -- there's no ramfs on Mac OS) and
   shredding them afterwards.
 
   \begin{itemize}
