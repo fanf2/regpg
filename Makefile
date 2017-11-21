@@ -41,7 +41,7 @@ clean:
 	rm -rf t/gnupg t/work
 
 test:
-	perlcritic regpg
+	type perlcritic >/dev/null && perlcritic regpg
 	prove
 
 regpg.1: regpg
