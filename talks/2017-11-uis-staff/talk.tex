@@ -214,8 +214,13 @@
   distribute any master secrets. We know how to do this because we
   already do it for \ssh keys.
 
-  We distribute the public keys of each person who can decrypt, which
-  gives us a kind of auditable record of who has access to secrets.
+  We distribute the public keys of each person who can decrypt using
+  \git, alongside the encrypted secrets and the unencrypted
+  configuration and source code. This gives us a kind of auditable
+  record of who has access to secrets.
+
+  We get better tooling from the \gpg\ agent, which saves us from
+  having to repeatedly type our passphase.
 
   We can revoke a person's access if we can destroy all the copies of
   their private key, without having to replace all the secrets.
