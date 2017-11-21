@@ -13,7 +13,7 @@ my $kd = 'dummy@this-key-is.invalid';
 
 sub checklist {
 	my %k = @_;
-	works 'list keys', '' => $regpg, qw(lskeys);
+	works 'list keys', '' => qw(regpg lskeys);
 	for my $k (@{$k{like}}) {
 		my $qk = quotemeta $k;
 		like $stdout, qr{$qk}, "list contains $k";
@@ -24,7 +24,7 @@ sub checklist {
 	}
 }
 
-works 'add key one', '' => $regpg, 'addkey', $k1;
+works 'add key one', '' => qw(regpg addkey), $k1;
 is $stdout, '', 'add stdout is quiet';
 like $stderr, qr{imported}, 'add stderr is noisy';
 
@@ -33,7 +33,7 @@ subtest 'list keys (one)' => sub {
 	    unlike => [ $k2, $kd ];
 };
 
-works 'import key two', '' => $regpg, 'addkey', $k2;
+works 'import key two', '' => qw(regpg addkey), $k2;
 
 subtest 'list keys (both)' => sub {
 	checklist like => [ $k1, $k2 ],
@@ -41,7 +41,7 @@ subtest 'list keys (both)' => sub {
 };
 
 gpg_batch_yes;
-works 'delete key one', '' => $regpg, 'delkey', $k1;
+works 'delete key one', '' => qw(regpg delkey), $k1;
 unlink $gpgconf;
 
 subtest 'list keys (two)' => sub {
@@ -52,20 +52,20 @@ subtest 'list keys (two)' => sub {
 my $so = $stdout;
 my $se = $stderr;
 subtest 'ls synonym', => sub {
-	works 'ls', '' => $regpg, 'ls';
+	works 'ls', '' => qw(regpg ls);
 	is $stdout, $so, 'stdout matches';
 	is $stderr, $se, 'stderr matches';
 };
 
 subtest 'add synonym', => sub {
-	works 'add', '' => $regpg, 'add', $k1;
+	works 'add', '' => qw(regpg add), $k1;
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
 
 subtest 'del synonym', => sub {
 	gpg_batch_yes;
-	works 'del', '' => $regpg, 'del', $k2;
+	works 'del', '' => qw(regpg del), $k2;
 	unlink $gpgconf;
 	checklist like => [ $k1 ],
 	    unlike => [ $k2, $kd ];
