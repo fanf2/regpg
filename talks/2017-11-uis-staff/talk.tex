@@ -93,8 +93,8 @@
 
 \notes{
   \begin{abstract}
-    The \regpg program is a thin wrapper around \gpg for encrypting
-    secrets so they can be stored and shared using \git and decrypted
+    The \regpg\ program is a thin wrapper around \gpg\ for encrypting
+    secrets so they can be stored and shared using \git\ and decrypted
     when Ansible deploys them to servers.
   \end{abstract}
 }
@@ -112,7 +112,7 @@
 
     \notes{
       I will start off by explaining some of the context and thinking
-      behind \regpg by unpacking its slogan backwards.
+      behind \regpg\ by unpacking its slogan backwards.
     }
 
     \column{5cm}
@@ -159,7 +159,7 @@
 
 \notes{
 
-  In the first part, we'll discuss what \regpg is and what it is not.
+  In the first part, we'll discuss what \regpg\ is and what it is not.
 }
 
 \slideI[6cm]{keys.jpg}{
@@ -260,13 +260,13 @@
   It's often the case that each server secret is in a file by itself -
   that's true for \ssh and TLS and DNS keys.
 
-  \regpg works best when each secret is in a file by itself. You can
+  \regpg\ works best when each secret is in a file by itself. You can
   use filenames to identify secrets without having to decrypt them.
 
   Keeping secrets strictly separate from non-secret code and
-  configuration helps \git \code{diff} to works better.
+  configuration helps \git\ \code{diff} to works better.
 
-  \regpg does not have any hooks into \git for automatically
+  \regpg\ does not have any hooks into \git\ for automatically
   decrypting and \code{diff}ing secrets because secrets are blobs of
   random data for which \code{diff} is useless.
 
@@ -278,21 +278,21 @@
 
 \notes{
 
-  \regpg is for encrypting files for storage in version control when
+  \regpg\ is for encrypting files for storage in version control when
   they are not in use, and decrypting them for deployment to
   production.
 
   The other verb that might have fitted in this place is ``share'',
-  but \regpg is not directly about sharing.
+  but \regpg\ is not directly about sharing.
 
-  \regpg stores secrets in a way that works with \git or other version
-  control systems, but \regpg does not get involved with \git. You use
-  \git for sharing secrets in the same way you us it for sharing code
+  \regpg\ stores secrets in a way that works with \git\ or other version
+  control systems, but \regpg\ does not get involved with \git. You use
+  \git\ for sharing secrets in the same way you us it for sharing code
   or configuration.
 
-  I have tried a few times to write wrappers that get clever with \git
-  and they have usually been dismal failures. \regpg does not get
-  clever with \git.
+  I have tried a few times to write wrappers that get clever with
+  \git\ and they have usually been dismal failures. \regpg\ does
+  not get clever with \git.
 
 }
 
@@ -307,14 +307,14 @@
 
   The first is safe cryptography.
 
-  \regpg keeps well away from any low-level primitives. I did a code
+  \regpg\ keeps well away from any low-level primitives. I did a code
   review of \code{ansible-vault} and it uses a cryptographic library
   that literally has ``HAZMAT'' in its name. And, totally predictably,
   \code{ansible-vault} has really bad crypto.
 
-  Instead, \regpg relies on \gpg for cryptography. \gpg is terrible
+  Instead, \regpg\ relies on \gpg\ for cryptography. \gpg\ is terrible
   software in many ways, but it is widely available, it has reasonably
-  competent crypto, and it is also used by \git and Debian.
+  competent crypto, and it is also used by \git\ and Debian.
 
 }
 
@@ -326,7 +326,7 @@
 
   The other aspect to being safe is psychological safety.
 
-  \regpg allows you to make it clear in your Ansible playbook which
+  \regpg\ allows you to make it clear in your Ansible playbook which
   files should be encrypted, helps you to find out which files
   actually are or are not encrypted, and tells you when things are
   inconsistent.
@@ -336,7 +336,7 @@
   and decrypt in place, and doesn't complain either way, so you can
   easily expose secrets by mistake.
 
-  \regpg tries to be really easy to understand. It isn't very chatty,
+  \regpg\ tries to be really easy to understand. It isn't very chatty,
   but it also does not hide things from you. I want you to feel
   confident that you know how it works and what it is doing.
 
@@ -348,20 +348,20 @@
 
 \notes{
 
-  \regpg is a thin wrapper around \gpg to adapt it for our purposes.
+  \regpg\ is a thin wrapper around \gpg\ to adapt it for our purposes.
 
-  It's a very thin wrapper. You don't need \regpg to decrypt secrets
+  It's a very thin wrapper. You don't need \regpg\ to decrypt secrets
   -- you can still use normal \code{gpg -d} to decrypt them.
 
-  \regpg simplifies \gpg in two ways.
+  \regpg\ simplifies \gpg\ in two ways.
 
-  Firstly, \regpg gets rid of \gpg's key management and replaces it
+  Firstly, \regpg\ gets rid of \gpg's key management and replaces it
   with Jon Warbrick's scheme.
 
   There are no key servers, no web of trust, no key signing parties.
-  Instead we just use \git to exchange public keys.
+  Instead we just use \git\ to exchange public keys.
 
-  Secondly, \regpg provides several little helpers to make it easier
+  Secondly, \regpg\ provides several little helpers to make it easier
   to use \gpg-encrypted secrets with other tools such as OpenSSL,
   OpenSSH, and Ansible.
 
@@ -379,7 +379,7 @@
   shortly.
 
   In \gpg, the term ``recipients'' means those who can decrypt a
-  message. \regpg is all about managing a list of recipients and
+  message. \regpg\ is all about managing a list of recipients and
   repeatably and reliably encrypting files to those recipients.
 
 }
@@ -424,7 +424,7 @@
 \notes{
 
   The prerequisites are required for \regpg's core functionality; the
-  helpers are optional but some \regpg features won't work without
+  helpers are optional but some \regpg\ features won't work without
   them.
 
   These are Debian package names. If anyone is able to help with
@@ -471,7 +471,7 @@
 
   \begin{itemize}
   \item Generate a key just for \regpg
-  \item Separate from your other \gpg keys (if any)
+  \item Separate from your other \gpg\ keys (if any)
   \end{itemize}
 
   \begin{itemize}
@@ -514,8 +514,8 @@
   \item ls
   \end{itemize}
 
-  \regpg has made a public key ring (and a backup file, because \gpg
-  loves backup files)
+  \regpg\ has made a public key ring (and a backup file,
+  because \gpg\ loves backup files)
 
   The ``addself'' subcommand adds keys which match your login name and
   for which you have the private key.
@@ -534,9 +534,9 @@
   \item regpg ls
   \end{itemize}
 
-  One bit of magic going on here is that \regpg ensures that \gpg uses
-  the backwards compatible keyring format, even if you are using \gpg
-  2.1.
+  One bit of magic going on here is that \regpg\ ensures that
+  \gpg\ uses the backwards compatible keyring format, even if
+  you are using \gpg\ 2.1.
 
 }
 
@@ -578,7 +578,7 @@
   \item regpg encrypt foo foo.asc
   \end{itemize}
 
-  Note \regpg does not need a passphrase to encrypt, just the public keys.
+  Note \regpg\ does not need a passphrase to encrypt, just the public keys.
 
   The \code{.asc} extension is the ugly but conventional name for a
   PGP-encrypted ASCII-armored file. (ASCII armoring is like Base64.)
@@ -590,7 +590,7 @@
   The ``check'' subcommand looks for encrypted files by recursively
   grepping for the ``BEGIN PGP MESSAGE'' ASCII-armoring.
 
-  \regpg warns us that we have left behind an unencrypted file.
+  \regpg\ warns us that we have left behind an unencrypted file.
   (It uses a simple heuristic based on filenames.)
 
   \begin{itemize}
@@ -599,7 +599,7 @@
   \item regpg decrypt foo.asc
   \end{itemize}
 
-  \regpg asks for your passphrase to decrypt the first time
+  \regpg\ asks for your passphrase to decrypt the first time
 
   \begin{itemize}
   \item regpg decrypt foo.asc
@@ -613,7 +613,7 @@
   \end{itemize}
 
   You should not normally need to edit an encrypted file by hand, but
-  if you do, \regpg tries to make it safer by keeping temporary files
+  if you do, \regpg\ tries to make it safer by keeping temporary files
   in a RAM disk (at least on Linux - there's no ramfs on Mac OS) and
   shredding them afterwards.
 
@@ -621,7 +621,7 @@
   \item echo secret three | regpg en bar.asc
   \end{itemize}
 
-  \regpg is friendly to pipelines.
+  \regpg\ is friendly to pipelines.
 
   \begin{itemize}
   \item regpg ck
@@ -631,7 +631,7 @@
   \item regpg ck
   \end{itemize}
 
-  Several \regpg subcommands take a \code{-r} option which recurses
+  Several \regpg\ subcommands take a \code{-r} option which recurses
   over all the files found by \code{regpg check}
 
 }
@@ -668,7 +668,7 @@
   \item regpg ck
   \end{itemize}
 
-  \regpg says a key has been added to the keyring and lists which
+  \regpg\ says a key has been added to the keyring and lists which
   files need to be decrypted and re-encrypted so that every recipient
   listed in the keyring can decrypt them
 
@@ -717,7 +717,7 @@
 \notes{
 
   It turns out that OpenSSL and OpenSSH have mostly the same key
-  format, so \regpg uses the same ``genkey'' command for both of them.
+  format, so \regpg\ uses the same ``genkey'' command for both of them.
 
 }
 
@@ -741,7 +741,7 @@
   For TLS give it the algorithm and private key file name.
 
   I always find it difficult to remember how to make a certificate
-  signing request, so \regpg provides some help.
+  signing request, so \regpg\ provides some help.
 
   First, get a configuration file from an existing certificate, either
   from a file or a web server:
@@ -775,7 +775,7 @@
 
 \notes{
 
-  All these commands are itempotent, and unlike other \regpg commands,
+  All these commands are itempotent, and unlike other \regpg\ commands,
   they are quite verbose.
 
 }
@@ -853,7 +853,7 @@
   \item cat ansible.cfg
   \end{itemize}
 
-  \regpg added a plugin for decrypting secrets. This is 20 lines of
+  \regpg\ added a plugin for decrypting secrets. This is 20 lines of
   python that just invokes \code{gpg --decrypt} -- the plugin does not
   use \regpg.
 
@@ -861,7 +861,7 @@
   \item cat gpg-preload.yml
   \end{itemize}
 
-  \regpg added a plugin for preloading \code{gpg-agent}. You can use
+  \regpg\ added a plugin for preloading \code{gpg-agent}. You can use
   this to make gpg ask you for your passphrase just once -- there is a
   race condition which can make it asking for every host.
 
@@ -874,8 +874,8 @@
   \item git commit -m 'regpg init ansible'
   \end{itemize}
 
-  There's an example of how to use this setup at the end of the \regpg
-  man page.
+  There's an example of how to use this setup at the end of the
+  \regpg\ man page.
 
   \begin{itemize}
   \item regpg help
@@ -911,7 +911,7 @@
 
 \notes{
 
-  I'm going to set up \regpg for use with \code{ansible-vault} which
+  I'm going to set up \regpg\ for use with \code{ansible-vault} which
   is only recommended if you want to convert from \code{ansible-vault}
   to \regpg.
 
@@ -941,7 +941,7 @@
 
   Ansible is automatically decrypting things for us.
 
-  Let's convert this file to a normal \regpg setup.
+  Let's convert this file to a normal \regpg\ setup.
 
   \begin{itemize}
   \item regpg conv ansible-vault
@@ -973,7 +973,7 @@
   \end{itemize}
 
   The \code{ansible-gpg} repo comes with a demo setup. Note that the
-  pubring is in incompatible \gpg 2.1 keybox format.
+  pubring is in incompatible \gpg\ 2.1 keybox format.
 
   \begin{itemize}
   \item regpg conv ansible-gpg
