@@ -57,6 +57,8 @@ BEGIN {
 	chdir $work; # ignore failure
 
 	$ENV{GNUPGHOME} = "$gnupg";
+
+	$ENV{PATH} = "$dir/..:$ENV{PATH}";
 };
 
 sub run {
