@@ -91,7 +91,7 @@ SKIP: {
 	    '' => qw(ansible-vault encrypt secret);
 	isnt slurp('secret'), 'otterly badgered', 'file is now encrypted';
 	works 'ansible-vault decrypt',
-	    '' => qw(ansible-vault decrypt --output - secret);
+	    '' => qw(ansible-vault decrypt --output /dev/stdout secret);
 	is $stdout, 'otterly badgered', 'vault can be decrypted';
 	works 'regpg ansible-vault list',
 	    '' => qw(regpg conv ansible-vault);
