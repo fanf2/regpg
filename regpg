@@ -827,6 +827,7 @@ $::{import}   = $::{importkey};
 $::{export}   = $::{exportkey};
 $::{en}	      = $::{encrypt};
 $::{re}	      = $::{recrypt};
+$::{squeegee} = $::{shred}; # rwhb2's pronunciation
 
 usage unless @ARGV;
 my $subcommand = shift;
@@ -834,7 +835,7 @@ if (grep { $subcommand eq $_ }
 	qw(add addkey addself check ck conv decrypt del delkey
 	   edit en encrypt export exportkey gencsrconf gencsr
 	   genkey genpwd --help help import importkey init ls
-	   lskeys pbcopy pbpaste re recrypt shred)) {
+	   lskeys pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
