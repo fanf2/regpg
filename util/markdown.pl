@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use File::Basename;
-use File::Slurp;
 use File::Spec::Functions qw(abs2rel);
 use Text::Markdown;
 
@@ -14,7 +13,9 @@ my ($in,$out) = @ARGV;
 
 my $css = abs2rel 'doc/style.css', dirname $in;
 
-my $md = read_file $in;
+open my $hin, '<', $in or die "open < $in: $!\n";
+undef $/;
+my $md = <$hin>;
 
 die "stray tabs!\n" if $md =~ m{\t};
 
@@ -24,7 +25,8 @@ my $title = $1;
 
 my $body = Text::Markdown::Markdown($md);
 
-write_file $out, <<HTML;
+open my $hout, '>', $out or die "open > $out: $!\n";
+print $hout <<HTML;
 <!DOCTYPE html>
 <html lang="en">
  <head>
