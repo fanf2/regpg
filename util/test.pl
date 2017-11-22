@@ -15,9 +15,8 @@ if (exec_path 'perlcritic') {
 	exit $? if $?;
 }
 
-rmtree 't/bin';
-mkdir 't/bin'
-    or die "mkdir t/bin: $!\n";
+mkdir 't/bin';
+unlink glob 't/bin/*';
 for my $gpg (qw(gpg gpg1 gpg2)) {
 	my $path = exec_path $gpg;
 	next unless $path;
