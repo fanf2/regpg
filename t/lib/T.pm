@@ -86,7 +86,7 @@ BEGIN {
 
 END {
 	system qw(gpg-connect-agent --no-autostart killagent /bye)
-	    if $gpgvers ge "2.1";
+	    if $gpgvers ge "2.1" and $0 !~ m{000};
 	$? = 0;
 };
 
