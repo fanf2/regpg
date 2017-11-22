@@ -25,9 +25,11 @@ ok -d $work, 'created working directory';
 
 ################################################################
 
+my @genkey = qw(gpg --gen-key --batch --quiet);
+push @genkey, '--quick-random' if $gpgvers lt "2.0";
+
 for my $key (qw(one two)) {
-	works "generated key $key",
-	    <<"GENKEY" => qw(gpg --gen-key --batch --quick-random --quiet);
+	works "generated key $key", <<"GENKEY" => @genkey;
 Key-Type: RSA
 Key-Length: 2048
 Key-Usage: encrypt,sign

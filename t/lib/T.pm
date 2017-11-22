@@ -12,6 +12,8 @@ use Test::More;
 our $regpg;
 our $gnupg;
 our $gpgconf;
+our $gpgvers;
+our $agentpid;
 our $work;
 our $pgpmsg;
 
@@ -24,6 +26,7 @@ our @EXPORT = qw(
 	$regpg
 	$gnupg
 	$gpgconf
+	$gpgvers
 	$work
 	$pgpmsg
 
@@ -59,6 +62,22 @@ BEGIN {
 	$ENV{GNUPGHOME} = "$gnupg";
 
 	$ENV{PATH} = "$dir/..:$ENV{PATH}";
+
+	$gpgvers = qx(gpg --version);
+	die "unknown gpg version"
+	    unless $gpgvers =~ s{^gpg [(]GnuPG[)] (\d\.\d)\..*}{$1}s;
+
+	if ($gpgvers ge "2.1") {
+		my $agent = qx(gpg-agent --daemon --csh --debug-quick-random);
+		die "could not start gpg agent"
+		    unless $agent =~ m{^setenv\s+(\S+)\s+(\S+:(\d+):\d+);$};
+		$ENV{$1} = $2;
+		$agentpid = $3;
+	}
+};
+
+END {
+	kill 'INT', $agentpid if defined $agentpid;
 };
 
 sub run {
