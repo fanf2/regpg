@@ -65,7 +65,7 @@ local $ENV{GPG_AGENT_INFO} = 'dummy';
 
 spew 'ansible.cfg', <<'ANSIBLE_CFG';
 [defaults]
-hostfile = inventory
+inventory = inventory
 ANSIBLE_CFG
 spew 'inventory', <<'INVENTORY';
 localhost ansible_connection=local

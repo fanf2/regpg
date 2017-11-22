@@ -440,7 +440,7 @@ First we need a minimal Ansible setup.
         ^D
         $ cat >ansible.cfg
         [defaults]
-        hostfile = inventory
+        inventory = inventory
         ^D
         $ git add inventory ansible.cfg
         $ git commit -m 'Start Ansible'
@@ -480,7 +480,7 @@ OK, this has added several files. We already know about `.git*` and
 
         $ cat ansible.cfg
         [defaults]
-        hostfile = inventory
+        inventory = inventory
         filter_plugins = plugins/filter
 
 `regpg` has added a filter plugin to Ansible's configuration. (You can
