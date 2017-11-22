@@ -112,7 +112,7 @@ like slurp('tls.csr'), $csr, 'gencsr file is cert request';
 
 works 'openssl likes csr',
     '' => qw(openssl req -in tls.csr -text);
-like $stdout, qr{CN=dotat[.]at}, 'openssl found CN';
+like $stdout, qr{CN ?= ?dotat[.]at}, 'openssl found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'openssl found SAN';
 is $stderr, '', 'openssl stderr quiet';
 
@@ -123,7 +123,7 @@ like $stderr, qr{pipe to openssl req}, 'regpg stderr noisy';
 
 works 'gencsr verbose file',
     '' => $regpg, qw(gencsr -v tls.pem.asc tls.csr.conf tls.csr);
-like $stdout, qr{CN=dotat[.]at}, 'verbose found CN';
+like $stdout, qr{CN ?= ?dotat[.]at}, 'verbose found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'verbose found SAN';
 like $stderr, qr{running openssl req}, 'regpg stderr noisy';
 
