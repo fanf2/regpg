@@ -27,10 +27,10 @@ ok -d $work, 'created working directory';
 
 for my $key (qw(one two)) {
 	works "generated key $key",
-	    <<"GENKEY" => qw(gpg --gen-key --batch --quiet);
+	    <<"GENKEY" => qw(gpg --gen-key --batch --quick-random --quiet);
 Key-Type: RSA
-Key-Usage: encrypt,sign
 Key-Length: 2048
+Key-Usage: encrypt,sign
 Name-Email: regpg-$key\@testing.example
 %no-ask-passphrase
 %no-protection
