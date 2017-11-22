@@ -97,15 +97,20 @@ SKIP: {
 	    '' => qw(regpg conv ansible-vault);
 	is $stderr, '', 'regpg stderr is quiet';
 	like $stdout, qr{secret}, 'lists encrypted file';
-	works 'regpg ansible-vault convert',
-	    '' => qw(regpg conv ansible-vault secret secret.asc);
-	is $stderr, '', 'regpg stderr is quiet';
-	is $stdout, '', 'regpg stdout is quiet';
-	ok -f 'secret.asc', 'conv created file';
-	like slurp('secret.asc'), $pgpmsg, 'from vault to pgp';
-	works 'decrypt converted file',
-	    '' => qw(regpg decrypt secret.asc);
-	is $stdout, 'otterly badgered', 'correctly decrypted';
+	works 'ansible-vault version',
+	    '' => qw(ansible-vault --version);
+	unless ($stdout =~ m{ansible-vault 2\.4\.0\.0}) {
+		works 'regpg ansible-vault convert',
+		    '' => qw(regpg conv ansible-vault secret secret.asc);
+		is $stderr, '', 'regpg stderr is quiet';
+		is $stdout, '', 'regpg stdout is quiet';
+		ok -f 'secret.asc', 'conv created file';
+		ok ! -f '-', 'conv avoided ansible-vault --output bug';
+		like slurp('secret.asc'), $pgpmsg, 'from vault to pgp';
+		works 'decrypt converted file',
+		    '' => qw(regpg decrypt secret.asc);
+		is $stdout, 'otterly badgered', 'correctly decrypted';
+	}
 }
 
 done_testing;
