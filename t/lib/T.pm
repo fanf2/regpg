@@ -88,8 +88,7 @@ BEGIN {
 };
 
 END {
-	close STDIN; # do not wait for further agent commands
-	system qw(gpg-connect-agent --no-autostart killagent)
+	system qw(gpg-connect-agent --no-autostart killagent /bye)
 	    if $gpgvers ge "2.1";
 };
 
