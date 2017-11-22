@@ -73,7 +73,7 @@ subtest 'del synonym', => sub {
 
 subtest 'del all', => sub {
 	gpg_batch_yes;
-	works 'del', '' => $regpg, 'del', $k1;
+	works 'del', '' => qw(regpg del), $k1;
 	unlink $gpgconf;
 	checklist like => [ ],
 	    unlike => [ $k1, $k2, $kd ];
@@ -84,7 +84,7 @@ subtest 'del all', => sub {
 };
 
 subtest 'dummy re-init of empty keyring', => sub {
-	works 'add', '' => $regpg, 'add', '-v', $k1;
+	works 'add', '' => qw(regpg add -v), $k1;
 	like $stderr, qr{--delete-key}, 'delete dummy key';
 	like $stderr, qr{0xA3F96E2C6131531B}, 'dummy key id';
 	checklist like => [ $k1 ],
@@ -93,7 +93,7 @@ subtest 'dummy re-init of empty keyring', => sub {
 
 subtest 'add both', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
-	works 'add', '' => $regpg, 'add', $k1, $k2;
+	works 'add', '' => qw(regpg add), $k1, $k2;
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
@@ -101,7 +101,7 @@ subtest 'add both', => sub {
 subtest 'addself', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	local $ENV{USER} = 'testing.example';
-	works 'addself', '' => $regpg, 'addself';
+	works 'addself', '' => qw(regpg addself);
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
 };
@@ -109,21 +109,21 @@ subtest 'addself', => sub {
 my $pubkey = qr{-----BEGIN PGP PUBLIC KEY BLOCK-----};
 subtest 'export all', => sub {
 	works 'export keys',
-	    '' => $regpg, 'exportkey';
+	    '' => qw(regpg exportkey);
 	is $stderr, '', 'export stderr is quiet';
 	like $stdout, $pubkey, 'exported public key';
 	spew 'export', $stdout;
 };
 subtest 'export one', => sub {
 	works 'export key one',
-	    '' => $regpg, 'exportkey', $k1;
+	    '' => qw(regpg exportkey), $k1;
 	is $stderr, '', 'export stderr is quiet';
 	like $stdout, $pubkey, 'exported public key';
 	spew 'one', $stdout;
 };
 subtest 'export two', => sub {
 	works 'export key two',
-	    '' => $regpg, 'exportkey', $k2;
+	    '' => qw(regpg exportkey), $k2;
 	is $stderr, '', 'export stderr is quiet';
 	like $stdout, $pubkey, 'exported public key';
 	spew 'two', $stdout;
@@ -132,7 +132,7 @@ subtest 'export two', => sub {
 subtest 'importkey pipe', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'importkey',
-	    slurp('export') => $regpg, 'importkey';
+	    slurp('export') => qw(regpg importkey);
 	like $stderr, qr{imported}, 'import stderr is noisy';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
@@ -140,7 +140,7 @@ subtest 'importkey pipe', => sub {
 subtest 'importkey file', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'importkey',
-	    '' => $regpg, 'importkey', 'export';
+	    '' => qw(regpg importkey export);
 	like $stderr, qr{imported}, 'import stderr is noisy';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
@@ -148,7 +148,7 @@ subtest 'importkey file', => sub {
 subtest 'importkey files', => sub {
 	unlink 'pubring.gpg', 'pubring.gpg~';
 	works 'importkey',
-	    '' => $regpg, qw(importkey one two);
+	    '' => qw(regpg importkey one two);
 	like $stderr, qr{imported}, 'import stderr is noisy';
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];

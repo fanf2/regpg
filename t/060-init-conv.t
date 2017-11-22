@@ -11,28 +11,28 @@ use T;
 local $ENV{USER} = 'testing.example';
 
 unlink glob '*';
-works 'addself', '' => $regpg, 'addself';
-works 'ls', '' => $regpg, 'ls';
+works 'addself', '' => qw(regpg addself);
+works 'ls', '' => qw(regpg ls);
 my $ls = $stdout;
 
 unlink glob '*';
-works 'init', '' => $regpg, 'init';
+works 'init', '' => qw(regpg init);
 is $stdout, '', 'regpg stdout quiet';
 like $stderr, qr{imported:}, 'regpg stderr noisy';
 ok -f 'pubring.gpg', 'init created keyring';
 
-works 'ls', '' => $regpg, 'ls';
+works 'ls', '' => qw(regpg ls);
 is $stdout, $ls, 'regpg init like addself';
 
 gpg_batch_yes;
-works 'del', '' => $regpg, 'del', 'regpg-two';
+works 'del', '' => qw(regpg del regpg-two);
 unlink $gpgconf;
 
-works 'init', '' => $regpg, 'init';
+works 'init', '' => qw(regpg init);
 is $stdout, '', 'regpg stdout quiet';
 like $stderr, qr{done init}, 'regpg stderr noisy';
 
-works 'ls', '' => $regpg, 'ls';
+works 'ls', '' => qw(regpg ls);
 isnt $stdout, $ls, 'regpg init unlike addself for existing keyring';
 
 local $ENV{HOME} = $work;
@@ -51,7 +51,7 @@ SKIP: {
 	like $stdout, qr{Binary files .* differ},
 	    'uninit git binary diff';
 
-	works 'init git', '' => $regpg, qw(init git);
+	works 'init git', '' => qw(regpg init git);
 	is $stdout, '', 'regpg stdout quiet';
 	like $stderr, qr{running git config}, 'regpg stderr noisy';
 
@@ -74,7 +74,7 @@ INVENTORY
 SKIP: {
 	skip 'ansible-nope', 3 unless canexec 'ansible-playbook';
 
-	works 'init ansible', '' => $regpg, qw(init ansible);
+	works 'init ansible', '' => qw(regpg init ansible);
 	works 'try ansible', '' => qw(ansible-playbook gpg-preload.yml);
 	like $stdout, qr{All assertions passed}, 'gpg_d plugin worked';
 }
@@ -83,7 +83,7 @@ SKIP: {
 	skip 'ansible-revault', 18 unless canexec 'ansible-vault';
 
 	unlink 'secret', 'secret.asc';
-	works 'init ansible-vault', '' => $regpg, qw(init ansible-vault);
+	works 'init ansible-vault', '' => qw(regpg init ansible-vault);
 	ok -f 'vault.open', 'init created vault.open';
 	ok -f 'vault.pwd.asc', 'init created vault.pwd.asc';
 	spew 'secret', 'otterly badgered';

@@ -24,8 +24,9 @@ mkpath $work;
 ok -d $work, 'created working directory';
 
 mkpath $testbin;
-symlink "../../regpg" => $regpg;
-ok -l $regpg, 'regpg on test exec path';
+symlink "../../regpg" => "$testbin/regpg";
+ok -l "$testbin/regpg", 'regpg on test exec path';
+ok -x "$testbin/regpg", 'regpg executable';
 
 ################################################################
 

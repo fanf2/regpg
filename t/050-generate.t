@@ -46,7 +46,7 @@ dD5Wnm/fbK7UzG+mGWYVf0nQKE2o9hgH7yY7OhcQlOHYi8jpMATBmtkjaJ/2txGY
 CERT
 
 works 'gencsrconf pipe',
-    $cert => $regpg, 'gencsrconf';
+    $cert => qw(regpg gencsrconf);
 like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'csrconf contains CN';
 like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
 is $stderr, '', 'regpg stderr quiet';
@@ -54,13 +54,13 @@ is $stderr, '', 'regpg stderr quiet';
 spew 'cert', $cert;
 
 works 'gencsrconf from file',
-    '' => $regpg, 'gencsrconf', 'cert';
+    '' => qw(regpg gencsrconf cert);
 like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'csrconf contains CN';
 like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
 is $stderr, '', 'regpg stderr quiet';
 
 works 'gencsrconf to file',
-    '' => $regpg, 'gencsrconf', 'cert', 'tls.csr.conf';
+    '' => qw(regpg gencsrconf cert tls.csr.conf);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
 like slurp('tls.csr.conf'),
@@ -69,18 +69,18 @@ like slurp('tls.csr.conf'),
     qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
 
 fails 'gencsrconf three args',
-    '' => $regpg, qw(gencsrconf one two three);
+    '' => qw(regpg gencsrconf one two three);
 like $stderr, qr{usage:}, 'usage';
 
 works 'genkey rsa',
-    '' => $regpg, qw(genkey rsa tls.pem.asc);
+    '' => qw(regpg genkey rsa tls.pem.asc);
 is $stdout, '', 'regpg stdout quiet';
 like $stderr, qr{Generating}, 'regpg stderr noisy';
 ok -f 'tls.pem.asc', 'genkey rsa wrote file';
 like slurp('tls.pem.asc'), $pgpmsg, 'genkey rsa wrote encrypted file';
 
 works 'genkey rsa ssh',
-    '' => $regpg, qw(genkey rsa ssh.asc ssh.pub);
+    '' => qw(regpg genkey rsa ssh.asc ssh.pub);
 is $stdout, '', 'regpg stdout quiet';
 like $stderr, qr{Generating}, 'regpg stderr noisy';
 ok -f 'ssh.asc', 'genkey rsa wrote ssh private key';
@@ -89,22 +89,22 @@ like slurp('ssh.asc'), $pgpmsg, 'genkey rsa wrote encrypted ssh key';
 like slurp('ssh.pub'), qr{ssh-rsa}, 'genkey rsa ssh public key OK';
 
 fails 'genkey one arg',
-    '' => $regpg, qw(genkey one);
+    '' => qw(regpg genkey one);
 like $stderr, qr{usage:}, 'usage';
 
 fails 'genkey four args',
-    '' => $regpg, qw(genkey one two three four);
+    '' => qw(regpg genkey one two three four);
 like $stderr, qr{usage:}, 'usage';
 
 my $csr = qr{\A-----BEGIN CERTIFICATE REQUEST-----};
 
 works 'gencsr pipe',
-    '' => $regpg, qw(gencsr tls.pem.asc tls.csr.conf);
+    '' => qw(regpg gencsr tls.pem.asc tls.csr.conf);
 like $stdout, $csr, 'regpg stdout is cert request';
 is $stderr, '', 'regpg stderr quiet';
 
 works 'gencsr file',
-    '' => $regpg, qw(gencsr tls.pem.asc tls.csr.conf tls.csr);
+    '' => qw(regpg gencsr tls.pem.asc tls.csr.conf tls.csr);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
 ok -f 'tls.csr', 'gencsr wrote file';
@@ -117,32 +117,32 @@ like $stdout, qr{DNS:www[.]dotat[.]at}, 'openssl found SAN';
 is $stderr, '', 'openssl stderr quiet';
 
 works 'gencsr verbose pipe',
-    '' => $regpg, qw(gencsr -v tls.pem.asc tls.csr.conf);
+    '' => qw(regpg gencsr -v tls.pem.asc tls.csr.conf);
 like $stdout, $csr, 'verbose stdout cert';
 like $stderr, qr{pipe to openssl req}, 'regpg stderr noisy';
 
 works 'gencsr verbose file',
-    '' => $regpg, qw(gencsr -v tls.pem.asc tls.csr.conf tls.csr);
+    '' => qw(regpg gencsr -v tls.pem.asc tls.csr.conf tls.csr);
 like $stdout, qr{CN ?= ?dotat[.]at}, 'verbose found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'verbose found SAN';
 like $stderr, qr{running openssl req}, 'regpg stderr noisy';
 
 fails 'gencsr one arg',
-    '' => $regpg, qw(gencsr one);
+    '' => qw(regpg gencsr one);
 like $stderr, qr{usage:}, 'usage';
 
 fails 'gencsr four args',
-    '' => $regpg, qw(gencsr one two three four);
+    '' => qw(regpg gencsr one two three four);
 like $stderr, qr{usage:}, 'usage';
 
 works 'genpwd pipe',
-    '' => $regpg, qw(genpwd);
+    '' => qw(regpg genpwd);
 like $stdout, $pgpmsg, 'genpwd output encrypted';
 is $stderr, '', 'regpg stderr quiet';
 
 unlink 'pwd.asc';
 works 'genpwd file',
-    '' => $regpg, qw(genpwd pwd.asc);
+    '' => qw(regpg genpwd pwd.asc);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
 ok -f 'pwd.asc', 'genpwd wrote file';

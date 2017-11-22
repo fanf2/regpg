@@ -9,7 +9,6 @@ use FindBin;
 use POSIX;
 use Test::More;
 
-our $regpg;
 our $gnupg;
 our $gpgconf;
 our $gpgvers;
@@ -23,7 +22,6 @@ our $stdout;
 our $stderr;
 
 our @EXPORT = qw(
-	$regpg
 	$gnupg
 	$gpgconf
 	$gpgvers
@@ -49,7 +47,6 @@ BEGIN {
 	my $dir = "$FindBin::Bin";
 
 	$testbin = "$dir/bin";
-	$regpg = "$testbin/regpg";
 	$gnupg = "$dir/gnupg";
 	$gpgconf = "$gnupg/gpg.conf";
 	$work  = "$dir/work";
