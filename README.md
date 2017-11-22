@@ -94,19 +94,19 @@ Dependencies
 To use `regpg` you need the following programs. I've listed the
 versions that I have tested.
 
-* `perl` 5.20
-* `gpg` 1.4.18
-* `gpg-agent` 2.0.26
+* `perl` - 5.20 - 5.22
+* `gpg` - 1.4.18 - 2.0.26 - 2.1.11
+* `gpg-agent` - 2.0.26 - 2.1.11
 * `pinentry-gtk2` 0.8.3 (or) `pinentry-tty` 0.9.7
 
 You only need the following programs if you use `regpg`'s helper
 subcommands.
 
-* `git` 2.10
-* Ansible 2.2
-* OpenSSH 6.7
-* OpenSSL 1.0.1
-* `xclip` 0.12
+* `git` - 2.7 - 2.10
+* Ansible - 2.2
+* OpenSSH - 6.7 - 7.2
+* OpenSSL - 1.0.1 - 1.0.2
+* `xclip` - 0.12
 
 
 Downloads
