@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
-use File::Temp qw(tempfile);
+use File::Temp qw(tempfile mkdtemp);
 use FindBin;
 use POSIX;
 use Test::More;
@@ -13,8 +13,8 @@ our $regpg;
 our $gnupg;
 our $gpgconf;
 our $gpgvers;
-our $agentpid;
 our $work;
+our $testbin;
 our $pgpmsg;
 
 our $status;
@@ -28,6 +28,7 @@ our @EXPORT = qw(
 	$gpgconf
 	$gpgvers
 	$work
+	$testbin
 	$pgpmsg
 
 	$status
@@ -47,7 +48,8 @@ our @EXPORT = qw(
 BEGIN {
 	my $dir = "$FindBin::Bin";
 
-	$regpg = "$dir/../regpg";
+	$testbin = "$dir/bin";
+	$regpg = "$testbin/regpg";
 	$gnupg = "$dir/gnupg";
 	$gpgconf = "$gnupg/gpg.conf";
 	$work  = "$dir/work";
@@ -57,28 +59,38 @@ BEGIN {
 	       .*\n
 	       -----END[ ]PGP[ ]MESSAGE-----\n$}sx;
 
+	# gross hack for compatibility with home directories on the
+	# CIFS filesystem on Cambridge's PWF/MCS/DS Linux which does
+	# not support special files such as the agent socket
+	if (-x "$dir/../Makefile") {
+		my $realgnupg = readlink $gnupg;
+		if (! defined $realgnupg) {
+			$realgnupg = mkdtemp
+			    "/run/user/$</regpg.test.gnupg.XXXXXXXX";
+			symlink $realgnupg => $gnupg
+			    or die "symlink $realgnupg => $gnupg: $!\n";
+		}
+		$gnupg = $realgnupg;
+	}
+
+	$ENV{GNUPGHOME} = $gnupg;
+	$ENV{PATH} = "$testbin:$ENV{PATH}";
+
 	chdir $work; # ignore failure
-
-	$ENV{GNUPGHOME} = "$gnupg";
-
-	my $bin = "$dir/bin";
-	$ENV{PATH} = "$dir/bin:$ENV{PATH}";
 
 	$gpgvers = qx(gpg --version);
 	die "unknown gpg version"
 	    unless $gpgvers =~ s{^gpg [(]GnuPG[)] (\d\.\d)\..*}{$1}s;
 
-	if ($gpgvers ge "2.1") {
-		my $agent = qx(gpg-agent --daemon --csh --debug-quick-random);
-		die "could not start gpg agent"
-		    unless $agent =~ m{^setenv\s+(\S+)\s+(\S+:(\d+):\d+);$};
-		$ENV{$1} = $2;
-		$agentpid = $3;
-	}
+	# ensure the agent will not block on /dev/random
+	system qw(gpg-agent --daemon --quiet --debug-quick-random)
+	    if $gpgvers ge "2.1";
 };
 
 END {
-	kill 'INT', $agentpid if defined $agentpid;
+	close STDIN; # do not wait for further agent commands
+	system qw(gpg-connect-agent --no-autostart killagent)
+	    if $gpgvers ge "2.1";
 };
 
 sub run {

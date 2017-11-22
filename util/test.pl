@@ -18,8 +18,6 @@ if (exec_path 'perlcritic') {
 rmtree 't/bin';
 mkdir 't/bin'
     or die "mkdir t/bin: $!\n";
-symlink '../regpg' => 't/bin/regpg'
-    or die "symlink regpg => t/bin: $!\n";
 for my $gpg (qw(gpg gpg1 gpg2)) {
 	my $path = exec_path $gpg;
 	next unless $path;
