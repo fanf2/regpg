@@ -56,7 +56,7 @@ SKIP: {
 	like $stderr, qr{running git config}, 'regpg stderr noisy';
 
 	works 'git log',    '' => qw(git log --patch);
-	like $stdout, qr{^[+]\w+\s.*\s<regpg-one[@]}m,
+	like $stdout, qr{^[+]\w+\s.*\s<?regpg-one[@]}m,
 	    'init git text diff';
 }
 
