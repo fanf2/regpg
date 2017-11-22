@@ -77,6 +77,9 @@ subtest 'del all', => sub {
 	unlink $gpgconf;
 	checklist like => [ ],
 	    unlike => [ $k1, $k2, $kd ];
+	# gpg-2.2 does not completely truncate the file, so force it
+	# to make the next test actually reinitializes the keyring
+	open my $dummy, '>', 'pubring.gpg' if 8 == -s 'pubring.gpg';
 	ok -z 'pubring.gpg', 'empty keyring';
 };
 
