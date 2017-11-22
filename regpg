@@ -551,11 +551,15 @@ sub conv_ansible_vault {
 			xargs grep -l '[$]ANSIBLE_VAULT;' | sort);
 		return 0;
 	}
-	# `ansible-vault decrypt --output -` is noisy on stderr
+	# ansible-vault-2.2 requires --output -
+	# ansible-vault-2.4 requires --output /dev/stdout
+	my $version = pipeslurp qw(ansible-vault --version);
+	my $out = ($version =~ m{ansible-vault 2\.4\.}) ? '/dev/stdout' : '-';
+	# `ansible-vault decrypt` is noisy on stderr
 	open my $stderr, '>&STDERR' or die "dup: $!\n";
 	open STDERR, '>', '/dev/null' or die "open /dev/null: $!\n";
 	my $cleartext = pipeslurp
-	    qw(ansible-vault decrypt --output /dev/stdout), shift @ARGV;
+	    qw(ansible-vault decrypt --output), $out, shift @ARGV;
 	open STDERR, '>&', $stderr or die "dup: $!\n";
 	return pipespew $cleartext, @gpg_en, recipients, getout;
 }
