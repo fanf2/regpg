@@ -61,7 +61,8 @@ BEGIN {
 
 	$ENV{GNUPGHOME} = "$gnupg";
 
-	$ENV{PATH} = "$dir/..:$ENV{PATH}";
+	my $bin = "$dir/bin";
+	$ENV{PATH} = "$dir/bin:$ENV{PATH}";
 
 	$gpgvers = qx(gpg --version);
 	die "unknown gpg version"

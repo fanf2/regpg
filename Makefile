@@ -38,11 +38,10 @@ uninstall:
 
 clean:
 	rm -f ${DOCS} index.html
-	rm -rf t/gnupg t/work
+	rm -rf t/bin t/gnupg t/work
 
 test:
-	if type perlcritic >/dev/null 2>&1; then perlcritic regpg; fi
-	prove
+	util/test.pl
 
 regpg.1: regpg
 	pod2man regpg regpg.1
