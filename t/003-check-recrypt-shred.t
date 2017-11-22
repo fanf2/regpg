@@ -50,8 +50,9 @@ unlink $gpgconf;
 
 fails 'check finds missing key (long form)',
     '' => $regpg, 'check';
-like colorstrip($stdout), qr{^[-]\w+\s+<$q2>\s*$}m, 'check shows key deleted';
-like $stderr, qr{public key not found}, 'check complains about missing key';
+like colorstrip($stdout), qr{^[-]\w+\s.*\s<$q2>\s*$}m, 'check shows key deleted';
+like $stderr, qr{public key not found|No public key},
+    'check complains about missing key';
 
 fails 'recrypt requires -r',
     '' => $regpg, 'recrypt';
@@ -77,7 +78,7 @@ works 'add a key', '' => $regpg, 'add', $k2;
 
 fails 'check finds new key',
     '' => $regpg, 'check';
-like colorstrip($stdout), qr{^[+]\w+\s+<$q2>\s*$}m, 'check shows new key';
+like colorstrip($stdout), qr{^[+]\w+\s.*\s<$q2>\s*$}m, 'check shows new key';
 is $stderr, '', 'check stderr quiet';
 
 works 'recrypt -r (add)',
