@@ -260,7 +260,7 @@ sub ring_keys {
 	    : (safeslurp @gpg, qw(--list-keys --with-colons));
 	# get the key ID of each encryption-capable key or subkey
 	return map { m{^(?:[^:]*:){4}([^:]*):} }
-	    grep { m{^(pub|sub|sec|ssb):.*:\w*e\w*:$} } @out;
+	    grep { m{^(pub|sub|sec|ssb)(:[^:]*){10}:\w*e\w*:} } @out;
 }
 
 sub recipients {
