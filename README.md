@@ -140,7 +140,8 @@ Acknowledgments
 ---------------
 
 Thanks to Jon Warbrick who gave me the idea for `regpg`'s key
-management, and David McBride for helpful discussions.
+management; and David Carter, Ben Harris, and David McBride for
+helpful bug reports and discussions.
 
 ---------------------------------------------------------------------------
 
