@@ -8,7 +8,9 @@ use Test::More;
 
 use T;
 
+my $k1 = 'regpg-one@testing.example';
 my $k2 = 'regpg-two@testing.example';
+my $q1 = quotemeta $k1;
 my $q2 = quotemeta $k2;
 my $r = quotemeta RED;
 my $g = quotemeta GREEN;
@@ -16,6 +18,12 @@ my $b = quotemeta RESET;
 
 works 'create encrypted file1',
     'secret1' => qw(regpg encrypt file1.asc);
+
+works 'list file1',
+    '' => qw(regpg ls file1.asc);
+like $stdout, qr{^\w+\s.*\s<?$q1>?\s*$}m, 'list includes key1';
+like $stdout, qr{^\w+\s.*\s<?$q2>?\s*$}m, 'list includes key2';
+is $stderr, '', 'list stderr quiet';
 
 works 'check file1',
     '' => qw(regpg check);
@@ -73,6 +81,12 @@ works 'check after recrypt (del)',
     '' => qw(regpg check);
 like $stdout, qr{file1\.asc}, 'check mentions file1';
 is $stderr, '', 'check stderr quiet';
+
+works 'list after del',
+    '' => qw(regpg ls file1.asc);
+like $stdout, qr{^\w+\s.*\s<?$q1>?\s*$}m, 'list includes key1';
+unlike $stdout, qr{^\w+\s.*\s<?$q2>?\s*$}m, 'list omits key2';
+is $stderr, '', 'list stderr quiet';
 
 works 'add a key', '' => qw(regpg add), $k2;
 

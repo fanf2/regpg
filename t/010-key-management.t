@@ -40,6 +40,15 @@ subtest 'list keys (both)' => sub {
 	    unlike => [ $kd ];
 };
 
+subtest 'list keys (error cases)' => sub {
+	fails 'list missing file', '' => qw(regpg lskeys missing.asc);
+	is $stdout, '', 'lskeys stdout quiet';
+	like $stderr, qr{can't open}, 'lskeys file not found';
+	fails 'list two arguments', '' => qw(regpg lskeys one two);
+	is $stdout, '', 'lskeys stdout quiet';
+	like $stderr, qr{usage:}, 'lskeys usage error';
+};
+
 gpg_batch_yes;
 works 'delete key one', '' => qw(regpg delkey), $k1;
 unlink $gpgconf;

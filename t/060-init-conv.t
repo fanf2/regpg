@@ -44,12 +44,18 @@ rmtree '.git';
 SKIP: {
 	skip 'gitless', 10 unless canexec 'git';
 
+	unlink 'secret.asc';
+	works 'encrypt a file',
+	    'otterly badgered' => qw(regpg en secret.asc);
+
 	works 'git init',   '' => qw(git init);
-	works 'git add',    '' => qw(git add pubring.gpg);
+	works 'git add',    '' => qw(git add pubring.gpg secret.asc);
 	works 'git commit', '' => qw(git commit -m pubring);
 	works 'git log',    '' => qw(git log --patch);
 	like $stdout, qr{Binary files .* differ},
 	    'uninit git binary diff';
+	like $stdout, qr{-BEGIN PGP MESSAGE-},
+	    'uninit git PGP message';
 
 	works 'init git', '' => qw(regpg init git);
 	is $stdout, '', 'regpg stdout quiet';
@@ -58,6 +64,8 @@ SKIP: {
 	works 'git log',    '' => qw(git log --patch);
 	like $stdout, qr{^[+]\w+\s.*\s<?regpg-one[@]}m,
 	    'init git text diff';
+	unlike $stdout, qr{-BEGIN PGP MESSAGE-},
+	    'init git no PGP message';
 }
 
 local $ENV{ANSIBLE_NOCOWS} = 'yes';

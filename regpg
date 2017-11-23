@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 
+use Cwd qw(abs_path);
 use File::Basename;
 use File::Path;
 use File::Temp qw(mktemp tempfile);
@@ -18,7 +19,7 @@ usage:
 	regpg help
 	regpg check [options] <cryptfile.asc>...
 keys:
-	regpg lskeys [options]
+	regpg lskeys [options] [cryptfile.asc]
 	regpg addself [options]
 	regpg addkey [options] <keyname>...
 	regpg delkey [options] <keyname>...
@@ -502,20 +503,30 @@ sub init_ansible_vault {
 	return ansible_cfg qw(defaults vault_password_file vault.open);
 }
 
-sub init_git {
-	my $a = safeslurp qw(git check-attr diff), $opt{k};
-	if ($a eq "$opt{k}: diff: unspecified\n") {
+sub git_diff_attr {
+	my ($file,$mode) = @_;
+	my $a = safeslurp qw(git check-attr diff), "$keydir$file";
+	if ($a eq "$keydir$file: diff: unspecified\n") {
 		my $gitattr = "$keydir.gitattributes";
 		verbose "append to $gitattr";
 		unless ($opt{n}) {
 			open my $fh, '>>', $gitattr
 			    or die "open $gitattr: $!\n";
-			print $fh "$keybase diff=gpgkeys\n";
+			print $fh "$file diff=$mode\n";
 			close $fh
 			    or die "write $gitattr: $!\n";
 		}
 	}
-	return vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
+	return;
+}
+
+sub init_git {
+	git_diff_attr $keybase, 'gpgkeys';
+	git_diff_attr '*.asc', 'gpgrcpt';
+	vsystem qw(git config diff.gpgkeys.textconv), 'regpg ls -k';
+	vsystem qw(git config diff.gpgrcpt.textconv),
+	    sprintf "regpg ls -k %s", abs_path $opt{k};
+	return;
 }
 
 sub init_keys {
@@ -623,8 +634,12 @@ sub importkey {
 }
 
 sub lskeys {
-	getargs min => 0, max => 0;
-	return vsystem @gpg, '--fingerprint';
+	getargs min => 0, max => 1;
+	return vsystem @gpg, '--fingerprint'
+	    if @ARGV == 0;
+	my $out = pipeslurp @gpg, qw(--list-packets --list-only), @ARGV;
+	print fingerprint $_ for $out =~ m{\s+keyid\s+(\S+)\s+}g;
+	return 0;
 }
 
 sub for_files {
@@ -863,7 +878,7 @@ B<regpg> B<check> [I<options>] <I<cryptfile.asc>>...
 
 - keys:
 
-B<regpg> B<lskeys> [I<options>]
+B<regpg> B<lskeys> [I<options>] [I<cryptfile.asc>]
 
 B<regpg> B<addself> [I<options>]
 
@@ -1004,11 +1019,14 @@ file, by default F<pubring.gpg>.
 
 =over
 
-=item B<regpg> B<lskeys>
+=item B<regpg> B<lskeys> [I<cryptfile.asc>]
 
-=item B<regpg> B<ls>
+=item B<regpg> B<ls> [I<cryptfile.asc>]
 
-List the keys in the B<regpg> keyring.
+With no argument, list the keys in the B<regpg> keyring.
+
+With a I<cryptfile.asc> argument, list the keys that are able to
+decrypt the file.
 
 =item B<regpg> B<addself>
 
