@@ -930,15 +930,23 @@ The B<regpg> program is a thin wrapper around B<gpg> for looking after
 secrets that need to be stored encrypted in a version control system
 and deployed to servers with a configuration management system.
 
-You use the B<regpg> B<*keys> subcommands to maintain a B<gpg> public key
-ring file (by default F<./pubring.gpg>) which lists the set of people
-who can decrypt the secrets.
+At the root of your project you have a F<pubring.gpg> file which lists
+the set of people who can decrypt the secrets. Elsewhere in that
+directory and its subdirectories you have encrypted F<secret.asc>
+files. The F<.asc> extension is short for ASCII-armored PGP message.
+You can use a different layout, by B<regpg> works best if you follow
+the usual conventions.
+
+You use the B<regpg> B<*keys> subcommands to maintain F<pubring.gpg>.
+By default, B<regpg> expects to find F<pubring.gpg> in the current
+working directory.
 
 You use the B<regpg> B<*crypt> subcommands to manage encrypted files.
-The encryption recipients are all the keys in the public key ring.
-Decryption is non-interactive, using B<gpg-agent>.
+The "recipients" who can decrypt the files are all the keys in the
+public key ring. Decryption is non-interactive, using B<gpg-agent>.
 
-You use the B<regpg> B<gen*> subcommands to create encrypted secrets.
+You use the B<regpg> B<gen*> subcommands to create encrypted secrets
+to be used by other software.
 
 The B<regpg> B<check> subcommand verifies that the encrypted files and
 public keyring are consistent with each other.
@@ -1110,8 +1118,8 @@ read from stdin.
 If I<cryptfile> is C<-> or there are no arguments then the ciphertext
 is written to stdout.
 
-Note: conventionally the I<cryptfile> has a C<.asc> (for
-ASCII-armored) or C<.gpg> extension.
+Note: conventionally the I<cryptfile> has a F<.asc> extention, short
+for ASCII-armored PGP message.
 
 =item B<regpg> B<decrypt> [I<cryptfile.asc> [I<clearfile>]]
 
@@ -1447,8 +1455,8 @@ start of your main playbook:
 =head1 ACKNOWLEDGMENTS
 
 Thanks to Jon Warbrick who gave me the idea for B<regpg>'s key
-management; and David Carter, Ben Harris, and David McBride for
-helpful bug reports and discussions.
+management; and David Carter, Ben Harris, Ian Lewis, and David McBride
+for helpful bug reports and discussions.
 
 =head1 SEE ALSO
 

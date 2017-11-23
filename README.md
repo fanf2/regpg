@@ -43,6 +43,15 @@ Overview
     with `ansible` and `git`, and some `conv` commands to help you
     migrate to `regpg` from other tools.
 
+ *  conventional project layout
+
+    At the root of your project you have a `pubring.gpg` file which
+    lists the set of people who can decrypt the secrets. This is your
+    current working directory when using `regpg`. Elsewhere in your
+    project directory and its subdirectories you have encrypted
+    `secret.asc` files. The F<.asc> extension is short for
+    ASCII-armored PGP message.
+
 
 Documentation
 -------------
@@ -140,8 +149,8 @@ Acknowledgments
 ---------------
 
 Thanks to Jon Warbrick who gave me the idea for `regpg`'s key
-management; and David Carter, Ben Harris, and David McBride for
-helpful bug reports and discussions.
+management; and David Carter, Ben Harris, Ian Lewis, and David McBride
+for helpful bug reports and discussions.
 
 ---------------------------------------------------------------------------
 
