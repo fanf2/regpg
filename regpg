@@ -1317,7 +1317,7 @@ Z<>
 =item B<regpg> B<init> B<git>
 
 Configure B<git> to provide human-readable diffs of the B<regpg>
-public keyring.
+public keyring, and keys that can decrypt each secret.
 
 Note: You must have run B<git> B<init> first. The B<git> B<diff>
 configuration is not propagated with the contents of the repository,
@@ -1325,7 +1325,9 @@ so you need to re-run B<regpg> B<init> B<git> in each fresh clone.
 
 Note: this does not provide human-readable diffs of the cleartext
 contents of encrypted files, because that would expose secrets
-dangerously.
+dangerously. Instead it diffs the keys that are able to decrypt each
+secret. This is intended to help you audit changes to the list of
+people that can access the secrets.
 
 =item B<regpg> B<init> B<ansible>
 
