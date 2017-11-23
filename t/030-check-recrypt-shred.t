@@ -50,6 +50,13 @@ is $stdout, '', 'shred stdout quiet';
 like $stderr, qr{running .*/file}, 'shred stderr verbosity';
 isnt -f 'file1', 'shred removed cleartext file1';
 
+spew 'file1';
+works 'squeegee',
+    '' => qw(regpg squeegee);
+is $stdout, '', 'squeegee stdout quiet';
+like $stderr, qr{running .*/file}, 'squeegee stderr verbosity';
+isnt -f 'file1', 'squeegee removed cleartext file1';
+
 unlink 'file2.asc';
 
 gpg_batch_yes;
