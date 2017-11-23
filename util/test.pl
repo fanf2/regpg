@@ -17,10 +17,14 @@ if (exec_path 'perlcritic') {
 
 mkdir 't/bin';
 unlink glob 't/bin/*';
+my %version;
 for my $gpg (qw(gpg gpg1 gpg2)) {
 	my $path = exec_path $gpg;
 	next unless $path;
-	print STDERR "testing with gpg => $path\n";
+	my $version = (qx($gpg --version))[0];
+	next if $version{$version};
+	$version{$version} = 1;
+	print STDERR "testing with $path => $version";
 	unlink 't/bin/gpg';
 	symlink $path => 't/bin/gpg'
 	    or die "symlink $path => t/bin/gpg: $!\n";
