@@ -664,6 +664,11 @@ sub shred {
 	return for_files shred => \&shred_some;
 }
 
+sub squeegee {
+	$opt{r} = 1;
+	return shred;
+}
+
 sub recrypt {
 	return for_files recrypt => \&recrypt_some;
 }
@@ -850,7 +855,6 @@ $::{import}   = $::{importkey};
 $::{export}   = $::{exportkey};
 $::{en}	      = $::{encrypt};
 $::{re}	      = $::{recrypt};
-$::{squeegee} = $::{shred}; # rwhb2's pronunciation
 
 usage unless @ARGV;
 my $subcommand = shift;
@@ -1191,6 +1195,11 @@ If the B<-r> option is given,
 all cleartext files found by C<regpg check> are shredded.
 
 Note: You might want to test B<shred> with the B<-n> option first!
+
+=item B<regpg> B<squeegee>
+
+An alias for C<regpg shred -r>, particularly handy for users of glass
+teletypes.
 
 =back
 
