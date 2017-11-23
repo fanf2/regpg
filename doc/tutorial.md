@@ -170,6 +170,10 @@ The basic `init` subcommand just creates a `pubring.gpg` file and
 imports your public key. Note that 3E4D80EF matches the ID of the key
 we generated earlier.
 
+The `pubring.gpg` file lives at the root of your project. It lists the
+set of people who can decrypt the secrets. Your encrypted secrets will
+live elsewhere in this directory and its subdirectories.
+
 Let's commit what we have so far:
 
         $ git add pubring.gpg
@@ -255,7 +259,10 @@ This is not a useful diff. You can make it much nicer by installing
         done init -k ./pubring.gpg
         pipe from git check-attr diff ./pubring.gpg
         append to ./.gitattributes
+        pipe from git check-attr diff ./*.asc
+        append to ./.gitattributes
         running git config diff.gpgkeys.textconv regpg ls -k
+        running git config diff.gpgrcpt.textconv regpg ls -k ~/demo/pubring.gpg
 
 `regpg init` is safe to re-run - you can see it observe that
 `pubring.gpg` is already initialized, and that the `git diff` hook is
@@ -308,8 +315,10 @@ A couple of things worth noting:
    the `.git/config` part of the setup. (It would be a remote code
    execution vulnerability!)
 
- * There's no support for diffing secrets, because they should be kept
-   secret, not displayed.
+ * The git hook does not diff decrypted secrets, because they should
+   be kept secret, not displayed. Instead it diffs the keys that are
+   able to decrypt the secret. This is intended to help you audit
+   changes to the list of people that can access the secrets.
 
 
 manipulate secrets
@@ -394,7 +403,26 @@ rid of the second entry in `pubring.gpg`:
         sub   4096R/53E8369C 2017-10-17
 
 What has happened to our encrypted secret key? Well, nothing! It is
-still encrypted to both keys. We can see this by running:
+still encrypted to both keys. There are a couple of ways to see this.
+I can get a list of all the keys that can decrypt a secret:
+
+        $ regpg lskeys foo.asc
+        pub   4096R/3E4D80EF 2017-10-17
+              Key fingerprint = C292 2AB4 1114 30F3 B3B2  483E 1124 9B85 3E4D 80EF
+        uid                  Tony Finch (regpg) <fanf9@uis.cam.ac.uk>
+        sub   4096R/53E8369C 2017-10-17
+
+        pub   4096R/78D9305F 2017-04-04
+              Key fingerprint = D9B6 599A 03AA 1D93 8DC5  A820 72F3 EE0B 78D9 305F
+        uid                  Tony Finch <dot@dotat.at>
+        uid                  Tony Finch <fanf@FreeBSD.org>
+        uid                  Tony Finch <fanf@apache.org>
+        uid                  Tony Finch <fanf2@cam.ac.uk>
+        uid                  Tony Finch <fanf@exim.org>
+        sub   4096R/55317719 2017-04-04
+
+Or I can get a diff between the keys in `pubring.gpg` and the keys
+that can decrypt the secret:
 
         $ regpg check
          checking: ./dotat.at.pem.asc
@@ -514,15 +542,8 @@ You can run the playbook:
         $ ansible-playbook gpg-preload.yml
 
         PLAY [all] *********************************************************************
-
         TASK [setup] *******************************************************************
         ok: [localhost]
-
-        TASK [check gpg agent is available] ********************************************
-        ok: [localhost -> localhost] => {
-            "changed": false,
-            "msg": "All assertions passed"
-        }
 
         TASK [ensure gpg agent is ready] ***********************************************
         ok: [localhost -> localhost] => {
