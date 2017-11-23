@@ -66,8 +66,7 @@ unlink $gpgconf;
 fails 'check finds missing key (long form)',
     '' => qw(regpg check);
 like colorstrip($stdout), qr{^[-]\w+\s.*\s<?$q2>?\s*$}m, 'check shows key deleted';
-like $stderr, qr{public key not found|No public key},
-    'check complains about missing key';
+is $stderr, '', 'check stderr quiet';
 
 fails 'recrypt requires -r',
     '' => qw(regpg recrypt);

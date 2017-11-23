@@ -100,6 +100,10 @@ sub getout {
 #  utilities
 #
 
+# save stdout/stderr once
+open my $stdout, '>&STDOUT' or die "dup: $!\n";
+open my $stderr, '>&STDERR' or die "dup: $!\n";
+
 sub verbose {
 	print STDERR "@_\n" if $opt{v};
 	return;
@@ -144,6 +148,15 @@ sub safeslurp {
 	return pipeslurp @_;
 }
 
+sub pipeslurp_quiet {
+	return pipeslurp @_ if $opt{v} or $opt{n};
+	open STDERR, '>', '/dev/null' or die "open /dev/null: $!\n";
+	my @out = pipeslurp @_;
+	open STDERR, '>&', $stderr or die "dup: $!\n";
+	return @out if wantarray;
+	return join '', @out;
+}
+
 sub pipespew {
 	my $data = shift;
 	verbose "pipe to @_";
@@ -157,9 +170,6 @@ sub pipespew {
 	}
 	return 0;
 }
-
-# save stdout once
-open my $stdout, '>&STDOUT' or die "dup: $!\n";
 
 sub tempclose {
 	my ($th,$tn,$fn) = @_;
@@ -297,9 +307,9 @@ sub add_keys {
 sub fingerprint {
 	# search in both the regpg keyring and the user's keyring
 	my @r;
-	eval { @r = pipeslurp @gpg, '--fingerprint', @_; };
+	eval { @r = pipeslurp_quiet @gpg, '--fingerprint', @_; };
 	return @r if @r;
-	eval { @r = pipeslurp 'gpg', '--fingerprint', @_; };
+	eval { @r = pipeslurp_quiet 'gpg', '--fingerprint', @_; };
 	return @r if @r;
 	return "no fingerprint for @_\n", "\n";
 }
@@ -564,17 +574,14 @@ sub conv_ansible_vault {
 	}
 	my $version = pipeslurp qw(ansible-vault --version);
 	my $cleartext;
-	if ($version =~ m{ansible-vault 2\.4\.}) {
-		# this is likely to crash due to a bug in ansible 2.4
+	if ($version =~ m{ansible-vault 2\.4\.0\.}) {
+		# this is likely to crash due to a bug in ansible 2.4.0
 		$cleartext = pipeslurp
 		    qw(ansible-vault decrypt --output /dev/stdout), shift @ARGV;
 	} else {
 		# `ansible-vault decrypt --output -` is noisy on stderr
-		open my $stderr, '>&STDERR' or die "dup: $!\n";
-		open STDERR, '>', '/dev/null' or die "open /dev/null: $!\n";
-		$cleartext = pipeslurp
+		$cleartext = pipeslurp_quiet
 		    qw(ansible-vault decrypt --output -), shift @ARGV;
-		open STDERR, '>&', $stderr or die "dup: $!\n";
 	}
 	return pipespew $cleartext, @gpg_en, recipients, getout;
 }
