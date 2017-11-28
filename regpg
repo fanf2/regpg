@@ -80,7 +80,7 @@ sub getargs {
 	@gpg = (qw(gpg --no-greeting --keyid-format=long --trust-model=always
 		       --no-default-keyring --keyring), $opt{k});
 	@gpg_de = (qw(gpg --decrypt --quiet --batch --use-agent));
-	@gpg_en = (@gpg, qw(--armor --encrypt));
+	@gpg_en = (@gpg, qw(--armor --force-mdc --encrypt));
 	return;
 }
 
