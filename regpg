@@ -1205,8 +1205,8 @@ Note: You might want to test B<shred> with the B<-n> option first!
 
 =item B<regpg> B<squeegee>
 
-An alias for C<regpg shred -r>, particularly handy for users of glass
-teletypes.
+An alias for C<regpg shred -r>, an effective cleaner that is
+particularly handy for users of glass TTYs.
 
 =back
 
