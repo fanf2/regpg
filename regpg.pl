@@ -200,6 +200,7 @@ sub spewto {
 	my $data = shift;
 	verbose "write to $fn";
 	return if $opt{n};
+	mkpath dirname $fn;
 	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
 	print $th $data;
 	return tempclose $th, $tn, $fn;
@@ -436,9 +437,10 @@ sub shred_some {
 #  init
 #
 
-my $gpg_d = << INSERT ansible/gpg_d.py;
-my $gpg_preload = << INSERT ansible/gpg-preload.yml;
-my $vault_script = << INSERT ansible/vault-open.sh;
+my $ansible_action = INSERT_HERE 'ansible/action.py';
+my $ansible_filter = INSERT_HERE 'ansible/filter.py';
+my $gpg_preload    = INSERT_HERE 'ansible/gpg-preload.yml';
+my $vault_script   = INSERT_HERE 'ansible/vault-open.sh';
 
 sub ansible_cfg {
 	return vsystem qw(ansible localhost -c local -m ini_file -a),
@@ -455,16 +457,17 @@ sub init_preload {
 }
 
 sub init_plugin {
-	my $dir = "${keydir}plugins/filter";
-	my $py = "$dir/gpg_d.py";
-	mkpath $dir;
-	spewto $py, $gpg_d;
-	return ansible_cfg qw(defaults filter_plugins plugins/filter);
+	my ($type,$file) = @_;
+	spewto "${keydir}plugins/$type/gpg_d.py", $file;
+	return ansible_cfg 'defaults', "${type}_plugins", "plugins/${type}";
 }
 
 sub init_ansible {
 	init_preload;
-	init_plugin;
+	# dummy module to make the action plugin work
+	spewto "${keydir}library/gpg_d.py", '';
+	init_plugin 'action', $ansible_action;
+	init_plugin 'filter', $ansible_filter;
 	return;
 }
 
@@ -1299,12 +1302,18 @@ people that can access the secrets.
 Configure Ansible for use with B<regpg>.
 An F<ansible.cfg> file is created if necessary.
 
-This installs an Ansible Jinja2 filter plugin called F<gpg_d> that
-decrypts secrets for deployment on servers. It can be used in
-templates, including the B<content:> option to Ansible's B<copy> module.
+This installs three things:
 
-It also creates a F<gpg-preload.yml> playbook, which you can use to
-get B<gpg-agent> ready right at the start of a playbook run.
+The F<gpg_d> module works like the F<copy> module, except that the
+C<src:> file is decrypted before being transferred to the remote
+target. The decrypted contents can be binary.
+
+The F<gpg_d> Jinja2 filter inserts decrypted files into templates.
+The decrypted contents must be plain text.
+
+To ensure that B<gpg-agent> is not confused by concurrent passphrase
+requests, you can include F<gpg-preload.yml> at the start of your
+playbook.
 
 See the L</EXAMPLES> below for how to use this setup.
 
@@ -1407,12 +1416,12 @@ C<when:> condition on the last line allows you to avoid decrypting
 secrets except when necessary.
 
     - name: install ssh host keys
-      copy:
-	content="{{ item | gpg_d }}"
-	dest="/etc/ssh/{{ item | basename | replace('.asc','') }}"
-	mode=0600
+      gpg_d:
+        src="{{ item }}"
+        dest="/etc/ssh/{{ item | basename | replace('.asc','') }}"
+        mode=0600
       with_fileglob:
-	- ssh_host_*_key.asc
+        - ssh_host_*_key.asc
       when: secrets | default(all) | default()
 
 There can be a problem when Ansible invokes F<gpg_d> multiple times
@@ -1425,6 +1434,11 @@ start of your main playbook:
     - include: gpg-preload.yml
       when: secrets | default(all) | default()
     # etc...
+
+The F<gpg-preload.yml> playbook uses the F<gpg_d> filter like this:
+
+    assert:
+      that: "{{ 'gpg-preload.asc' | gpg_d }}"
 
 =head1 VERSION
 

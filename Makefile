@@ -22,6 +22,11 @@ man1files=	regpg.1
 
 DOCS=		${htmlfiles} ${man1files}
 
+ansible=	ansible/action.py	\
+		ansible/filter.py	\
+		ansible/gpg-preload.yml	\
+		ansible/vault-open.sh
+
 PROGS=		regpg
 
 ALL=		${PROGS} ${DOCS}
@@ -45,7 +50,7 @@ clean:
 test: ${PROGS}
 	util/test.pl
 
-regpg: regpg.pl
+regpg: regpg.pl ${ansible}
 	util/insert-here.pl <regpg.pl >regpg
 	chmod +x regpg
 
