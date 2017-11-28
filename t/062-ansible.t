@@ -23,7 +23,10 @@ spew 'inventory', <<'INVENTORY';
 localhost ansible_connection=local
 INVENTORY
 
-exit unless canexec 'ansible-playbook';
+unless (canexec 'ansible-playbook') {
+	done_testing;
+	exit;
+}
 
 works 'init ansible', '' => qw(regpg init ansible);
 works 'try ansible', '' => qw(ansible-playbook gpg-preload.yml);
