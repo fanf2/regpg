@@ -80,14 +80,6 @@ localhost ansible_connection=local
 INVENTORY
 
 SKIP: {
-	skip 'ansible-nope', 3 unless canexec 'ansible-playbook';
-
-	works 'init ansible', '' => qw(regpg init ansible);
-	works 'try ansible', '' => qw(ansible-playbook gpg-preload.yml);
-	like $stdout, qr{All assertions passed}, 'gpg_d plugin worked';
-}
-
-SKIP: {
 	skip 'ansible-revault', 18 unless canexec 'ansible-vault';
 
 	unlink 'secret', 'secret.asc';
