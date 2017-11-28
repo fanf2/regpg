@@ -85,7 +85,7 @@ class ActionModule(ActionBase):
 
         except Exception as e:
             result['failed'] = True
-            result['msg'] = to_bytes(e)
+            result['msg'] = 'could not get remote checksum: '+to_bytes(e)
             return result
 
         remote_checksum = dest_stat['checksum']
@@ -118,10 +118,8 @@ class ActionModule(ActionBase):
                                                task_vars=task_vars, tmp=tmp,
                                                delete_remote_tmp=False))
 
-            result['diff'] = { 'before': { 'checksum': remote_checksum },
-                               'after': { 'checksum': local_checksum } }
-
-        else:
+        elif remote_checksum != '1':
+            # only check remote file if it is present
             new_module_args.update(
                 dict(
                     src=None,
@@ -133,9 +131,13 @@ class ActionModule(ActionBase):
                                                module_args=new_module_args,
                                                task_vars=task_vars, tmp=tmp,
                                                delete_remote_tmp=False))
+            result['fanf'] = 'spong'
 
-            result['diff']['before']['checksum'] = remote_checksum
-            result['diff']['after']['checksum'] = local_checksum
+        if 'diff' not in result:
+            result['diff'] = { 'before': {}, 'after': {} }
+
+        result['diff']['before']['checksum'] = remote_checksum
+        result['diff']['after']['checksum'] = local_checksum
 
         self._remove_tmp_path(tmp)
 
