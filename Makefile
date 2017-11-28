@@ -24,7 +24,9 @@ DOCS=		${htmlfiles} ${man1files}
 
 PROGS=		regpg
 
-all: ${DOCS}
+ALL=		${PROGS} ${DOCS}
+
+all: ${ALL}
 
 install: all
 	install -m 755 -d ${bindest}
@@ -37,11 +39,15 @@ uninstall:
 	for f in ${man1files}; do rm -f ${man1dest}/$$f; done
 
 clean:
-	rm -f ${DOCS} index.html
+	rm -f ${ALL} regpg.asc index.html
 	rm -rf t/bin t/gnupg t/work
 
-test:
+test: ${PROGS}
 	util/test.pl
+
+regpg: regpg.pl
+	util/insert-here.pl <regpg.pl >regpg
+	chmod +x regpg
 
 regpg.1: regpg
 	pod2man regpg regpg.1
@@ -60,11 +66,11 @@ index.html: README.html logo/iframe.pl
 .md.html:
 	util/markdown.pl $< $@
 
-release: ${DOCS}
-	util/release.sh ${DOCS}
+release: all
+	util/release.sh ${ALL}
 
 uptalk:
 	for subdir in talks/*; do ${MAKE} -C $$subdir all tidy; done
 
-upload: ${DOCS} index.html uptalk
+upload: ${ALL} index.html uptalk
 	util/upload.sh

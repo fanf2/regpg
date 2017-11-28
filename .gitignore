@@ -1,5 +1,7 @@
 doc/*.html
+regpg
 regpg.1
+regpg.asc
 regpg.html
 index.html
 README.html

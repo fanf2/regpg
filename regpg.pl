@@ -436,44 +436,9 @@ sub shred_some {
 #  init
 #
 
-my $gpg_d = <<'PYTHON';
-import ansible
-import subprocess
-
-def gpg_d(file):
-    try:
-        output = subprocess.check_output(
-            ['gpg', '--use-agent', '--batch', '--quiet', '--decrypt', file])
-    except subprocess.CalledProcessError as e:
-        raise ansible.errors.AnsibleFilterError(
-            'gpg --decrypt '+file+' failed: '+e.output)
-    if output == "":
-        raise ansible.errors.AnsibleFilterError(
-            'gpg --decrypt '+file+' produced no output')
-    return output
-
-class FilterModule(object):
-    def filters(self):
-        return {
-            'gpg_d': gpg_d
-        }
-PYTHON
-
-my $gpg_preload = <<'YAML';
----
-- hosts: all
-  tasks:
-    - name: ensure gpg agent is ready
-      assert:
-        that: "{{ 'gpg-preload.asc' | gpg_d }}"
-      run_once: true
-      delegate_to: localhost
-YAML
-
-my $vault_script = <<'SHELL';
-#!/bin/sh
-gpg --use-agent --batch --quiet --decrypt vault.pwd.asc
-SHELL
+my $gpg_d = << INSERT ansible/gpg_d.py;
+my $gpg_preload = << INSERT ansible/gpg-preload.yml;
+my $vault_script = << INSERT ansible/vault-open.sh;
 
 sub ansible_cfg {
 	return vsystem qw(ansible localhost -c local -m ini_file -a),

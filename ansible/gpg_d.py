@@ -1,0 +1,20 @@
+import ansible
+import subprocess
+
+def gpg_d(file):
+    try:
+        output = subprocess.check_output(
+            ['gpg', '--use-agent', '--batch', '--quiet', '--decrypt', file])
+    except subprocess.CalledProcessError as e:
+        raise ansible.errors.AnsibleFilterError(
+            'gpg --decrypt '+file+' failed: '+e.output)
+    if output == "":
+        raise ansible.errors.AnsibleFilterError(
+            'gpg --decrypt '+file+' produced no output')
+    return output
+
+class FilterModule(object):
+    def filters(self):
+        return {
+            'gpg_d': gpg_d
+        }

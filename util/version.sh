@@ -12,17 +12,17 @@ case $# in
 esac
 
 case $N in
-(*.X)	files="regpg"
+(*.X)	files="regpg.pl"
 	skip=:
 	;;
-(*)	files="regpg README.md"
+(*)	files="regpg.pl README.md"
 	skip=
 	;;
 esac
 
-$skip make clean all test
-
 perl -pi -e 's{regpg-\d+(\.\d+)+(\.X)?}{'$V'}' $files
+
+$skip make clean all test
 
 git commit -a -m $V
 $skip git tag -s -m $V $V

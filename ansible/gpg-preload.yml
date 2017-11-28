@@ -1,0 +1,8 @@
+---
+- hosts: all
+  tasks:
+    - name: ensure gpg agent is ready
+      assert:
+        that: "{{ 'gpg-preload.asc' | gpg_d }}"
+      run_once: true
+      delegate_to: localhost
