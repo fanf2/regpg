@@ -1391,7 +1391,8 @@ F<secrets.tar.gz.asc>.
 
 Get a template OpenSSL CSR configuration file based on a certificate
 similar to the one you want. This example gets the request details
-from the certificate for C<dotat.at>:
+from the certificate for C<dotat.at>, which it downloads from the web
+server:
 
     $ regpg gencsrconf dotat.at tls.csr.conf
 
