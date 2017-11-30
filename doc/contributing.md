@@ -73,7 +73,7 @@ The non-image files (TeX source and `Makefile`) are public domain (CC0).
 
 * make a signed tag for the new version
 
-        ./util/version 1.2
+        ./util/version.sh 1.2
 
 * build and sign release tarballs in `./dist/`
 
@@ -81,7 +81,7 @@ The non-image files (TeX source and `Makefile`) are public domain (CC0).
 
 * set an unknown patch level post release
 
-        ./util/version 1.2.X
+        ./util/version.sh 1.2.X
 
 * publish
 
