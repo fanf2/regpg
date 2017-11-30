@@ -10,9 +10,16 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
 try:
+    # ansible-2.2
     from ansible.utils.boolean import boolean
 except:
-    from ansible.module_utils.parsing.convert_bool import boolean
+    try:
+        # ansible-2.4
+        from ansible.module_utils.parsing.convert_bool import boolean
+    except:
+        # ansible-2.3
+        from ansible import constants as C
+        boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 

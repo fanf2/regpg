@@ -82,23 +82,25 @@ sub test_playbook {
 	like $stdout, qr{\+\s+"mode": "0640",}, 'correct mode';
 }
 
-test_playbook 'system';
-
 unless (-d "$testansible/.git") {
+	test_playbook 'system';
 	done_testing;
 	exit;
 }
 
 $ENV{ANSIBLE_HOME} = $testansible;
-$ENV{PYTHONPATH} = "$testansible/lib"
-    . ($ENV{PYTHONPATH} ? ":$ENV{PYTHONPATH}" : '');
+$ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
 for my $tag (qw(
+		stable-2.2
+		stable-2.3
 		stable-2.4
 	   )) {
 	ok chdir($testansible), "chdir $testansible";
 	works 'deinit submodules',
 	    '' => qw(git submodule deinit --all --force);
+	# can't use works() here because git deletes its tempfiles
+	system qw(git clean -dfx);
 	works "switch branch to $tag",
 	    '' => qw(git checkout), $tag;
 	works 'update submodules',
