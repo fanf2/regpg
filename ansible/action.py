@@ -5,9 +5,14 @@ import os
 import subprocess
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+
+try:
+    # ansible-2.2 and later
+    from ansible.module_utils._text import to_bytes
+except:
+    from ansible.utils.unicode import to_bytes
 
 try:
     # ansible-2.2
@@ -18,8 +23,7 @@ except:
         from ansible.module_utils.parsing.convert_bool import boolean
     except:
         # ansible-2.3
-        from ansible import constants as C
-        boolean = C.mk_boolean
+        from ansible.constants import mk_boolean as boolean
 
 class ActionModule(ActionBase):
 
@@ -43,11 +47,11 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['msg'] = "src and dest are required"
         else:
-            try:
-                src = self._find_needle('templates', src)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_native(e)
+            if self._task._role is not None:
+                path = self._task._role._role_path
+            else:
+                path = self._loader.get_basedir()
+            src = self._loader.path_dwim_relative(path, 'files', src)
 
         if 'failed' in result:
             return result
@@ -129,7 +133,7 @@ class ActionModule(ActionBase):
                                                task_vars=task_vars, tmp=tmp,
                                                delete_remote_tmp=False))
 
-        elif remote_checksum != '1':
+        elif not result['changed']:
             # only check remote file if it is present
             new_module_args.update(
                 dict(
@@ -142,8 +146,6 @@ class ActionModule(ActionBase):
                                                module_args=new_module_args,
                                                task_vars=task_vars, tmp=tmp,
                                                delete_remote_tmp=False))
-            result['fanf'] = 'spong'
-
         if 'diff' not in result:
             result['diff'] = { 'before': {}, 'after': {} }
 

@@ -59,6 +59,7 @@ sub test_playbook {
 	my $version = shift;
 
 	unlink 'installed';
+
 	works "ansible $version install a file (check)",
 	    '' => qw(ansible-playbook --check --diff playbook.yml);
 	like $stdout, qr{changed=1}, 'ansible will change';
@@ -75,11 +76,25 @@ sub test_playbook {
 
 	chmod 0600, 'installed';
 
+	works "ansible $version install a file (check mode)",
+	    '' => qw(ansible-playbook --check playbook.yml);
+	like $stdout, qr{changed=1}, 'ansible changed 1';
+
 	works "ansible $version install a file (change mode)",
 	    '' => qw(ansible-playbook --diff playbook.yml);
-	like $stdout, qr{changed=1}, 'ansible changed';
+	like $stdout, qr{changed=1}, 'ansible changed 2';
 	like $stdout, qr{\-\s+"mode": "0600",}, 'wrong mode';
 	like $stdout, qr{\+\s+"mode": "0640",}, 'correct mode';
+
+	spew 'installed', 'garbage';
+
+	works "ansible $version install a file (check modified)",
+	    '' => qw(ansible-playbook --check playbook.yml);
+	like $stdout, qr{changed=1}, 'ansible changed 3';
+
+	works "ansible $version install a file (fix modification)",
+	    '' => qw(ansible-playbook playbook.yml);
+	like $stdout, qr{changed=1}, 'ansible changed 4';
 }
 
 unless (-d "$testansible/.git") {
@@ -92,6 +107,7 @@ $ENV{ANSIBLE_HOME} = $testansible;
 $ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
 for my $tag (qw(
+		stable-2.1
 		stable-2.2
 		stable-2.3
 		stable-2.4
