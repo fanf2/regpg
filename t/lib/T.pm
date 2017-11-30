@@ -14,6 +14,7 @@ our $gpgconf;
 our $gpgvers;
 our $work;
 our $testbin;
+our $testansible;
 our $pgpmsg;
 
 our $status;
@@ -27,6 +28,7 @@ our @EXPORT = qw(
 	$gpgvers
 	$work
 	$testbin
+	$testansible
 	$pgpmsg
 
 	$status
@@ -46,10 +48,11 @@ our @EXPORT = qw(
 BEGIN {
 	my $dir = "$FindBin::Bin";
 
-	$testbin = "$dir/bin";
-	$gnupg = "$dir/gnupg";
-	$gpgconf = "$gnupg/gpg.conf";
-	$work  = "$dir/work";
+	$gnupg	     = "$dir/gnupg";
+	$gpgconf     = "$gnupg/gpg.conf";
+	$work	     = "$dir/work";
+	$testbin     = "$dir/bin";
+	$testansible = "$dir/ansible";
 
 	$pgpmsg =
 	    qr{^-----BEGIN[ ]PGP[ ]MESSAGE-----\n
