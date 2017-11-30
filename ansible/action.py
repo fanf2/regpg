@@ -20,6 +20,7 @@ __metaclass__ = type
 import os
 import subprocess
 
+from ansible import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
@@ -100,7 +101,10 @@ class ActionModule(ActionBase):
         remote_user = (task_vars.get('ansible_ssh_user') or
                        self._play_context.remote_user)
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
+            if ansible_version[:4] == '2.0.':
+                tmp = self._make_tmp_path()
+            else:
+                tmp = self._make_tmp_path(remote_user)
             self._cleanup_remote_tmp = True
 
         try:
@@ -132,8 +136,12 @@ class ActionModule(ActionBase):
             xfered = self._connection._shell.join_path(tmp, 'src')
             self._transfer_data(xfered, cleartext)
 
-            # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, xfered), remote_user)
+            if ansible_version[:4] != '2.0.':
+                # fix file permissions when the copy is done as a different user
+                self._fixup_perms2((tmp, xfered), remote_user)
+            elif (self._play_context.become and
+                  self._play_context.become_user != 'root'):
+                self._remote_chmod('a+r', xfered)
 
             # run the copy module
             new_module_args.update(

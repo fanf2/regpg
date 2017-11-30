@@ -101,8 +101,10 @@ sub test_playbook {
 	works "ansible $version install a file (change mode)",
 	    '' => qw(ansible-playbook --diff playbook.yml);
 	like $stdout, qr{changed=1}, 'ansible changed 2';
-	like $stdout, qr{\-\s+"mode": "0600",}, 'wrong mode';
-	like $stdout, qr{\+\s+"mode": "0640",}, 'correct mode';
+	if ($version ne 'stable-2.0') {
+		like $stdout, qr{\-\s+"mode": "0600",}, 'wrong mode';
+		like $stdout, qr{\+\s+"mode": "0640",}, 'correct mode';
+	}
 
 	spew 'installed', 'garbage';
 
@@ -135,10 +137,12 @@ $ENV{ANSIBLE_HOME} = $testansible;
 $ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
 for my $tag (qw(
+		stable-2.0
 		stable-2.1
 		stable-2.2
 		stable-2.3
 		stable-2.4
+		devel
 	   )) {
 	ok chdir($testansible), "chdir $testansible";
 	works 'deinit submodules',
