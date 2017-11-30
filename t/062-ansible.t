@@ -55,6 +55,24 @@ spew 'playbook.yml', <<"YAML";
         mode: 0640
 YAML
 
+mkpath 'roles/wombat/files';
+symlink '../../../binary.asc' => 'roles/wombat/files/echidna.asc';
+mkpath 'roles/wombat/tasks';
+spew 'roles/wombat/tasks/main.yml', <<"YAML";
+---
+- name: test plugin in a role
+  gpg_d:
+    src: echidna.asc
+    dest: $cwd/installed
+    mode: 0640
+YAML
+spew 'role.yml', <<"YAML";
+---
+- hosts: localhost
+  roles:
+    - wombat
+YAML
+
 sub test_playbook {
 	my $version = shift;
 
@@ -95,6 +113,16 @@ sub test_playbook {
 	works "ansible $version install a file (fix modification)",
 	    '' => qw(ansible-playbook playbook.yml);
 	like $stdout, qr{changed=1}, 'ansible changed 4';
+
+	spew 'installed', 'garbage';
+
+	works "ansible $version role (check modified)",
+	    '' => qw(ansible-playbook --check role.yml);
+	like $stdout, qr{changed=1}, 'ansible changed 5';
+
+	works "ansible $version role (fix modification)",
+	    '' => qw(ansible-playbook role.yml);
+	like $stdout, qr{changed=1}, 'ansible changed 6';
 }
 
 unless (-d "$testansible/.git") {
