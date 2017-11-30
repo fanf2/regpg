@@ -81,7 +81,8 @@ Documentation
 
 If you use `regpg`, let me know! Send me mail at <dot@dotat.at>.
 
-If you would like to submit a bug report or a patch, see
+If you would like to submit a bug report or a patch,
+or if you would like more information about `regpg`'s licence, see
 [doc/contributing.md](https://dotat.at/prog/regpg/doc/contributing.html)
 
 
@@ -152,9 +153,21 @@ Thanks to Jon Warbrick who gave me the idea for `regpg`'s key
 management; and David Carter, Ben Harris, Ian Lewis, and David McBride
 for helpful bug reports and discussions.
 
+
 ---------------------------------------------------------------------------
 
 > Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>  
 > at Cambridge University Information Services.  
-> You may do anything with this. It has no warranty.  
-> <https://creativecommons.org/publicdomain/zero/1.0/>
+>
+> `regpg` is free software: you can redistribute it and/or modify
+> it under the terms of the GNU General Public License as published by
+> the Free Software Foundation, either version 3 of the License, or
+> (at your option) any later version.
+>
+> `regpg` is distributed in the hope that it will be useful,
+> but WITHOUT ANY WARRANTY; without even the implied warranty of
+> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> GNU General Public License for more details.
+>
+> You should have received a copy of the GNU General Public License
+> along with `regpg`.  If not, see <http://www.gnu.org/licenses/>.

@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# You may do anything with this. It has no warranty.
+# <https://creativecommons.org/publicdomain/zero/1.0/>
 
 use warnings;
 use strict;

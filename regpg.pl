@@ -1,4 +1,17 @@
 #!/usr/bin/perl
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use warnings;
 use strict;
@@ -1321,6 +1334,10 @@ Note: these Ansible hooks only use B<gpg>, so you don't need B<regpg>
 to run your playbooks. You only need B<regpg> for altering the public
 keyring and encrypted files.
 
+Note: The F<plugins/action/gpg_d.py> file is distributed under the
+terms of the GNU General Public License version 3 or later. The other
+hook files are public domain (CC0).
+
 =item B<regpg> B<init> B<ansible-vault>
 
 Configure Ansible Vault for use with B<regpg>.
@@ -1446,9 +1463,9 @@ The F<gpg-preload.yml> playbook uses the F<gpg_d> filter like this:
   This is regpg-0.94.X <https://dotat.at/prog/regpg/>
 
   Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
-  at Cambridge University Information Services.
-  You may do anything with this. It has no warranty.
-  <https://creativecommons.org/publicdomain/zero/1.0/>
+  at Cambridge University Information Services
+  and distributed under the terms of the GNU General Public License
+  version 3 or later. <https://www.gnu.org/licenses/gpl.html>
 
 =head1 ACKNOWLEDGMENTS
 
