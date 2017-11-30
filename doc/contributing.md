@@ -59,6 +59,16 @@ so they are released under the least restrictive terms possible.
 
 ----------------------------------------------------------------
 
+The `talks` directory in the `regpg` git repository is not
+included in the `regpg` release tarballs.
+
+Most of the images are released under various Creative Commons
+licences. Each image should have a link to its source.
+
+The non-image files (TeX source and `Makefile`) are public domain (CC0).
+
+----------------------------------------------------------------
+
 ### release process
 
 * make a signed tag for the new version
