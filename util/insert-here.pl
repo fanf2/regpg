@@ -7,7 +7,8 @@ use warnings;
 use strict;
 
 my $V = qx(git describe);
-$V =~ s{-(\d+)-\w+\s*}{.$1};
+chomp $V;
+$V =~ s{-(\d+)-\w+}{.$1};
 
 while (<>) {
 	if (m{^my\s+(\S+)\s+=\s+INSERT_HERE\s+'(\S+)';$}) {
@@ -17,7 +18,7 @@ while (<>) {
 		print <$f>;
 		print "END\n\n";
 	} else {
-		s{regpg-\d+(\.\d+)+(\.X)?}{$V};
+		s{regpg-\d+(\.\d+|\.X)+}{$V};
 		print;
 	}
 }

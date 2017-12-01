@@ -71,21 +71,14 @@ The non-image files (TeX source and `Makefile`) are public domain (CC0).
 
 ### release process
 
-* make a signed tag for the new version
-
         ./util/version.sh 1.2
 
-* build and sign release tarballs in `./dist/`
+The `util/version.sh` makes a signed tag for the new version, builds
+and sign release tarballs in `./dist/`, uploads the release, and marks
+`regpg.pl` with an unknown patch level post release.
 
-        make release
-
-* set an unknown patch level post release
-
-        ./util/version.sh 1.2.X
-
-* publish
-
-        make upload
+When you `make upload` the current patchlevel script is published at
+<https://dotat.at/prog/regpg/regpg>.
 
 You can `make release` any time to get patchlevel tarballs in `./dust/`
 
