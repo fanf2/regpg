@@ -1273,11 +1273,11 @@ Z<>
 =item B<regpg> B<genpwd> [I<cryptfile.asc>]
 
 If I<cryptfile.asc> already exists, decrypt it and print a SHA256
-C<crypt(3)> hash of the password.
+(type C<$5$>) C<crypt(3)> hash of the password.
 
 Otherwise, generate a 40 character password, encrypt it, and store it
-in I<cryptfile.asc>. In B<-v> mode, also print a SHA256 C<crypt(3)>
-hash of the password.
+in I<cryptfile.asc>. In B<-v> mode, also print a C<crypt(3)> hash of
+the password.
 
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
