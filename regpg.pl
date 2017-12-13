@@ -793,9 +793,20 @@ sub genkey {
 	return 0;
 }
 
+sub cryptpwd {
+	my $salt = substr random_password, 0, 16;
+	return printf "%s\n", crypt @_, '$5$'.$salt.'$';
+}
+
 sub genpwd {
 	getargs min => 0, max => 1;
-	pipespew random_password, @gpg_en, recipients, getout;
+	if ($ARGV[0] and -f $ARGV[0]) {
+		cryptpwd pipeslurp @gpg_de, @ARGV;
+	} else {
+		my $pwd = random_password;
+		pipespew $pwd, @gpg_en, recipients, getout;
+		cryptpwd $pwd if $opt{v};
+	}
 	return 0;
 }
 
@@ -1261,9 +1272,15 @@ Z<>
 
 =item B<regpg> B<genpwd> [I<cryptfile.asc>]
 
-Generate a 20 character password, encrypt it, and store it in I<cryptfile.asc>.
+If I<cryptfile.asc> already exists, decrypt it and print a SHA256
+C<crypt(3)> hash of the password.
 
-If I<cryptfile> is missing or C<-> then it is written to stdout.
+Otherwise, generate a 40 character password, encrypt it, and store it
+in I<cryptfile.asc>. In B<-v> mode, also print a SHA256 C<crypt(3)>
+hash of the password.
+
+If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
+is written to stdout.
 
 =back
 
