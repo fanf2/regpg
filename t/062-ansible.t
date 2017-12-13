@@ -138,6 +138,7 @@ $ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
 for my $tag (qw(
 		stable-2.0
+		v2.1.1.0-1
 		stable-2.1
 		stable-2.2
 		stable-2.3
@@ -159,10 +160,14 @@ for my $tag (qw(
 		     => "$testbin/ansible";
 	symlink "$testansible/bin/ansible-playbook"
 		     => "$testbin/ansible-playbook";
-	my $version = $tag =~ s{stable-(\d+)\.(\d+)}{ansible $1\\.$2\\.}r;
+	my $version =
+	    $tag =~ m{stable-(\d+\.\d+)} ? "ansible $1." :
+	    $tag =~ m{v(\d+\.\d+\.\d+\.\d+)-\d} ? "ansible $1" :
+	    "ansible";
+	my $vere = quotemeta $version;
 	works "ansible $tag smoke test",
 	    '' => qw(ansible --version);
-	like $stdout, qr{$version}, "ansible version matches $tag";
+	like $stdout, qr{$vere}, "ansible version matches $tag";
 	test_playbook $tag;
 }
 
