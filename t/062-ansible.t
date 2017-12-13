@@ -138,9 +138,7 @@ $ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
 for my $tag (qw(
 		stable-2.0
-		v2.1.0.0-1
 		v2.1.1.0-1
-		v2.1.2.0-1
 		stable-2.1
 		stable-2.2
 		stable-2.3

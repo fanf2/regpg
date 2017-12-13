@@ -137,8 +137,7 @@ class ActionModule(ActionBase):
             self._transfer_data(xfered, cleartext)
 
             if (ansible_version[:4] != '2.0.' and
-                ansible_version[:6] != '2.1.0.' and
-                ansible_version[:6] != '2.1.1.'):
+                ansible_version[:4] != '2.1.'):
                 # fix file permissions when the copy is done as a different user
                 self._fixup_perms2((tmp, xfered), remote_user)
             elif (self._play_context.become and
