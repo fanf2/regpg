@@ -48,10 +48,10 @@ helpers:
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 generators:
-	regpg genca [options] <priv.asc> <ca.conf> [ca.crt]
+	regpg genca [options] <priv.asc> <ca.cnf> [ca.crt]
 	regpg gencrt [options] <priv.asc> <ca.crt> <csr> [crt]
-	regpg gencsrconf [options] [<certfile>|<hostname> [csr.conf]]
-	regpg gencsr [options] <private.asc> <csr.conf> [csr]
+	regpg gencsrcnf [options] [<certfile>|<hostname> [csr.cnf]]
+	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
 	regpg genpwd [options] [cryptfile.asc]
 setup:
@@ -722,18 +722,18 @@ sub edit {
 	return $status;
 }
 
-sub gencsrconf {
+sub gencsrcnf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
-	my ($source,$conffile,$cert) = @ARGV;
+	my ($src,$cnf,$crt) = @ARGV;
 	my @openssl_x509 = qw(openssl x509 -noout -text -nameopt multiline);
-	if (stdio $source or -f $source) {
-		$cert = safeslurp @openssl_x509, stdio -in => $source;
+	if (stdio $src or -f $src) {
+		$crt = safeslurp @openssl_x509, stdio -in => $src;
 	} else {
-		my $connect = $source =~ s{^(.*)(:\d+)$}{$1}
-		    ? "$1$2" : "$source:443";
-		$cert = safeslurp "openssl s_client ".
-		    "-servername $source -connect $connect ".
+		my ($host,$port) = $src =~ m{^(.*):(\d+)$}
+		    ? ($1,$2) : ($src,443);
+		$crt = safeslurp "openssl s_client ".
+		    "-servername $host -connect $host:$port ".
 		    "</dev/null 2>/dev/null | @openssl_x509";
 	}
 	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
@@ -744,7 +744,7 @@ sub gencsrconf {
 	my @san = $3 =~ m{$dns}g;
 	$subject =~ s{^\s+}{}mg;
 	my $san = join '', map { "DNS.$_ = $san[$_]\n" } keys @san;
-	my $conftext = <<"CONF";
+	my $out = <<"CONF";
 [ req ]
 prompt = no
 distinguished_name = distinguished_name
@@ -758,19 +758,19 @@ $subject
 [ subjectAltName ]
 $san
 CONF
-	if (stdio $conffile) {
-		print $conftext;
+	if (stdio $cnf) {
+		print $out;
 	} else {
-		spewto $conffile, $conftext;
+		spewto $cnf, $out;
 	}
 	return 0;
 }
 
 sub genca {
 	getargs min => 2, max => 3;
-	my ($priv,$conf,$ca) = @ARGV;
+	my ($priv,$cnf,$ca) = @ARGV;
 	my $key = pipeslurp @gpg_de, $priv;
-	my @opt = (-config => $conf);
+	my @opt = (-config => $cnf);
 	push @opt, stdio -out => $ca;
 	pipespew $key,
 	    qw(openssl req -new -x509 -days 1491 -key /dev/stdin), @opt;
@@ -795,9 +795,9 @@ sub gencrt {
 
 sub gencsr {
 	getargs min => 2, max => 3;
-	my ($priv,$conf,$req) = @ARGV;
+	my ($priv,$cnf,$req) = @ARGV;
 	my $key = pipeslurp @gpg_de, $priv;
-	my @opt = (-config => $conf);
+	my @opt = (-config => $cnf);
 	push @opt, stdio -out => $req;
 	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
 	vsystem qw(openssl req -text -in), $req
@@ -879,21 +879,22 @@ sub conv {
 }
 
 $::{'--help'} = $::{help};
-$::{ck}	      = $::{check};
-$::{ls}	      = $::{lskeys};
+$::{ck}       = $::{check};
+$::{ls}       = $::{lskeys};
 $::{add}      = $::{addkey};
 $::{del}      = $::{delkey};
-$::{import}   = $::{importkey};
 $::{export}   = $::{exportkey};
-$::{en}	      = $::{encrypt};
-$::{re}	      = $::{recrypt};
+$::{import}   = $::{importkey};
+$::{en}       = $::{encrypt};
+$::{re}       = $::{recrypt};
+$::{gencsrconf} = $::{gencsrcnf};
 
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
 	qw(add addkey addself check ck conv decrypt
 	   del delkey edit en encrypt export exportkey
-	   genca gencrt gencsrconf gencsr genkey genpwd
+	   genca gencrt gencsrcnf gencsrconf gencsr genkey genpwd
 	   --help help import importkey init ls lskeys
 	   pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
@@ -947,13 +948,13 @@ B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
 
-B<regpg> B<genca> [I<options>] <I<priv.asc>> <I<ca.conf>> [I<ca.crt>]
+B<regpg> B<genca> [I<options>] <I<priv.asc>> <I<ca.cnf>> [I<ca.crt>]
 
 B<regpg> B<gencrt> [I<options>] <I<priv.asc>> <I<ca.crt>> <I<csr>> [I<crt>]
 
-B<regpg> B<gencsrconf> [I<options>] [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
+B<regpg> B<gencsrcnf> [I<options>] [<I<certfile>>|<I<hostname>> [I<csr.cnf>]]
 
-B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<csr.conf>> [I<csr>]
+B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<csr.cnf>> [I<csr>]
 
 B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
@@ -1248,7 +1249,7 @@ OpenSSH, etc.
 
 =over
 
-=item B<regpg> B<genca> <I<priv.asc>> <I<ca.conf>> [I<ca.crt>]
+=item B<regpg> B<genca> <I<priv.asc>> <I<ca.cnf>> [I<ca.crt>]
 
 Create a self-signed X.509 certificate that can be used as a private
 internal certificate authority root certificate.
@@ -1257,7 +1258,7 @@ The CA root private key I<priv.asc> should have been generated with
 B<regpg> B<genkey> B<rsa>.
 
 The certificate distinguished name is given in the OpenSSL
-configuration file I<ca.conf>.
+configuration file I<ca.cnf>.
 
 If I<ca.crt> is C<-> or is omitted then it is written to stdout.
 
@@ -1269,12 +1270,12 @@ and CA root certificate is I<ca.crt>.
 
 If I<crt> is C<-> or is omitted then it is written to stdout.
 
-=item B<regpg> B<gencsrconf> [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
+=item B<regpg> B<gencsrcnf> [<I<certfile>>|<I<hostname>> [I<csr.cnf>]]
 
 Convert an X.509 certificate into an B<openssl> B<req> configuration file
 which can be used with B<regpg> B<gencsr>.
 
-You can use B<gencsrconf> with an existing certificate file I<certfile>
+You can use B<gencsrcnf> with an existing certificate file I<certfile>
 to help with renewals, or you can fetch a web server's certificate
 from I<hostname> to create an example configuration to adapt for a new
 certificate request. See the L</EXAMPLES> below.
@@ -1282,16 +1283,16 @@ certificate request. See the L</EXAMPLES> below.
 If I<certfile> is C<-> or there are no arguments then it is read from
 stdin.
 
-If I<csr.conf> is C<-> or there is one argument then it is written to
+If I<csr.cnf> is C<-> or there is one argument then it is written to
 stdout.
 
-=item B<regpg> B<gencsr> <I<private.asc>> <I<csr.conf>> [I<csr>]
+=item B<regpg> B<gencsr> <I<private.asc>> <I<csr.cnf>> [I<csr>]
 
 Generate an X.509 certificate signing request for an encrypted private
 key.
 
 The CSR parameters (distinguished name, subjectAltName, etc)
-are given in the OpenSSL configuration file I<csr.conf>.
+are given in the OpenSSL configuration file I<csr.cnf>.
 (See the C<req(1ssl)> man page for details.)
 
 The private key I<private.asc> should have been generated
@@ -1487,13 +1488,13 @@ similar to the one you want. This example gets the request details
 from the certificate for C<dotat.at>, which it downloads from the web
 server:
 
-    $ regpg gencsrconf dotat.at tls.csr.conf
+    $ regpg gencsrcnf dotat.at tls.cnf
 
-Edit F<tls.csr.conf> to the correct details for your server, then you
+Edit F<tls.cnf> to the correct details for your server, then you
 can generate a key and CSR:
 
     $ regpg genkey rsa tls.pem.asc
-    $ regpg gencsr tls.pem.asc tls.csr.conf tls.csr
+    $ regpg gencsr tls.pem.asc tls.cnf tls.csr
 
 =head2 Private internal certificate authority
 
@@ -1504,7 +1505,7 @@ C<commonName> to the name of your CA, e.g. "Honest Achmed's Used Cars
 and Certificates".
 
     $ regpg genkey rsa root.pem.asc
-    $ regpg genca root.pem.asc root.conf root.crt
+    $ regpg genca root.pem.asc root.cnf root.crt
 
 Then to make a certificate, generate a CSR as in the previous example,
 then sign it with the CA root key:
