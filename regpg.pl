@@ -48,6 +48,8 @@ helpers:
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 generators:
+	regpg genca [options] <priv.asc> <ca.conf> [ca.crt]
+	regpg gencrt [options] <priv.asc> <ca.crt> <csr> [crt]
 	regpg gencsrconf [options] [<certfile>|<hostname> [csr.conf]]
 	regpg gencsr [options] <private.asc> <csr.conf> [csr]
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
@@ -233,13 +235,17 @@ sub copyfile {
 	return;
 }
 
-sub random_password {
+sub random_bytes {
+	my $len = shift;
 	open my $fh, '<', '/dev/urandom'
 	    or die "open /dev/urandom: $!\n";
-	my $len = 30;
 	$len == sysread $fh, my $bytes, $len
 	    or die "read /dev/urandom: $!\n";
-	return encode_base64 $bytes;
+	return $bytes;
+}
+
+sub random_password {
+	return encode_base64 random_bytes 30;
 }
 
 ########################################################################
@@ -722,7 +728,7 @@ sub gencsrconf {
 	my ($source,$conffile,$cert) = @ARGV;
 	my @openssl_x509 = qw(openssl x509 -noout -text -nameopt multiline);
 	if (stdio $source or -f $source) {
-		$cert = safeslurp @openssl_x509, stdio '-in', $source;
+		$cert = safeslurp @openssl_x509, stdio -in => $source;
 	} else {
 		my $connect = $source =~ s{^(.*)(:\d+)$}{$1}
 		    ? "$1$2" : "$source:443";
@@ -760,12 +766,39 @@ CONF
 	return 0;
 }
 
+sub genca {
+	getargs min => 2, max => 3;
+	my ($priv,$conf,$ca) = @ARGV;
+	my $key = pipeslurp @gpg_de, $priv;
+	my @opt = (-config => $conf);
+	push @opt, stdio -out => $ca;
+	pipespew $key,
+	    qw(openssl req -new -x509 -days 1491 -key /dev/stdin), @opt;
+	vsystem qw(openssl x509 -text -in), $ca
+	    if $opt{v} and $opt[-2] eq '-out';
+	return 0;
+}
+
+sub gencrt {
+	getargs min => 3, max => 4;
+	my ($priv,$ca,$csr,$crt) = @ARGV;
+	my $key = pipeslurp @gpg_de, $priv;
+	my @opt = (-CA => $ca, -in => $csr);
+	push @opt, -set_serial => "0x".unpack "H*", random_bytes 8;
+	push @opt, stdio -out => $crt;
+	pipespew $key,
+	    qw(openssl x509 -req -days 365 -CAkey /dev/stdin), @opt;
+	vsystem qw(openssl x509 -text -in), $crt
+	    if $opt{v} and $opt[-2] eq '-out';
+	return 0;
+}
+
 sub gencsr {
 	getargs min => 2, max => 3;
 	my ($priv,$conf,$req) = @ARGV;
 	my $key = pipeslurp @gpg_de, $priv;
-	my @opt = ('-config', $conf);
-	push @opt, stdio '-out', $req;
+	my @opt = (-config => $conf);
+	push @opt, stdio -out => $req;
 	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
 	vsystem qw(openssl req -text -in), $req
 	    if $opt{v} and $opt[-2] eq '-out';
@@ -858,10 +891,11 @@ $::{re}	      = $::{recrypt};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck conv decrypt del delkey
-	   edit en encrypt export exportkey gencsrconf gencsr
-	   genkey genpwd --help help import importkey init ls
-	   lskeys pbcopy pbpaste re recrypt shred squeegee)) {
+	qw(add addkey addself check ck conv decrypt
+	   del delkey edit en encrypt export exportkey
+	   genca gencrt gencsrconf gencsr genkey genpwd
+	   --help help import importkey init ls lskeys
+	   pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
 } else {
 	usage;
@@ -912,6 +946,10 @@ B<regpg> B<pbpaste> [I<options>] [I<cryptfile.asc>]
 B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
+
+B<regpg> B<genca> [I<options>] <I<priv.asc>> <I<ca.conf>> [I<ca.crt>]
+
+B<regpg> B<gencrt> [I<options>] <I<priv.asc>> <I<ca.crt>> <I<csr>> [I<crt>]
 
 B<regpg> B<gencsrconf> [I<options>] [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
 
@@ -1210,6 +1248,27 @@ OpenSSH, etc.
 
 =over
 
+=item B<regpg> B<genca> <I<priv.asc>> <I<ca.conf>> [I<ca.crt>]
+
+Create a self-signed X.509 certificate that can be used as a private
+internal certificate authority root certificate.
+
+The CA root private key I<priv.asc> should have been generated with
+B<regpg> B<genkey> B<rsa>.
+
+The certificate distinguished name is given in the OpenSSL
+configuration file I<ca.conf>.
+
+If I<ca.crt> is C<-> or is omitted then it is written to stdout.
+
+=item B<regpg> B<gencrt> <I<priv.asc>> <I<ca.crt>> <I<csr>> [I<crt>]
+
+Create an X.509 certificate signed by your private internal
+certificate authority whose encrypted CA private key is I<priv.asc>
+and CA root certificate is I<ca.crt>.
+
+If I<crt> is C<-> or is omitted then it is written to stdout.
+
 =item B<regpg> B<gencsrconf> [<I<certfile>>|<I<hostname>> [I<csr.conf>]]
 
 Convert an X.509 certificate into an B<openssl> B<req> configuration file
@@ -1435,6 +1494,22 @@ can generate a key and CSR:
 
     $ regpg genkey rsa tls.pem.asc
     $ regpg gencsr tls.pem.asc tls.csr.conf tls.csr
+
+=head2 Private internal certificate authority
+
+To create the root certificate, you'll need an OpenSSL configuration
+file similar to the one you would use for requesting a normal
+certificate. Delete all the C<subjectAltName> parts, and set the
+C<commonName> to the name of your CA, e.g. "Honest Achmed's Used Cars
+and Certificates".
+
+    $ regpg genkey rsa root.pem.asc
+    $ regpg genca root.pem.asc root.conf root.crt
+
+Then to make a certificate, generate a CSR as in the previous example,
+then sign it with the CA root key:
+
+    $ regpg gencrt root.pem.asc root.crt tls.csr tls.crt
 
 =head2 Ansible without Vault
 
