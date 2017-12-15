@@ -48,8 +48,7 @@ helpers:
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 generators:
-	regpg genca [options] <priv.asc> <ca.cnf> [ca.crt]
-	regpg gencrt [options] <priv.asc> <ca.crt> <csr> [crt]
+	regpg gencrt [opts] <days> [<cakey> <cacrt>] <priv> <cnf> <crt>
 	regpg gencsrcnf [options] [<certfile>|<hostname> [csr.cnf]]
 	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
@@ -203,6 +202,7 @@ sub pipespewto {
 	verbose "will pipe out to $fn";
 	return verbose "pipe to", @_
 	    if $opt{n};
+	mkpath dirname $fn;
 	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
 	open STDOUT, '>&', $th or die "dup: $!\n";
 	pipespew $data, @_;
@@ -212,12 +212,11 @@ sub pipespewto {
 
 sub spewto {
 	my $fn = shift;
-	my $data = shift;
 	verbose "write to $fn";
 	return if $opt{n};
 	mkpath dirname $fn;
 	my ($th,$tn) = tempfile "$fn.XXXXXXXX";
-	print $th $data;
+	print $th @_;
 	return tempclose $th, $tn, $fn;
 }
 
@@ -246,6 +245,10 @@ sub random_bytes {
 
 sub random_password {
 	return encode_base64 random_bytes 30;
+}
+
+sub random_serial {
+	return -set_serial => "0x".unpack "H*", random_bytes 16;
 }
 
 ########################################################################
@@ -737,8 +740,8 @@ sub gencsrcnf {
 		    "</dev/null 2>/dev/null | @openssl_x509";
 	}
 	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
-	$cert =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
-		   [ ]+X509v3[ ]Subject[ ]Alternative[ ]Name:\s+($dns+)}x
+	$crt =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
+		  [ ]+X509v3[ ]Subject[ ]Alternative[ ]Name:\s+($dns+)}x
 	    or die "regpg: could not find certificate subject\n";
 	my $subject = $2;
 	my @san = $3 =~ m{$dns}g;
@@ -748,9 +751,10 @@ sub gencsrcnf {
 [ req ]
 prompt = no
 distinguished_name = distinguished_name
-req_extensions = req_extensions
+req_extensions = extensions
+x509_extensions = extensions
 
-[ req_extensions ]
+[ extensions ]
 subjectAltName = \@subjectAltName
 
 [ distinguished_name ]
@@ -766,30 +770,37 @@ CONF
 	return 0;
 }
 
-sub genca {
-	getargs min => 2, max => 3;
-	my ($priv,$cnf,$ca) = @ARGV;
-	my $key = pipeslurp @gpg_de, $priv;
-	my @opt = (-config => $cnf);
-	push @opt, stdio -out => $ca;
-	pipespew $key,
-	    qw(openssl req -new -x509 -days 1491 -key /dev/stdin), @opt;
-	vsystem qw(openssl x509 -text -in), $ca
-	    if $opt{v} and $opt[-2] eq '-out';
-	return 0;
-}
-
 sub gencrt {
-	getargs min => 3, max => 4;
-	my ($priv,$ca,$csr,$crt) = @ARGV;
-	my $key = pipeslurp @gpg_de, $priv;
-	my @opt = (-CA => $ca, -in => $csr);
-	push @opt, -set_serial => "0x".unpack "H*", random_bytes 8;
-	push @opt, stdio -out => $crt;
-	pipespew $key,
-	    qw(openssl x509 -req -days 365 -CAkey /dev/stdin), @opt;
-	vsystem qw(openssl x509 -text -in), $crt
-	    if $opt{v} and $opt[-2] eq '-out';
+	getargs min => 4, max => 6;
+	my ($days,$cakey,$cacrt,$priv,$cnf,$self,$signed);
+	if (@ARGV == 6) {
+		($days,$cakey,$cacrt,$priv,$cnf,$signed) = @ARGV;
+		$self = mktemp "$signed.XXXXXXXX";
+		$cakey = pipeslurp @gpg_de, $cakey;
+		$priv = pipeslurp @gpg_de, $priv;
+	} else {
+		($days,$priv,$cnf,$self) = @ARGV;
+		$priv = pipeslurp @gpg_de, $priv;
+	}
+	# Generate a self-signed certificate, then re-sign if necessary.
+	# If we generate a CSR then `openssl x509 -req` drops the
+	# extensions when making a signed certificate. `openssl ca`
+	# requires too much faff with config files for our purposes.
+	pipespew $priv, qw(openssl req -new -x509 -key /dev/stdin),
+	    random_serial, -days => $days, -config => $cnf, -out => $self;
+	if (@ARGV == 6) {
+		# see the openssl x509v3_config man page
+		my $ext = mktemp "$cnf.XXXXXXXX";
+		spewto $ext,
+		    "extendedKeyUsage = serverAuth, clientAuth\n",
+		    "subjectKeyIdentifier = hash\n",
+		    "authorityKeyIdentifier = keyid,issuer\n";
+		pipespew $cakey, qw(openssl x509 -CAkey /dev/stdin),
+		    random_serial, -days => $days, -CA => $cacrt,
+		    -extfile => $ext, -in => $self, -out => $signed;
+		unlink $self, $ext;
+	}
+	vsystem qw(openssl x509 -text -in), $ARGV[-1] if $opt{v};
 	return 0;
 }
 
@@ -894,7 +905,7 @@ my $subcommand = shift;
 if (grep { $subcommand eq $_ }
 	qw(add addkey addself check ck conv decrypt
 	   del delkey edit en encrypt export exportkey
-	   genca gencrt gencsrcnf gencsrconf gencsr genkey genpwd
+	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd
 	   --help help import importkey init ls lskeys
 	   pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
@@ -948,9 +959,7 @@ B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
 
-B<regpg> B<genca> [I<options>] <I<priv.asc>> <I<ca.cnf>> [I<ca.crt>]
-
-B<regpg> B<gencrt> [I<options>] <I<priv.asc>> <I<ca.crt>> <I<csr>> [I<crt>]
+B<regpg> B<gencrt> [I<opts>] <I<days>> [<I<cakey>> <I<cacrt>>] <I<priv>> <I<cnf>> <I<crt>>
 
 B<regpg> B<gencsrcnf> [I<options>] [<I<certfile>>|<I<hostname>> [I<csr.cnf>]]
 
@@ -1249,26 +1258,19 @@ OpenSSH, etc.
 
 =over
 
-=item B<regpg> B<genca> <I<priv.asc>> <I<ca.cnf>> [I<ca.crt>]
+=item B<regpg> B<gencrt> <I<days>> [<I<cakey>> <I<cacrt>>] <I<priv>> <I<cnf>> <I<crt>>
 
-Create a self-signed X.509 certificate that can be used as a private
-internal certificate authority root certificate.
+Create an X.509 certificate with avalidity period given by I<days>, and
+write it to I<crt>. If you provide I<cakey> and I<cacrt>, the
+certificate will be signed by them, otherwise it will be self-signed.
 
-The CA root private key I<priv.asc> should have been generated with
-B<regpg> B<genkey> B<rsa>.
+The certificate's encrypted private key is read from I<priv>, and the
+certificate parameters (distinguished name, subjectAltName, etc) are
+given in the OpenSSL configuration file I<cnf>. (See the C<req(1ssl)>
+man page for details.)
 
-The certificate distinguished name is given in the OpenSSL
-configuration file I<ca.cnf>.
-
-If I<ca.crt> is C<-> or is omitted then it is written to stdout.
-
-=item B<regpg> B<gencrt> <I<priv.asc>> <I<ca.crt>> <I<csr>> [I<crt>]
-
-Create an X.509 certificate signed by your private internal
-certificate authority whose encrypted CA private key is I<priv.asc>
-and CA root certificate is I<ca.crt>.
-
-If I<crt> is C<-> or is omitted then it is written to stdout.
+See the L</EXAMPLES> below for how to use this for a private internal
+certificate authority.
 
 =item B<regpg> B<gencsrcnf> [<I<certfile>>|<I<hostname>> [I<csr.cnf>]]
 
@@ -1499,18 +1501,32 @@ can generate a key and CSR:
 =head2 Private internal certificate authority
 
 To create the root certificate, you'll need an OpenSSL configuration
-file similar to the one you would use for requesting a normal
-certificate. Delete all the C<subjectAltName> parts, and set the
-C<commonName> to the name of your CA, e.g. "Honest Achmed's Used Cars
-and Certificates".
+file similar to this, but with a more suitable distinguished name:
+
+        [ req ]
+        prompt = no
+        distinguished_name = distinguished_name
+        req_extensions = extensions
+        x509_extensions = extensions
+
+        [ extensions ]
+        keyUsage = critical, keyCertSign, cRLSign
+        basicConstraints = critical, CA:TRUE
+        subjectKeyIdentifier = hash
+        authorityKeyIdentifier = keyid, issuer
+
+        [ distinguished_name ]
+        commonName = "Honest Achmed's Used Cars and Certificates"
+
+Then make your CA root private key and certificate:
 
     $ regpg genkey rsa root.pem.asc
-    $ regpg genca root.pem.asc root.cnf root.crt
+    $ regpg gencrt 3650 root.pem.asc root.cnf root.crt
 
-Then to make a certificate, generate a CSR as in the previous example,
-then sign it with the CA root key:
+Then to make a certificate, generate a configuration file and private
+key as in the previous example, then run the following command:
 
-    $ regpg gencrt root.pem.asc root.crt tls.csr tls.crt
+    $ regpg gencrt 365 root.pem.asc root.crt tls.pem.asc tls.cnf tls.crt
 
 =head2 Ansible without Vault
 
