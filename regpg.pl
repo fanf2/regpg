@@ -1519,7 +1519,7 @@ file similar to this, but with a more suitable distinguished name:
         keyUsage = critical, keyCertSign, cRLSign
         basicConstraints = critical, CA:TRUE
         subjectKeyIdentifier = hash
-        authorityKeyIdentifier = keyid, issuer
+        authorityKeyIdentifier = keyid:always, issuer:always
 
         [ distinguished_name ]
         commonName = "Honest Achmed's Used Cars and Certificates"
