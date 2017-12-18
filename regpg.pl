@@ -789,12 +789,12 @@ sub gencrt {
 	pipespew $priv, qw(openssl req -new -x509 -key /dev/stdin),
 	    random_serial, -days => $days, -config => $cnf, -out => $self;
 	if (@ARGV == 6) {
-		# see the openssl x509v3_config man page
+		# The authorityKeyIdentifier will get the wrong value if
+		# it is added the first time round. See x509v3_config(5ssl)
 		my $ext = mktemp "$cnf.XXXXXXXX";
 		spewto $ext,
-		    "extendedKeyUsage = serverAuth, clientAuth\n",
-		    "subjectKeyIdentifier = hash\n",
-		    "authorityKeyIdentifier = keyid,issuer\n";
+		     "subjectKeyIdentifier = hash\n",
+		     "authorityKeyIdentifier = keyid:always, issuer:always\n";
 		pipespew $cakey, qw(openssl x509 -CAkey /dev/stdin),
 		    random_serial, -days => $days, -CA => $cacrt,
 		    -extfile => $ext, -in => $self, -out => $signed;
@@ -1269,6 +1269,12 @@ certificate parameters (distinguished name, subjectAltName, etc) are
 given in the OpenSSL configuration file I<cnf>. (See the C<req(1ssl)>
 man page for details.)
 
+In the self-signed case the OpenSSL configuration file I<cnf> should
+contain all the X.508v3 extension attributes you require. (See the
+C<x509v3_config(5ssl)> man page for details.) In the CA-signed case,
+B<regpg> will add the C<subjectKeyIdentifier> and
+C<authorityKeyIdentifier>, so you should omit them.
+
 See the L</EXAMPLES> below for how to use this for a private internal
 certificate authority.
 
@@ -1524,7 +1530,13 @@ Then make your CA root private key and certificate:
     $ regpg gencrt 3650 root.pem.asc root.cnf root.crt
 
 Then to make a certificate, generate a configuration file and private
-key as in the previous example, then run the following command:
+key as in the previous example. You may want to add the following to the
+C<[extensions]> section:
+
+        keyUsage = digitalSignature, keyEncipherment
+        extendedKeyUsage = serverAuth, clientAuth
+
+Then run the following command:
 
     $ regpg gencrt 365 root.pem.asc root.crt tls.pem.asc tls.cnf tls.crt
 
