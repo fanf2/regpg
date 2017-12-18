@@ -45,31 +45,37 @@ dD5Wnm/fbK7UzG+mGWYVf0nQKE2o9hgH7yY7OhcQlOHYi8jpMATBmtkjaJ/2txGY
 -----END CERTIFICATE-----
 CERT
 
-works 'gencsrconf pipe',
+works 'gencsrcnf pipe',
+    $cert => qw(regpg gencsrcnf);
+like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'tls.cnf contains CN';
+like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'tls.cnf contains SAN';
+is $stderr, '', 'regpg stderr quiet';
+
+works 'gencsrconf compat alias',
     $cert => qw(regpg gencsrconf);
-like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'csrconf contains CN';
-like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
+like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'tls.cnf contains CN';
+like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'tls.cnf contains SAN';
 is $stderr, '', 'regpg stderr quiet';
 
 spew 'cert', $cert;
 
-works 'gencsrconf from file',
-    '' => qw(regpg gencsrconf cert);
-like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'csrconf contains CN';
-like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
+works 'gencsrcnf from file',
+    '' => qw(regpg gencsrcnf cert);
+like $stdout, qr{commonName\s+=\s+dotat[.]at}, 'tls.cnf contains CN';
+like $stdout, qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'tls.cnf contains SAN';
 is $stderr, '', 'regpg stderr quiet';
 
-works 'gencsrconf to file',
-    '' => qw(regpg gencsrconf cert tls.csr.conf);
+works 'gencsrcnf to file',
+    '' => qw(regpg gencsrcnf cert tls.cnf);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
-like slurp('tls.csr.conf'),
-    qr{commonName\s+=\s+dotat[.]at}, 'csrconf contains CN';
-like slurp('tls.csr.conf'),
-    qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'csrconf contains SAN';
+like slurp('tls.cnf'),
+    qr{commonName\s+=\s+dotat[.]at}, 'tls.cnf contains CN';
+like slurp('tls.cnf'),
+    qr{DNS.\d+\s+=\s+www[.]dotat[.]at}, 'tls.cnf contains SAN';
 
-fails 'gencsrconf three args',
-    '' => qw(regpg gencsrconf one two three);
+fails 'gencsrcnf three args',
+    '' => qw(regpg gencsrcnf one two three);
 like $stderr, qr{usage:}, 'usage';
 
 works 'genkey rsa',
@@ -99,12 +105,12 @@ like $stderr, qr{usage:}, 'usage';
 my $csr = qr{\A-----BEGIN CERTIFICATE REQUEST-----};
 
 works 'gencsr pipe',
-    '' => qw(regpg gencsr tls.pem.asc tls.csr.conf);
+    '' => qw(regpg gencsr tls.pem.asc tls.cnf);
 like $stdout, $csr, 'regpg stdout is cert request';
 is $stderr, '', 'regpg stderr quiet';
 
 works 'gencsr file',
-    '' => qw(regpg gencsr tls.pem.asc tls.csr.conf tls.csr);
+    '' => qw(regpg gencsr tls.pem.asc tls.cnf tls.csr);
 is $stdout, '', 'regpg stdout quiet';
 is $stderr, '', 'regpg stderr quiet';
 ok -f 'tls.csr', 'gencsr wrote file';
@@ -117,12 +123,12 @@ like $stdout, qr{DNS:www[.]dotat[.]at}, 'openssl found SAN';
 is $stderr, '', 'openssl stderr quiet';
 
 works 'gencsr verbose pipe',
-    '' => qw(regpg gencsr -v tls.pem.asc tls.csr.conf);
+    '' => qw(regpg gencsr -v tls.pem.asc tls.cnf);
 like $stdout, $csr, 'verbose stdout cert';
 like $stderr, qr{pipe to openssl req}, 'regpg stderr noisy';
 
 works 'gencsr verbose file',
-    '' => qw(regpg gencsr -v tls.pem.asc tls.csr.conf tls.csr);
+    '' => qw(regpg gencsr -v tls.pem.asc tls.cnf tls.csr);
 like $stdout, qr{CN ?= ?dotat[.]at}, 'verbose found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'verbose found SAN';
 like $stderr, qr{running openssl req}, 'regpg stderr noisy';
