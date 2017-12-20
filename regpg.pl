@@ -770,6 +770,17 @@ CONF
 	return 0;
 }
 
+sub getkey {
+	my $priv = shift;
+	if (-f $priv) {
+		return pipeslurp @gpg_de, $priv;
+	} else {
+		my $key = pipeslurp qw(openssl genrsa 2048);
+		pipespewto $priv, $key, @gpg_en, recipients;
+		return $key;
+	}
+}
+
 sub gencrt {
 	getargs min => 4, max => 6;
 	my ($days,$cakey,$cacrt,$priv,$cnf,$self,$signed);
@@ -777,10 +788,10 @@ sub gencrt {
 		($days,$cakey,$cacrt,$priv,$cnf,$signed) = @ARGV;
 		$self = mktemp "$signed.XXXXXXXX";
 		$cakey = pipeslurp @gpg_de, $cakey;
-		$priv = pipeslurp @gpg_de, $priv;
+		$priv = getkey $priv;
 	} else {
 		($days,$priv,$cnf,$self) = @ARGV;
-		$priv = pipeslurp @gpg_de, $priv;
+		$priv = getkey $priv;
 	}
 	# Generate a self-signed certificate, then re-sign if necessary.
 	# If we generate a CSR then `openssl x509 -req` drops the
@@ -807,7 +818,7 @@ sub gencrt {
 sub gencsr {
 	getargs min => 2, max => 3;
 	my ($priv,$cnf,$req) = @ARGV;
-	my $key = pipeslurp @gpg_de, $priv;
+	my $key = getkey $priv;
 	my @opt = (-config => $cnf);
 	push @opt, stdio -out => $req;
 	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
@@ -1267,7 +1278,8 @@ certificate will be signed by them, otherwise it will be self-signed.
 The certificate's encrypted private key is read from I<priv>, and the
 certificate parameters (distinguished name, subjectAltName, etc) are
 given in the OpenSSL configuration file I<cnf>. (See the C<req(1ssl)>
-man page for details.)
+man page for details.) If I<priv> does not exist, it is created as if by
+C<regpg genkey rsa> I<priv>.
 
 In the self-signed case the OpenSSL configuration file I<cnf> should
 contain all the X.508v3 extension attributes you require. (See the
@@ -1304,7 +1316,8 @@ are given in the OpenSSL configuration file I<csr.cnf>.
 (See the C<req(1ssl)> man page for details.)
 
 The private key I<private.asc> should have been generated
-with B<regpg> B<genkey> B<rsa>.
+with B<regpg> B<genkey> B<rsa>. If it does not exist,
+it is created for you.
 
 If I<csr> is C<-> or is omitted then it is written to stdout.
 
@@ -1501,7 +1514,6 @@ server:
 Edit F<tls.cnf> to the correct details for your server, then you
 can generate a key and CSR:
 
-    $ regpg genkey rsa tls.pem.asc
     $ regpg gencsr tls.pem.asc tls.cnf tls.csr
 
 =head2 Private internal certificate authority
@@ -1526,12 +1538,11 @@ file similar to this, but with a more suitable distinguished name:
 
 Then make your CA root private key and certificate:
 
-    $ regpg genkey rsa root.pem.asc
     $ regpg gencrt 3650 root.pem.asc root.cnf root.crt
 
-Then to make a certificate, generate a configuration file and private
-key as in the previous example. You may want to add the following to the
-C<[extensions]> section:
+Then to make a certificate, generate a configuration file using
+B<gencsrcnf> as in the previous example. You may want to add the
+following to the C<[extensions]> section:
 
         keyUsage = digitalSignature, keyEncipherment
         extendedKeyUsage = serverAuth, clientAuth
