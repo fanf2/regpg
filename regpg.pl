@@ -1551,6 +1551,9 @@ Then run the following command:
 
     $ regpg gencrt 365 root.pem.asc root.crt tls.pem.asc tls.cnf tls.crt
 
+Note: For simple self-signed certificates, it's easiest to omit
+the key usage restrictions.
+
 =head2 Ansible without Vault
 
 After running B<regpg> B<init> B<ansible>, here are a couple of ways
