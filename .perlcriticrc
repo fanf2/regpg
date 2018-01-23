@@ -12,3 +12,4 @@ severity = 3
 [-RegularExpressions::ProhibitComplexRegexes]
 [-Subroutines::RequireArgUnpacking]
 [-ValuesAndExpressions::ProhibitImplicitNewlines]
+[-ValuesAndExpressions::ProhibitLeadingZeros]
