@@ -43,6 +43,7 @@ secrets:
 	regpg decrypt [options] [cryptfile.asc [clearfile]]
 	regpg recrypt [options] <cryptfile.asc>...
 helpers:
+	regpg depipe [options] <cryptfile.asc> <fifo>
 	regpg edit [options] <cryptfile.asc>
 	regpg pbcopy [options] [cryptfile.asc]
 	regpg pbpaste [options] [cryptfile.asc]
@@ -690,6 +691,38 @@ sub decrypt {
 	}
 }
 
+sub depipe {
+	getargs min => 2, max => 2;
+	my ($secret,$fifo) = @ARGV;
+	verbose "mkfifo $fifo";
+	if ($opt{n}) {
+		verbose "pipe from @gpg_de $secret";
+		verbose "write to $fifo\n";
+		verbose "unlink $fifo";
+		exit;
+	}
+	return pipeslurp @gpg_de, $secret if $opt{n};
+	unlink $fifo;
+	mkfifo $fifo, 0600
+	    or die "mkfifo $fifo: $!\n";
+	my $pid = fork;
+	die "regpg: fork: $!\n" unless defined $pid;
+	if ($pid > 0) {
+		print "regpg pid $pid waiting on $fifo\n";
+		exit 0;
+	}
+	open my $fh, '>', $fifo
+	    or die "open $fifo: $!\n";
+	my $cleartext = pipeslurp @gpg_de, $secret;
+	verbose "write to $fifo";
+	print $fh $cleartext;
+	close $fh or die "write $fifo: $!\n";
+	verbose "unlink $fifo";
+	unlink $fifo;
+	verbose "regpg pid $$ done";
+	exit;
+}
+
 my @pbcopy = qw(pbcopy);
 my @pbpaste = qw(pbpaste);
 
@@ -922,7 +955,7 @@ $::{gencsrconf} = $::{gencsrcnf};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck conv decrypt
+	qw(add addkey addself check ck conv decrypt depipe
 	   del delkey edit en encrypt export exportkey
 	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd
 	   --help help import importkey init ls lskeys
@@ -967,6 +1000,8 @@ B<regpg> B<decrypt> [I<options>] [I<cryptfile.asc> [I<clearfile>]]
 B<regpg> B<recrypt> [I<options>] <I<cryptfile.asc>>...
 
 - helpers:
+
+B<regpg> B<depipe> I<cryptfile.asc> I<fifo>
 
 B<regpg> B<edit> [I<options>] <I<cryptfile.asc>>
 
@@ -1228,6 +1263,16 @@ The following subcommands provide more convenient access to secrets,
 at the cost of some safety.
 
 =over
+
+=item B<regpg> B<depipe> I<cryptfile.asc> I<fifo>
+
+Create a named pipe called I<fifo>. The I<cryptfile> is decrypted and
+written to the I<fifo> in the background. In the foregroun you can
+start a program which reads the cleartext from the I<fifo>. When it
+has finished, the I<fifo> is removed.
+
+This subcommand is for use with programs that can't read from stdin
+but can read from a named pipe.
 
 =item B<regpg> B<edit> <I<cryptfile.asc>>
 
