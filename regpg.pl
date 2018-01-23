@@ -679,7 +679,13 @@ sub encrypt {
 sub decrypt {
 	getargs min => 0, max => 2;
 	my @in = (@ARGV > 0) ? (shift @ARGV) : ();
-	return vsystem @gpg_de, getout, @in;
+	if (stdio @ARGV) {
+		return vsystem @gpg_de, @in;
+	} else {
+		umask 0077;
+		spewto @ARGV, pipeslurp @gpg_de, @in;
+		return 0;
+	}
 }
 
 my @pbcopy = qw(pbcopy);
@@ -1186,6 +1192,8 @@ for ASCII-armored PGP message.
 =item B<regpg> B<decrypt> [I<cryptfile.asc> [I<clearfile>]]
 
 Decrypt I<cryptfile.asc> to produce I<clearfile>.
+The output file is created with mode 0600,
+i.e. the permissions deny access to group and other users.
 You must be running B<gpg-agent> which will be used
 to gain access to your private key for decryption.
 
