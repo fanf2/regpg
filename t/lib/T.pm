@@ -74,6 +74,7 @@ BEGIN {
 	}
 
 	$ENV{GNUPGHOME} = $gnupg;
+	$ENV{REGPGHOME} = $gnupg;
 	$ENV{PATH} = "$testbin:$ENV{PATH}";
 
 	chdir $work; # ignore failure

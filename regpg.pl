@@ -78,6 +78,7 @@ my @gpg_de;
 my @gpg_en;
 my $keydir;
 my $keybase;
+my $regpghome = $ENV{REGPGHOME} // '/nonexistent';
 
 sub getargs {
 	my %arg = @_;
@@ -92,7 +93,8 @@ sub getargs {
 	$opt{k} = "./$opt{k}" unless $opt{k} =~ m{/};
 	($keybase,$keydir) = fileparse $opt{k};
 	@gpg = (qw(gpg --no-greeting --keyid-format=long --trust-model=always
-		       --no-default-keyring --keyring), $opt{k});
+		   --homedir), $regpghome,
+		qw(--no-default-keyring --keyring), $opt{k});
 	@gpg_de = (qw(gpg --decrypt --quiet --batch --use-agent));
 	@gpg_en = (@gpg, qw(--armor --force-mdc --encrypt));
 	return;
@@ -1505,6 +1507,35 @@ to stdout.
 
 With no argument, B<regpg> lists the contents of
 F<secrets.tar.gz.asc>.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over
+
+=item GPG_AGENT_INFO
+
+When decrypting, B<regpg> tells B<gpg> to use B<gpg-agent> which (in
+older versions of B<gpg>) is located using C<$GPG_AGENT_INFO>.
+
+=item REGPGHOME
+
+In order to avoid interference from the user's F<gpg.conf>, by default
+B<regpg> sets C<$GNUPGHOME> to F</nonexistent>. You can set
+C<$REGPGHOME> to override this, if you want to configure B<gpg> when it
+is used by B<regpg>. Note that some configuration settings can break
+B<regpg>.
+
+=back
+
+=head1 FILES
+
+=over
+
+=item ./pubring.gpg
+
+The default B<regpg> public keyring.
 
 =back
 
