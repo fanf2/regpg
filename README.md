@@ -79,6 +79,9 @@ Documentation
     a presentation I gave to my colleagues which reprises some of the
     above in a different form
 
+ *  [doc/relnotes.md](https://dotat.at/prog/regpg/doc/relnotes.html) -
+    `regpg` release notes and change summary.
+
 If you use `regpg`, let me know! Send me mail at <dot@dotat.at>.
 
 If you would like to submit a bug report or a patch,

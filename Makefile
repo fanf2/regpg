@@ -15,6 +15,7 @@ man1dest=	${DESTDIR}${man1dir}
 
 markdown=	doc/contributing.md	\
 		doc/rationale.md	\
+		doc/relnotes.md		\
 		doc/secrets.md		\
 		doc/threat-model.md	\
 		doc/tutorial.md		\
