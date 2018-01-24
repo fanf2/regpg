@@ -1720,8 +1720,9 @@ The F<gpg-preload.yml> playbook uses the F<gpg_d> filter like this:
 =head1 ACKNOWLEDGMENTS
 
 Thanks to Jon Warbrick who gave me the idea for B<regpg>'s key
-management; and David Carter, Ben Harris, Ian Lewis, and David McBride
-for helpful bug reports and discussions.
+management; and David Carter, Ben Harris, Ian Lewis, David McBride,
+C<mchubby>, and Matthew Vernon for helpful bug reports and
+discussions.
 
 =head1 SEE ALSO
 
