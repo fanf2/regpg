@@ -10,6 +10,7 @@ use POSIX;
 use Test::More;
 
 our $gnupg;
+our $regpg;
 our $gpgconf;
 our $gpgvers;
 our $work;
@@ -24,6 +25,7 @@ our $stderr;
 
 our @EXPORT = qw(
 	$gnupg
+	$regpg
 	$gpgconf
 	$gpgvers
 	$work
@@ -50,7 +52,7 @@ BEGIN {
 
 	$gnupg	     = "$dir/gnupg";
 	$regpg	     = "$dir/regpg";
-	$gpgconf     = "$gnupg/gpg.conf";
+	$gpgconf     = "$regpg/gpg.conf";
 	$work	     = "$dir/work";
 	$testbin     = "$dir/bin";
 	$testansible = "$dir/ansible";

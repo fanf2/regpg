@@ -7,4 +7,5 @@ dust
 t/ansible
 t/bin
 t/gnupg
+t/regpg
 t/work

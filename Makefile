@@ -48,7 +48,7 @@ uninstall:
 
 clean:
 	rm -f ${ALL} regpg.asc index.html
-	rm -rf t/bin t/gnupg t/work
+	rm -rf t/bin t/gnupg r/regpg t/work
 
 test: ${PROGS}
 	util/test.pl
