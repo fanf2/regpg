@@ -79,7 +79,6 @@ my @gpg_de;
 my @gpg_en;
 my $keydir;
 my $keybase;
-my $regpghome = $ENV{REGPGHOME} // './.gnupg';
 
 sub getargs {
 	my %arg = @_;
@@ -93,8 +92,11 @@ sub getargs {
 	    unless -f $opt{k} or $arg{keymaker};
 	$opt{k} = "./$opt{k}" unless $opt{k} =~ m{/};
 	($keybase,$keydir) = fileparse $opt{k};
+	my $regpghome = $ENV{REGPGHOME} ? $ENV{REGPGHOME} :
+			$ENV{HOME} ? "$ENV{HOME}/.regpg" :
+			die "regpg: \$HOME and \$REGPGHOME are unset\n";
 	# let gpg report any problems
-	mkdir $regpghome, 0077;	chmod 0700, $regpghome;
+	mkdir $regpghome; chmod 0700, $regpghome;
 	@gpg = (qw(gpg --no-greeting --keyid-format=long --trust-model=always
 		   --homedir), $regpghome,
 		qw(--no-default-keyring --keyring), $opt{k});
@@ -1568,7 +1570,7 @@ older versions of B<gpg>) is located using C<$GPG_AGENT_INFO>.
 
 =item REGPGHOME
 
-By default B<regpg> sets B<gpg>'s home directory to F<./.gnupg>.
+By default B<regpg> sets B<gpg>'s home directory to F<~/.regpg>.
 You can set C<$REGPGHOME> to override this.
 
 =back
@@ -1581,12 +1583,12 @@ You can set C<$REGPGHOME> to override this.
 
 The default B<regpg> public keyring.
 
-=item ./.gnupg/
+=item ~/.regpg/
 
 Dummy C<$GNUPGHOME> directory to isolate B<regpg> from problematic
 F<gpg.conf> settings. You can set the C<$REGPGHOME> environment
-variable to change this. When starting, B<regpg> ensures this
-directory exists with the right permissions.
+variable to change this. When starting, B<regpg> automatically ensures
+this directory exists.
 
 =back
 

@@ -49,6 +49,7 @@ BEGIN {
 	my $dir = "$FindBin::Bin";
 
 	$gnupg	     = "$dir/gnupg";
+	$regpg	     = "$dir/regpg";
 	$gpgconf     = "$gnupg/gpg.conf";
 	$work	     = "$dir/work";
 	$testbin     = "$dir/bin";
@@ -74,7 +75,7 @@ BEGIN {
 	}
 
 	$ENV{GNUPGHOME} = $gnupg;
-	$ENV{REGPGHOME} = $gnupg;
+	$ENV{REGPGHOME} = $regpg;
 	$ENV{PATH} = "$testbin:$ENV{PATH}";
 
 	chdir $work; # ignore failure
