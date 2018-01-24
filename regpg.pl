@@ -1065,7 +1065,7 @@ and deployed to servers with a configuration management system.
 At the root of your project you have a F<pubring.gpg> file which lists
 the set of people who can decrypt the secrets. Elsewhere in that
 directory and its subdirectories you have encrypted F<secret.asc>
-files. The F<.asc> extension is short for ASCII-armored PGP message.
+files. (The F<.asc> extension is short for ASCII-armored PGP message.)
 You can use a different layout, by B<regpg> works best if you follow
 the usual conventions.
 
@@ -1084,7 +1084,7 @@ The B<regpg> B<check> subcommand verifies that the encrypted files and
 public keyring are consistent with each other.
 
 The B<regpg> B<init> subcommand helps you to hook up B<regpg> with
-a few other utilities.
+Ansible and B<git>.
 
 =head1 OPTIONS
 
@@ -1103,8 +1103,9 @@ Do nothing, but show what would have been done.
 
 =item B<-r>
 
-For the B<addkey>, B<delkey>, and B<recrypt> subcommands,
-recrypt all files found by the B<check> subcommand.
+For the B<addkey>, B<delkey>, B<import>, and B<recrypt> subcommands,
+recrypt all files found by the B<check> subcommand. For the B<shred>
+subcommand, destroy all cleartext files found by the B<check> subcommand.
 
 =item B<-v>
 
@@ -1194,7 +1195,7 @@ A I<keyname> can be a key fingerprint or ID
 or a person's email address.
 
 If the B<-r> option is given,
-all files are recrypted after the key is added.
+all files are recrypted after the key(s) are added.
 
 =item B<regpg> B<delkey> <I<keyname>>...
 
@@ -1206,7 +1207,7 @@ A I<keyname> can be a key fingerprint or ID
 or a person's email address.
 
 If the B<-r> option is given,
-all files are recrypted after the key is added.
+all files are recrypted after the key(s) are deleted.
 
 =item B<regpg> B<exportkey> [I<keyname>]...
 
@@ -1226,7 +1227,7 @@ exported by B<gpg>.
 If no I<keyfile>s are given then keys are read from stdin.
 
 If the B<-r> option is given,
-all files are recrypted after the key is added.
+all files are recrypted after the key(s) are added.
 
 =back
 
@@ -1293,10 +1294,10 @@ at the cost of some safety.
 
 =item B<regpg> B<depipe> I<cryptfile.asc> I<fifo>
 
-Create a named pipe called I<fifo>. The I<cryptfile> is decrypted and
-written to the I<fifo> in the background. In the foregroun you can
-start a program which reads the cleartext from the I<fifo>. When it
-has finished, the I<fifo> is removed.
+Create a temporary named pipe called I<fifo>. The I<cryptfile> is
+decrypted and written to the I<fifo> in the background. In the
+foreground you can start a program which reads the cleartext from the
+I<fifo>. When it has finished, the I<fifo> is removed.
 
 This subcommand is for use with programs that can't read from stdin
 but can read from a named pipe.
@@ -1353,8 +1354,8 @@ OpenSSH, etc.
 
 =item B<regpg> B<gencrt> <I<days>> [<I<cakey>> <I<cacrt>>] <I<priv>> <I<cnf>> <I<crt>>
 
-Create an X.509 certificate with avalidity period given by I<days>, and
-write it to I<crt>. If you provide I<cakey> and I<cacrt>, the
+Create an X.509 certificate with a validity period given by I<days>,
+and write it to I<crt>. If you provide I<cakey> and I<cacrt>, the
 certificate will be signed by them, otherwise it will be self-signed.
 
 The certificate's encrypted private key is read from I<priv>, and the
