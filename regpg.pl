@@ -881,8 +881,8 @@ sub genssh {
 	# the loose permission on /dev/stdin on BSDish systems, and
 	# puttygen seems to stop reading from a pipe before EOF; the
 	# disadvantage of the fifo is the risk of losing an open race.
-	my $mode = (stat '/dev/stdin')[2];
-	if ($mode & 0077) {
+	my @stat = POSIX::fstat((POSIX::pipe)[0]);
+	if ($stat[2] & 0077 && $stat[4] == $<) {
 		my $fifo = mktemp "$pub.XXXXXXXX";
 		spewtofifo $fifo, $key;
 		open STDOUT, '>', $pub
