@@ -118,6 +118,9 @@ subcommands.
 * OpenSSL - 1.0.1 - 1.0.2 - 1.1.0
 * `xclip` - 0.12
 
+The documentation is built using John Gruber's `Text::Markdown`.
+Apart from that, all the required modules come with `perl`.
+
 
 Downloads
 ---------
