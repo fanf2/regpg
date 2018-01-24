@@ -43,7 +43,7 @@ regpg release notes
 
 * Ansible portability fixes
 
-* Ansible gpg_d module
+* Ansible gpg_d module, to support binary secrets
 
 * Force message authentication digests on encrypted files
 
