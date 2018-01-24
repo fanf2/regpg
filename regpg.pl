@@ -910,6 +910,8 @@ sub genkey {
 	my @genkey = sort keys %genkey;
 	die "regpg genkey: algorithm $algo is not in @genkey\n",
 	    unless exists $genkey{$algo};
+	return genssh $pub, scalar pipeslurp @gpg_de, $priv
+	    if -f $priv and defined $pub;
 	my $key = pipeslurp @{ $genkey{$algo} };
 	pipespewto $priv, $key, @gpg_en, recipients;
 	genssh $pub, $key if $pub;
@@ -1411,8 +1413,11 @@ if you give the B<-v> option.
 
 Generate a cryptographic key pair, for use with OpenSSL or OpenSSH.
 The PEM private key is encrypted and written to the file
-I<private.asc>. If an I<ssh.pub> filename is given, an B<ssh> public
-key is written there.
+I<private.asc>.
+
+If an I<ssh.pub> filename is given, an B<ssh> public key is written
+there. If I<private.asc> already exists, B<genkey> will convert it to
+an B<ssh> public key rather than generating a new key.
 
 The algorithm can be one of:
 
