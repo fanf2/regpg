@@ -227,6 +227,31 @@ sub spewto {
 	return tempclose $th, $tn, $fn;
 }
 
+sub spewtofifo {
+	my $fifo = shift;
+	verbose "mkfifo $fifo";
+	if ($opt{n}) {
+		verbose "write to $fifo\n";
+		verbose "unlink $fifo";
+		return;
+	}
+	unlink $fifo;
+	mkfifo $fifo, 0600
+	    or die "mkfifo $fifo: $!\n";
+	my $pid = fork;
+	die "regpg: fork: $!\n" unless defined $pid;
+	return $pid if $pid > 0;
+	open my $fh, '>', $fifo
+	    or die "open $fifo: $!\n";
+	verbose "write to $fifo";
+	print $fh @_;
+	close $fh or die "write $fifo: $!\n";
+	verbose "unlink $fifo";
+	unlink $fifo;
+	verbose "regpg pid $$ done";
+	exit 0;
+}
+
 sub copyfile {
 	my $srcN = shift;
 	my $dstN = shift;
@@ -699,33 +724,10 @@ sub decrypt {
 sub depipe {
 	getargs min => 2, max => 2;
 	my ($secret,$fifo) = @ARGV;
-	verbose "mkfifo $fifo";
-	if ($opt{n}) {
-		verbose "pipe from @gpg_de $secret";
-		verbose "write to $fifo\n";
-		verbose "unlink $fifo";
-		exit;
-	}
-	return pipeslurp @gpg_de, $secret if $opt{n};
-	unlink $fifo;
-	mkfifo $fifo, 0600
-	    or die "mkfifo $fifo: $!\n";
-	my $pid = fork;
-	die "regpg: fork: $!\n" unless defined $pid;
-	if ($pid > 0) {
-		print "regpg pid $pid waiting on $fifo\n";
-		exit 0;
-	}
-	open my $fh, '>', $fifo
-	    or die "open $fifo: $!\n";
 	my $cleartext = pipeslurp @gpg_de, $secret;
-	verbose "write to $fifo";
-	print $fh $cleartext;
-	close $fh or die "write $fifo: $!\n";
-	verbose "unlink $fifo";
-	unlink $fifo;
-	verbose "regpg pid $$ done";
-	exit;
+	my $pid = spewtofifo $fifo, $cleartext;
+	print "regpg pid $pid waiting on $fifo\n" if $pid;
+	return 0;
 }
 
 my @pbcopy = qw(pbcopy);
