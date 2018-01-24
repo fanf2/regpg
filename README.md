@@ -118,6 +118,7 @@ subcommands.
 * Ansible - 2.2 - 2.4
 * OpenSSH - 6.7 - 7.2 - 7.6
 * OpenSSL - 1.0.1 - 1.0.2 - 1.1.0
+* PuTTY - 0.68
 * `xclip` - 0.12
 
 You only need the following to build from `git`.

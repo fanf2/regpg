@@ -94,6 +94,15 @@ ok -f 'ssh.pub', 'genkey rsa wrote ssh public key';
 like slurp('ssh.asc'), $pgpmsg, 'genkey rsa wrote encrypted ssh key';
 like slurp('ssh.pub'), qr{ssh-rsa}, 'genkey rsa ssh public key OK';
 
+works 'genkey ed25519 ssh',
+    '' => qw(regpg genkey ed25519 ed.asc ed.pub);
+is $stdout, '', 'regpg stdout quiet';
+is $stderr, '', 'regpg stderr quiet';
+ok -f 'ed.asc', 'genkey ed25519 wrote ssh private key';
+ok -f 'ed.pub', 'genkey ed25519 wrote ssh public key';
+like slurp('ed.asc'), $pgpmsg, 'genkey ed25519 wrote encrypted ssh key';
+like slurp('ed.pub'), qr{ssh-ed25519}, 'genkey ed25519 ssh public key OK';
+
 fails 'genkey one arg',
     '' => qw(regpg genkey one);
 like $stderr, qr{usage:}, 'usage';

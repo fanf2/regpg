@@ -878,7 +878,8 @@ sub gencsr {
 sub genssh {
 	my ($pub,$key) = @_;
 	# Ideally we want to use a pipe, but ssh-keygen does not like
-	# the loose permission on /dev/stdin on BSDish systems; the
+	# the loose permission on /dev/stdin on BSDish systems, and
+	# puttygen seems to stop reading from a pipe before EOF; the
 	# disadvantage of the fifo is the risk of losing an open race.
 	my $mode = (stat '/dev/stdin')[2];
 	if ($mode & 0077) {
@@ -897,17 +898,19 @@ sub genkey {
 	getargs min => 2, max => 3;
 	my ($algo,$priv,$pub) = @ARGV;
 	my %genkey = (
-		dsa   => [qw(dsaparam -genkey -noout 1024)],
-		ecdsa => [qw(ecparam  -genkey -noout -name prime256v1)],
-		ec256 => [qw(ecparam  -genkey -noout -name prime256v1)],
-		ec384 => [qw(ecparam  -genkey -noout -name secp384r1)],
-		ec521 => [qw(ecparam  -genkey -noout -name secp521r1)],
-		rsa   => [qw(genrsa 2048)],
-	    );
+	    dsa   => [qw(openssl dsaparam -genkey -noout 1024)],
+	    ecdsa => [qw(openssl ecparam  -genkey -noout -name prime256v1)],
+	    ec256 => [qw(openssl ecparam  -genkey -noout -name prime256v1)],
+	    ec384 => [qw(openssl ecparam  -genkey -noout -name secp384r1)],
+	    ec521 => [qw(openssl ecparam  -genkey -noout -name secp521r1)],
+	    rsa   => [qw(openssl genrsa 2048)],
+	    ed25519 => [qw(puttygen -O private-openssh -t ed25519
+   --random-device /dev/urandom --new-passphrase /dev/null -o /dev/stdout)]
+	);
 	my @genkey = sort keys %genkey;
 	die "regpg genkey: algorithm $algo is not in @genkey\n",
 	    unless exists $genkey{$algo};
-	my $key = pipeslurp 'openssl', @{ $genkey{$algo} };
+	my $key = pipeslurp @{ $genkey{$algo} };
 	pipespewto $priv, $key, @gpg_en, recipients;
 	genssh $pub, $key if $pub;
 	return 0;
@@ -1426,9 +1429,12 @@ The algorithm can be one of:
 
 =item rsa - 2048 bit RSA
 
-Z<>
+=item ed25519 - 256 bit Edwards elliptic curve
 
 =back
+
+Unlike the other algorithms, C<ed25519> is ssh-only, and requires
+B<puttygen>.
 
 =item B<regpg> B<genpwd> [I<cryptfile.asc>]
 
@@ -1719,6 +1725,7 @@ for helpful bug reports and discussions.
 
 =head1 SEE ALSO
 
-gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1), shred(1), ssh-keygen(1)
+gpg(1), gpg-agent(1), ansible(1), git(1),
+openssl(1), puttygen(1) shred(1), ssh-keygen(1)
 
 =cut
