@@ -875,6 +875,22 @@ sub gencsr {
 	return 0;
 }
 
+sub genssh {
+	my ($pub,$key) = @_;
+	# Ideally we want to use a pipe, but ssh-keygen does not like
+	# the loose permission on /dev/stdin on BSDish systems; the
+	# disadvantage of the fifo is the risk of losing an open race.
+	my $mode = (stat '/dev/stdin')[2];
+	if ($mode & 0077) {
+		my $fifo = mktemp "$pub.XXXXXXXX";
+		spewtofifo $fifo, $key;
+		exec qw(ssh-keygen -y -f), $fifo;
+	} else {
+		pipespewto $pub, $key, qw(ssh-keygen -y -f /dev/stdin);
+		return 0;
+	}
+}
+
 sub genkey {
 	getargs min => 2, max => 3;
 	my ($algo,$priv,$pub) = @ARGV;
@@ -891,8 +907,7 @@ sub genkey {
 	    unless exists $genkey{$algo};
 	my $key = pipeslurp 'openssl', @{ $genkey{$algo} };
 	pipespewto $priv, $key, @gpg_en, recipients;
-	pipespewto $pub, $key, qw(ssh-keygen -y -f /dev/stdin)
-	    if $pub;
+	genssh $pub, $key if $pub;
 	return 0;
 }
 
