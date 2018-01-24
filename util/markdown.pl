@@ -26,7 +26,7 @@ $md =~ s{£}{&pound;}g;
 $md =~ m{^([^\n]*)\n};
 my $title = $1;
 
-my $body = Text::Markdown::Markdown($md);
+my $body = Text::Markdown::markdown($md);
 
 open my $hout, '>', $out or die "open > $out: $!\n";
 print $hout <<HTML;
