@@ -884,6 +884,8 @@ sub genssh {
 	if ($mode & 0077) {
 		my $fifo = mktemp "$pub.XXXXXXXX";
 		spewtofifo $fifo, $key;
+		open STDOUT, '>', $pub
+		    or die "regpg: open $pub: $!\n";
 		exec qw(ssh-keygen -y -f), $fifo;
 	} else {
 		pipespewto $pub, $key, qw(ssh-keygen -y -f /dev/stdin);
