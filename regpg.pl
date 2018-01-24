@@ -641,7 +641,8 @@ sub lskeys {
 	getargs min => 0, max => 1;
 	return vsystem @gpg, '--fingerprint'
 	    if @ARGV == 0;
-	my $out = pipeslurp @gpg, qw(--list-packets --list-only), @ARGV;
+	my $out = pipeslurp @gpg,
+	    qw(--quiet --batch --list-packets --list-only), @ARGV;
 	print fingerprint $_ for $out =~ m{\s+keyid\s+(\S+)\s+}g;
 	return 0;
 }
