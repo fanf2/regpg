@@ -4,13 +4,14 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
+use File::Path qw(rmtree);
 use File::Temp qw(tempfile mkdtemp);
 use FindBin;
 use POSIX;
 use Test::More;
 
 our $gnupg;
-our $regpg;
+our $rehome;
 our $gpgconf;
 our $gpgvers;
 our $work;
@@ -26,7 +27,7 @@ our $stderr;
 
 our @EXPORT = qw(
 	$gnupg
-	$regpg
+	$rehome
 	$gpgconf
 	$gpgvers
 	$work
@@ -49,12 +50,22 @@ our @EXPORT = qw(
 	gpg_batch_yes
     );
 
+sub movehome {
+	my $home = shift;
+	my $real = readlink $home;
+	return $real if defined $real;
+	$real = mkdtemp "/run/user/$</regpg.test.XXXXXXXX";
+	symlink $real => $home
+	    or die "symlink $real => $home: $!\n";
+	return $real;
+}
+
 BEGIN {
 	my $dir = "$FindBin::Bin";
 
 	$gnupg	     = "$dir/gnupg";
-	$regpg	     = "$dir/regpg";
-	$gpgconf     = "$regpg/gpg.conf";
+	$rehome	     = "$dir/regpg";
+	$gpgconf     = "$rehome/gpg.conf";
 	$work	     = "$dir/work";
 	$testbin     = "$dir/bin";
 	$testansible = "$dir/ansible";
@@ -70,18 +81,12 @@ BEGIN {
 	$halfarsed = -x "$dir/../Makefile";
 
 	if ($halfarsed) {
-		my $realgnupg = readlink $gnupg;
-		if (! defined $realgnupg) {
-			$realgnupg = mkdtemp
-			    "/run/user/$</regpg.test.gnupg.XXXXXXXX";
-			symlink $realgnupg => $gnupg
-			    or die "symlink $realgnupg => $gnupg: $!\n";
-		}
-		$gnupg = $realgnupg;
+		$gnupg = movehome $gnupg;
+		$rehome = movehome $rehome;
 	}
 
 	$ENV{GNUPGHOME} = $gnupg;
-	$ENV{REGPGHOME} = $regpg;
+	$ENV{REGPGHOME} = $rehome;
 	$ENV{PATH} = "$testbin:$ENV{PATH}";
 
 	for (keys %ENV) {
