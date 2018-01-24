@@ -123,9 +123,8 @@ subcommands.
 You only need the following to build from `git`.
 
 * `make` - any version should do
-* `markdown` - 1.01 (installed as `Text::Markdown`);
-    note that on Debian-like system you want the `markdown` package,
-    not `libtext-markdown-perl`.
+* `Markdown.pl` or `Text::Markdown` -
+    aka `markdown` or `libtext-markdown-perl` on Debian-like systems
 * `perlcritic` - aka `libperl-critic-perl` on Debian-like systems
 
 
