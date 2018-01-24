@@ -231,7 +231,7 @@ sub spewtofifo {
 	my $fifo = shift;
 	verbose "mkfifo $fifo";
 	if ($opt{n}) {
-		verbose "write to $fifo\n";
+		verbose "write to $fifo";
 		verbose "unlink $fifo";
 		return;
 	}
