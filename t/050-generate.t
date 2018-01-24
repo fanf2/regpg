@@ -94,6 +94,22 @@ ok -f 'ssh.pub', 'genkey rsa wrote ssh public key';
 like slurp('ssh.asc'), $pgpmsg, 'genkey rsa wrote encrypted ssh key';
 like slurp('ssh.pub'), qr{ssh-rsa}, 'genkey rsa ssh public key OK';
 
+works 'genkey ecdsa',
+    '' => qw(regpg genkey ecdsa ec.asc);
+is $stdout, '', 'regpg stdout quiet';
+is $stderr, '', 'regpg stderr quiet';
+ok -f 'ec.asc', 'genkey ecdsa wrote private key';
+my $ecdsa = slurp('ec.asc');
+like $ecdsa, $pgpmsg, 'genkey ecdsa wrote encrypted key';
+
+works 'genkey ecdsa make pub key',
+    '' => qw(regpg genkey ecdsa ec.asc ec.pub);
+is $stdout, '', 'regpg stdout quiet';
+is $stderr, '', 'regpg stderr quiet';
+ok -f 'ec.pub', 'genkey ecdsa wrote ssh public key';
+is slurp('ec.asc'), $ecdsa, 'genkey ecdsa priv key unchanged';
+like slurp('ec.pub'), qr{ecdsa-sha2-nistp256}, 'genkey ecdsa ssh public key OK';
+
 works 'genkey ed25519 ssh',
     '' => qw(regpg genkey ed25519 ed.asc ed.pub);
 is $stdout, '', 'regpg stdout quiet';
