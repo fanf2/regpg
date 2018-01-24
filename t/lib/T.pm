@@ -80,6 +80,10 @@ BEGIN {
 	$ENV{REGPGHOME} = $regpg;
 	$ENV{PATH} = "$testbin:$ENV{PATH}";
 
+	for (keys %ENV) {
+		undef $ENV{$_} if m{^LC_.*|^LANG(uage)?$};
+	}
+
 	chdir $work; # ignore failure
 
 	$gpgvers = qx(gpg --version);
