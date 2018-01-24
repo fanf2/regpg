@@ -14,13 +14,17 @@ sub canxclip {
 works 'create encrypted file',
     'foo bar zig' => qw(regpg encrypt file.asc);
 
-works 'decrypt to fifo',
-    '' => qw(regpg depipe file.asc fifo);
-like $stdout, qr{regpg .* waiting on fifo}, 'regpg stdout mentions fifo';
-is $stderr, '', 'regpg stderr quiet';
-ok -p 'fifo', 'fifo exists';
-is slurp('fifo'), 'foo bar zig', 'read cleartext from fifo';
-ok ! -e 'fifo', 'fifo has been removed';
+SKIP: {
+	skip 'cannot mkfifo', 6 if $halfarsed;
+
+	works 'decrypt to fifo',
+	    '' => qw(regpg depipe file.asc fifo);
+	like $stdout, qr{regpg .* waiting on fifo}, 'regpg stdout mentions fifo';
+	is $stderr, '', 'regpg stderr quiet';
+	ok -p 'fifo', 'fifo exists';
+	is slurp('fifo'), 'foo bar zig', 'read cleartext from fifo';
+	ok ! -e 'fifo', 'fifo has been removed';
+}
 
 spew 'editor', <<'EDITOR';
 #!/bin/sh
