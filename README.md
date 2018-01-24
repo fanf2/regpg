@@ -92,10 +92,12 @@ Installing
 For a simple one-file install you can copy the `regpg` script to a
 directory on your `$PATH`.
 
-You can run `make install` to install the script and man page to
-the standard places in your home directory. See the start of the
-`Makefile` for variables you can set on the command line to adjust
-the install location.
+You can run `make install` to install the script and man page to the
+standard places in your home directory, and `make uninstall` to remove
+them. See the start of the `Makefile` for variables you can set on the
+command line to adjust the install location. See
+[doc/contributing.md](https://dotat.at/prog/regpg/doc/contributing.html)
+for details about building from `git`.
 
 
 Dependencies
@@ -118,8 +120,11 @@ subcommands.
 * OpenSSL - 1.0.1 - 1.0.2 - 1.1.0
 * `xclip` - 0.12
 
-The documentation is built using John Gruber's `Text::Markdown`.
-Apart from that, all the required modules come with `perl`.
+You only need the following to build from `git`.
+
+* `make` - any version should do
+* `markdown` - 1.01 (installed as `Text::Markdown`)
+* `perlcritic` - aka `libperl-critic-perl` on Debian-like systems
 
 
 Downloads

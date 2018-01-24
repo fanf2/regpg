@@ -14,6 +14,43 @@ according to the Developer's Certificate of Origin 1.1
 
 ----------------------------------------------------------------
 
+building `regpg`
+----------------
+
+The source archives (see "Downloads" in the `README`) are distributed
+ready-built, so you should only need to build `regpg` if you are
+installing from `git` (see "Repositories" in the `README`).
+
+The following `make` targets are supported:
+
+* `install` - install the script and man page
+* `uninstall` - remove installed files
+
+* `all` - build the main script and documentation
+* `test` - run the test suite
+* `clean` - remove build artefacts and test droppings
+
+----------------------------------------------------------------
+
+release process
+---------------
+
+        ./util/version.sh 1.2
+
+The `util/version.sh` makes a signed tag for the new version, builds
+and sign release tarballs in `./dist/`, uploads the release, and marks
+`regpg.pl` with an unknown patch level post release.
+
+When you `make upload` the current patchlevel script is published at
+<https://dotat.at/prog/regpg/regpg>.
+
+You can `make release` any time to get patchlevel tarballs in `./dust/`
+
+----------------------------------------------------------------
+
+overall licence - GPLv3
+-----------------------
+
 The overall licence for regpg is the GPLv3, same as GnuPG and Ansible.
 There is a copy of the GPL distributed with regpg in the file `COPYING`.
 
@@ -47,6 +84,9 @@ The GPL applies to:
 
 ----------------------------------------------------------------
 
+licence - CC0 pieces
+--------------------
+
 Several `regpg` support files are public domain (CC0)
 <https://creativecommons.org/publicdomain/zero/1.0/>:
 
@@ -59,6 +99,9 @@ so they are released under the least restrictive terms possible.
 
 ----------------------------------------------------------------
 
+licence - talks
+---------------
+
 The `talks` directory in the `regpg` git repository is not
 included in the `regpg` release tarballs.
 
@@ -66,20 +109,5 @@ Most of the images are released under various Creative Commons
 licences. Each image should have a link to its source.
 
 The non-image files (TeX source and `Makefile`) are public domain (CC0).
-
-----------------------------------------------------------------
-
-### release process
-
-        ./util/version.sh 1.2
-
-The `util/version.sh` makes a signed tag for the new version, builds
-and sign release tarballs in `./dist/`, uploads the release, and marks
-`regpg.pl` with an unknown patch level post release.
-
-When you `make upload` the current patchlevel script is published at
-<https://dotat.at/prog/regpg/regpg>.
-
-You can `make release` any time to get patchlevel tarballs in `./dust/`
 
 ----------------------------------------------------------------
