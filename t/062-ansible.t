@@ -18,6 +18,7 @@ local $ENV{GPG_AGENT_INFO} = 'dummy';
 spew 'ansible.cfg', <<'ANSIBLE_CFG';
 [defaults]
 inventory = inventory
+action_plugins = /etc/ansible/plugins/action
 ANSIBLE_CFG
 spew 'inventory', <<'INVENTORY';
 localhost ansible_connection=local
@@ -31,6 +32,12 @@ unless (canexec 'ansible-playbook') {
 }
 
 works 'init ansible', '' => qw(regpg init ansible);
+like slurp('ansible.cfg'),
+    qr{filter_plugins = plugins/filter},
+    'ansible filter plugin setting added';
+like slurp('ansible.cfg'),
+    qr{action_plugins = /etc/ansible/plugins/action:plugins/action},
+    'ansible action plugin setting extended';
 works 'try ansible', '' => qw(ansible-playbook gpg-preload.yml);
 like $stdout, qr{All assertions passed}, 'gpg_d filter worked';
 

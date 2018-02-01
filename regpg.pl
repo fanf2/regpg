@@ -497,8 +497,13 @@ my $gpg_preload    = INSERT_HERE 'ansible/gpg-preload.yml';
 my $vault_script   = INSERT_HERE 'ansible/vault-open.sh';
 
 sub ansible_cfg {
+	my ($sect,$opt,$val) = @_;
+	my ($fn,$fh,$c) = ("${keydir}ansible.cfg");
+	local $/ = undef;
+	$val = "$1:$val" if open $fh, '<', $fn and
+	    $c = <$fh> and $c =~ m{^\s*$opt\s*=\s*(.*)$}m;
 	return vsystem qw(ansible localhost -c local -m ini_file -a),
-	    "section=$_[0] option=$_[1] value=$_[2] ".
+	    "section=$sect option=$opt value=$val ".
 	    "dest=${keydir}ansible.cfg";
 }
 
