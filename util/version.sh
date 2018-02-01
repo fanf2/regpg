@@ -20,6 +20,8 @@ seddery() {
 	git commit -a -m $version
 }
 
+fgrep $V doc/relnotes.md
+
 make clean all test
 
 seddery $V regpg.pl README.md
