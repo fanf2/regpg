@@ -1,6 +1,13 @@
 regpg release notes and change summary
 ======================================
 
+2018-02-01 - regpg-0.102
+------------------------
+
+* fix `regpg init ansible` when there are existing plugin settings
+
+* check the relnotes are updated before release
+
 
 2018-01-24 - regpg-0.100
 ------------------------
