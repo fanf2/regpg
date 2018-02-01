@@ -141,12 +141,12 @@ and its [GPG signature](https://dotat.at/prog/regpg/regpg.asc).
 
 Download the full source archives and GPG signatures:
 
-* <https://dotat.at/prog/regpg/regpg-0.100.tar.xz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.100.tar.xz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.100.tar.gz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.100.tar.gz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.100.zip>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.100.zip.asc))
+* <https://dotat.at/prog/regpg/regpg-0.101.tar.xz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.101.tar.xz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.101.tar.gz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.101.tar.gz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.101.zip>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.101.zip.asc))
 
 
 Repositories
