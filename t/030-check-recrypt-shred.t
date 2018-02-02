@@ -30,9 +30,19 @@ works 'check file1',
 like $stdout, qr{file1\.asc}, 'check mentions file1';
 is $stderr, '', 'check stderr quiet';
 
+works 'check file1 quietly',
+    '' => qw(regpg check -q);
+is $stdout, '', 'check stdout quiet';
+is $stderr, '', 'check stderr quiet';
+
 spew 'file1';
 fails 'check finds cleartext',
     '' => qw(regpg check);
+like $stdout, qr{CLEARTEXT}, 'check mentions cleartext';
+is $stderr, '', 'check stderr quiet';
+
+fails 'check quiet reports cleartext',
+    '' => qw(regpg check -q);
 like $stdout, qr{CLEARTEXT}, 'check mentions cleartext';
 is $stderr, '', 'check stderr quiet';
 
