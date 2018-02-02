@@ -9,6 +9,9 @@ use strict;
 my $V = qx(git describe);
 chomp $V;
 $V =~ s{-(\d+)-\w+}{.$1};
+# prune the commit number on .X commit so that after a release
+# the bare script is uploaded without .1 in its version number
+$V =~ s{\.1$}{};
 
 while (<>) {
 	if (m{^my\s+(\S+)\s+=\s+INSERT_HERE\s+'(\S+)';$}) {
