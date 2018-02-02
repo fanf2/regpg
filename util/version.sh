@@ -27,6 +27,6 @@ make clean all test
 seddery $V regpg.pl README.md
 git tag -s -m $V $V
 
-make release upload
+make release
 
 seddery $V.X regpg.pl
