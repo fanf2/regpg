@@ -60,6 +60,7 @@ setup:
 options:
 	-k <pubring.gpg>	recipient keyring
 	-n			no changes (implies -v)
+	-q			quiet mode
 	-r			recrypt all files after keyring changes
 	-v			verbose mode
 Either or both file arguments to `encrypt` and `decrypt`
@@ -82,7 +83,7 @@ my $keybase;
 
 sub getargs {
 	my %arg = @_;
-	usage unless getopts '-hk:nrv', \%opt;
+	usage unless getopts '-hk:nqrv', \%opt;
 	help if $opt{h};
 	$opt{k} //= './pubring.gpg';
 	$opt{v} = 1 if $opt{n};
@@ -439,6 +440,7 @@ sub check_one {
 	my $fn = shift;
 	my %ck = check_quiet $fn, @_;
 	return 0 if $opt{n};
+	return 0 if $opt{q} and not ($ck{unsafe} || $ck{diff});
 	print $fn,
 	    $ck{unsafe} ? "\t" . holy_crap(@{ $ck{clear} }) : "",
 	    $ck{diff} ? "\t" : "",
@@ -452,6 +454,7 @@ sub check_long {
 	my $fn = shift;
 	my %ck = check_quiet $fn, @_;
 	return 0 if $opt{n};
+	return 0 if $opt{q} and not ($ck{unsafe} || $ck{diff});
 	print " checking: $fn\n";
 	printf "%s\n", holy_crap $_ for @{ $ck{clear} };
 	print diff_del fingerprint $_ for @{ $ck{file} };
@@ -477,7 +480,7 @@ sub shred_files {
 }
 
 sub shred_some {
-	$opt{v} = 1;
+	$opt{v} = 1 unless $opt{q};
 	if (@ARGV) {
 		shred_files $_ for @ARGV;
 	} else {
@@ -577,7 +580,7 @@ sub init_keys {
 #
 
 sub conv_ansible_gpg {
-	$opt{v} = 1;
+	$opt{v} = 1 unless $opt{q};
 	getargs keymaker => 1, min => 0, max => 0;
 	my $old_scripts = "${keydir}ansible-gpg";
 	return verbose "$old_scripts not found" unless -d $old_scripts;
@@ -942,7 +945,7 @@ sub genpwd {
 
 sub init {
 	getargs keymaker => 1, min => 0;
-	$opt{v} = 1;
+	$opt{v} = 1 unless $opt{q};
 	# Note: 'keys' is described but not named in the manual
 	# because it is automatically added to the hook list
 	my %init = (
@@ -1108,6 +1111,11 @@ to override the default F<./pubring.gpg>.
 
 Do nothing, but show what would have been done.
 
+=item B<-q>
+
+Quiet mode.
+This affects the B<check>, B<conv>, B<init>, and B<shred> subcommands.
+
 =item B<-r>
 
 For the B<addkey>, B<delkey>, B<import>, and B<recrypt> subcommands,
@@ -1139,6 +1147,9 @@ Check I<cryptfile>s for consistency.
 If no arguments are given, B<check>
 recursively finds and lists all encrypted files.
 These are the files that are recryped by the B<-r> option.
+
+With the B<-q> option, files are only listed if
+B<regpg> B<check> finds a problem with them.
 
 If a I<cryptfile> has a C<.asc> or a C<.gpg> extension,
 and an adjacent file exists without the extension,
