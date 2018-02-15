@@ -52,6 +52,11 @@ Overview
     `secret.asc` files. The F<.asc> extension is short for
     ASCII-armored PGP message.
 
+ *  when not to use `regpg`
+
+    It's usually better to use [HashiCorp Vault](https://www.vaultproject.io/)
+    or your cloud provider's native secret management, if you can.
+
 
 Documentation
 -------------
