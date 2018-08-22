@@ -58,6 +58,23 @@ Overview
     or your cloud provider's native secret management, if you can.
 
 
+Downloads
+---------
+
+Download the single-file `regpg` perl script:
+<https://dotat.at/prog/regpg/regpg>
+and its [GPG signature](https://dotat.at/prog/regpg/regpg.asc).
+
+Download the full source archives and GPG signatures:
+
+* <https://dotat.at/prog/regpg/regpg-0.104.tar.xz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.104.tar.xz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.104.tar.gz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.104.tar.gz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.104.zip>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.104.zip.asc))
+
+
 Documentation
 -------------
 
@@ -135,23 +152,6 @@ You only need the following to build from `git`.
 * `Markdown.pl` or `Text::Markdown` -
     aka `markdown` or `libtext-markdown-perl` on Debian-like systems
 * `perlcritic` - aka `libperl-critic-perl` on Debian-like systems
-
-
-Downloads
----------
-
-Download the single-file `regpg` perl script:
-<https://dotat.at/prog/regpg/regpg>
-and its [GPG signature](https://dotat.at/prog/regpg/regpg.asc).
-
-Download the full source archives and GPG signatures:
-
-* <https://dotat.at/prog/regpg/regpg-0.104.tar.xz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.104.tar.xz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.104.tar.gz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.104.tar.gz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.104.zip>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.104.zip.asc))
 
 
 Repositories
