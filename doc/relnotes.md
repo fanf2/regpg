@@ -1,6 +1,12 @@
 regpg release notes and change summary
 ======================================
 
+2018-02-02 - regpg-0.104
+------------------------
+
+* genspkifp generates SPKI fingerprints for HTTPS public key pinning (HPKP)
+
+
 2018-02-02 - regpg-0.103
 ------------------------
 
