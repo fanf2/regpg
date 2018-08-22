@@ -49,7 +49,7 @@ my ($ca_sn) = $stdout =~ m{\s+Serial Number:\s+(\S+)\n};
 my ($ca_id) = $stdout =~ qr{\s+X509v3 Subject Key Identifier:\s+(\S+)\s+};
 $ca_sn = uc $ca_sn; # good grief, OpenSSL, can't you be consistent?
 
-like $ca_sn, qr{^($xx:){15}$xx$}, 'serial number is 16 bytes';
+like $ca_sn, qr{^($xx:){14,}$xx$}, 'serial number is 16 bytes';
 like $ca_id, qr{^($xx:){15,}$xx$}, 'key id is 16 or more bytes';
 like $stdout, qr{\s+X509v3\s+Authority\s+Key\s+Identifier:
 		 \s+keyid:$ca_id
