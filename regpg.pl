@@ -54,6 +54,7 @@ generators:
 	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
 	regpg genpwd [options] [cryptfile.asc]
+	regpg genspkifp [options] [priv|crt|csr]
 setup:
 	regpg init [options] [hook]...
 	regpg conv <command> [options] <args>...
@@ -942,6 +943,29 @@ sub genpwd {
 	return 0;
 }
 
+sub genspkifp {
+	getargs min => 1, max => 1;
+	my $fn = $ARGV[0];
+	open my $fh, '<', $fn
+	    or die "open $fn: $!\n";
+	my $fl = <$fh>;
+	my $pub;
+	if ($fl eq "-----BEGIN PGP MESSAGE-----\n") {
+		$pub = safeslurp "@gpg_de $fn | openssl pkey -pubout";
+	} elsif ($fl eq "-----BEGIN RSA PRIVATE KEY-----\n") {
+		$pub = safeslurp qw(openssl pkey -pubout -in), $fn;
+	} elsif ($fl =~ m{^-----BEGIN CERTIFICATE( REQUEST)?-----\s*$}) {
+		my @cmd = ('openssl', defined($1) ? 'req' : 'x509');
+		print STDERR pipeslurp @cmd, qw(-subject -noout -in), $fn if $opt{v};
+		$pub = safeslurp @cmd, qw(-pubkey -noout -in), $fn;
+	} else {
+		die "unknown file format: $fn\n";
+	}
+	return pipespew $pub, 'openssl pkey -pubin -outform der |
+	openssl dgst -sha256 -binary |
+	openssl base64';
+}
+
 sub init {
 	getargs keymaker => 1, min => 0;
 	$opt{v} = 1 unless $opt{q};
@@ -993,7 +1017,7 @@ my $subcommand = shift;
 if (grep { $subcommand eq $_ }
 	qw(add addkey addself check ck conv decrypt depipe
 	   del delkey edit en encrypt export exportkey
-	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd
+	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd genspkifp
 	   --help help import importkey init ls lskeys
 	   pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
@@ -1058,6 +1082,8 @@ B<regpg> B<gencsr> [I<options>] <I<private.asc>> <I<csr.cnf>> [I<csr>]
 B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
 B<regpg> B<genpwd> [I<options>] [I<cryptfile.asc>]
+
+B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>]
 
 - setup:
 
@@ -1468,6 +1494,15 @@ the password.
 
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
+
+=item B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>]
+
+Generate an X.509 subject public key information SHA-256 fingerprint,
+suitable for use with HTTPS public key pinning (HPKP). The public key
+can be obtained from a gpg-encrypted private key, a certificate, or a
+certificate signing request. (Generating a SPKI pin from a private key
+has the disadvantages that the key needs to be decrypted, and B<regpg>
+is unable to print the subject's distinguished name in verbose mode.)
 
 =back
 

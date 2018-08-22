@@ -119,5 +119,25 @@ works 'openssl can verify cert',
     '' => qw(openssl verify -CAfile ca.crt web.crt);
 is $stdout, "web.crt: OK\n", 'verified OK';
 
+works 'decrypt key',
+    '' => qw{regpg decrypt web.pem.asc web.pem};
+works 'genspkifp web.pem',
+    '' => qw{regpg genspkifp web.pem};
+my $fp = $stdout;
+is length $fp, int((256/8+2)*4/3), 'plausible SHA256 fingerprint';
+works 'genspkifp web.pem.asc',
+    '' => qw{regpg genspkifp -v web.pem.asc};
+is $stdout, $fp, 'web.pem fp matches web.pem.asc';
+works 'genspkifp web.crt',
+    '' => qw{regpg genspkifp -v web.crt};
+is $stdout, $fp, 'web.pem fp matches web.crt';
+like $stderr, qr{CN ?= ?dotat[.]at}, 'verbosely printed DN of crt';
+works 'generate csr',
+    '' => qw{regpg gencsr web.pem.asc web.cnf web.csr};
+works 'genspkifp web.csr',
+    '' => qw{regpg genspkifp -v web.crt};
+is $stdout, $fp, 'web.pem fp matches web.csr';
+like $stderr, qr{CN ?= ?dotat[.]at}, 'verbosely printed DN of csr';
+
 done_testing;
 exit;
