@@ -129,15 +129,19 @@ works 'genspkifp web.pem.asc',
     '' => qw{regpg genspkifp -v web.pem.asc};
 is $stdout, $fp, 'web.pem fp matches web.pem.asc';
 works 'genspkifp web.crt',
-    '' => qw{regpg genspkifp -v web.crt};
+    '' => qw{regpg genspkifp web.crt};
 is $stdout, $fp, 'web.pem fp matches web.crt';
-like $stderr, qr{CN ?= ?dotat[.]at}, 'verbosely printed DN of crt';
+like $stderr, qr{CN ?= ?dotat[.]at}, 'printed DN of crt';
 works 'generate csr',
     '' => qw{regpg gencsr web.pem.asc web.cnf web.csr};
 works 'genspkifp web.csr',
-    '' => qw{regpg genspkifp -v web.crt};
+    '' => qw{regpg genspkifp web.crt};
 is $stdout, $fp, 'web.pem fp matches web.csr';
-like $stderr, qr{CN ?= ?dotat[.]at}, 'verbosely printed DN of csr';
+like $stderr, qr{CN ?= ?dotat[.]at}, 'printed DN of csr';
+works 'genspkifp quietly',
+    '' => qw{regpg genspkifp -q web.crt};
+is $stdout, $fp, 'web.pem fp matches web.csr';
+is $stderr, '', 'quiet mode';
 
 done_testing;
 exit;

@@ -956,7 +956,8 @@ sub genspkifp {
 		$pub = safeslurp qw(openssl pkey -pubout -in), $fn;
 	} elsif ($fl =~ m{^-----BEGIN CERTIFICATE( REQUEST)?-----\s*$}) {
 		my @cmd = ('openssl', defined($1) ? 'req' : 'x509');
-		print STDERR pipeslurp @cmd, qw(-subject -noout -in), $fn if $opt{v};
+		print STDERR pipeslurp @cmd, qw(-subject -noout -in), $fn
+		    unless $opt{q};
 		$pub = safeslurp @cmd, qw(-pubkey -noout -in), $fn;
 	} else {
 		die "unknown file format: $fn\n";
@@ -1139,7 +1140,8 @@ Do nothing, but show what would have been done.
 =item B<-q>
 
 Quiet mode.
-This affects the B<check>, B<conv>, B<init>, and B<shred> subcommands.
+This affects the B<check>, B<conv>, B<genspkifp>, B<init>,
+and B<shred> subcommands.
 
 =item B<-r>
 
@@ -1500,9 +1502,9 @@ is written to stdout.
 Generate an X.509 subject public key information SHA-256 fingerprint,
 suitable for use with HTTPS public key pinning (HPKP). The public key
 can be obtained from a gpg-encrypted private key, a certificate, or a
-certificate signing request. (Generating a SPKI pin from a private key
-has the disadvantages that the key needs to be decrypted, and B<regpg>
-is unable to print the subject's distinguished name in verbose mode.)
+certificate signing request. In the latter two cases, the subject's
+distinguished name is printed to C<stderr> unless the B<-q> option was
+given.
 
 =back
 
