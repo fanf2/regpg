@@ -1,7 +1,13 @@
 regpg release notes and change summary
 ======================================
 
-2018-02-02 - regpg-0.104
+2018-09-10 - regpg-0.105
+------------------------
+
+* genspkifp can now fetch remote certs (like gencsrcnf)
+
+
+2018-08-22 - regpg-0.104
 ------------------------
 
 * genspkifp generates SPKI fingerprints for HTTPS public key pinning (HPKP)
