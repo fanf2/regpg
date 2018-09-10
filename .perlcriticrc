@@ -5,6 +5,7 @@ verbose = %f:%l:%c: (%p)\t%m - %e\n
 severity = 3
 
 [-CodeLayout::ProhibitHardTabs]
+[-ControlStructures::ProhibitCascadingIfElse]
 [-ErrorHandling::RequireCarping]
 [-ErrorHandling::RequireCheckingReturnValueOfEval]
 [-InputOutput::RequireBriefOpen]

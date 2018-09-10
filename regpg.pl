@@ -54,7 +54,7 @@ generators:
 	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
 	regpg genpwd [options] [cryptfile.asc]
-	regpg genspkifp [options] [priv|crt|csr]
+	regpg genspkifp [options] [priv|crt|csr|host]
 setup:
 	regpg init [options] [hook]...
 	regpg conv <command> [options] <args>...
@@ -268,6 +268,14 @@ sub copyfile {
 	return;
 }
 
+sub peekfile {
+	my $fn = shift;
+	return if not -f $fn;
+	open my $fh, '<', $fn
+	    or die "open $fn: $!\n";
+	return scalar <$fh>;
+}
+
 sub random_bytes {
 	my $len = shift;
 	open my $fh, '<', '/dev/urandom'
@@ -393,6 +401,17 @@ sub recrypt_some {
 sub maybe_recrypt_all {
 	recrypt_some find_all if $opt{r};
 	return 0;
+}
+
+# actually an openssl wrapper
+
+sub certslurp {
+	my $src = shift;
+	my ($host,$port) = $src =~ m{^(.*):(\d+)$}
+	    ? ($1,$2) : ($src,443);
+	return safeslurp "openssl s_client ".
+	    "-servername $host -connect $host:$port ".
+	    "</dev/null 2>/dev/null | @_";
 }
 
 ########################################################################
@@ -789,11 +808,7 @@ sub gencsrcnf {
 	if (stdio $src or -f $src) {
 		$crt = safeslurp @openssl_x509, stdio -in => $src;
 	} else {
-		my ($host,$port) = $src =~ m{^(.*):(\d+)$}
-		    ? ($1,$2) : ($src,443);
-		$crt = safeslurp "openssl s_client ".
-		    "-servername $host -connect $host:$port ".
-		    "</dev/null 2>/dev/null | @openssl_x509";
+		$crt = certslurp $src, @openssl_x509;
 	}
 	my $dns = qr{DNS:([A-Za-z0-9*.-]+)[,\s]+};
 	$crt =~ m{\n(\ +)Subject:\n((?:\1\ +.*\n)+)\1[^ ](?:.*\n)+
@@ -944,13 +959,16 @@ sub genpwd {
 }
 
 sub genspkifp {
-	getargs min => 1, max => 1;
-	my $fn = $ARGV[0];
-	open my $fh, '<', $fn
-	    or die "open $fn: $!\n";
-	my $fl = <$fh>;
+	# not really a keymaker - we just don't use the keyring
+	getargs keymaker => 1, min => 1, max => 1;
+	my ($fn) = @ARGV;
+	my $fl = peekfile $fn;
 	my $pub;
-	if ($fl eq "-----BEGIN PGP MESSAGE-----\n") {
+	if (not defined $fl) {
+		print STDERR certslurp $fn, qw(openssl x509 -subject -noout)
+		    unless $opt{q};
+		$pub = certslurp $fn, qw(openssl x509 -pubkey -noout);
+	} elsif ($fl eq "-----BEGIN PGP MESSAGE-----\n") {
 		$pub = safeslurp "@gpg_de $fn | openssl pkey -pubout";
 	} elsif ($fl eq "-----BEGIN RSA PRIVATE KEY-----\n") {
 		$pub = safeslurp qw(openssl pkey -pubout -in), $fn;
@@ -1084,7 +1102,7 @@ B<regpg> B<genkey> [I<options>] <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
 B<regpg> B<genpwd> [I<options>] [I<cryptfile.asc>]
 
-B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>]
+B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>|I<host>]
 
 - setup:
 
@@ -1497,14 +1515,14 @@ the password.
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
 
-=item B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>]
+=item B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>|I<host>]
 
 Generate an X.509 subject public key information SHA-256 fingerprint,
 suitable for use with HTTPS public key pinning (HPKP). The public key
-can be obtained from a gpg-encrypted private key, a certificate, or a
-certificate signing request. In the latter two cases, the subject's
-distinguished name is printed to C<stderr> unless the B<-q> option was
-given.
+can be obtained from a gpg-encrypted private key, a certificate file,
+a certificate signing request, or by fetching a server's certificate.
+In the latter three cases, the subject's distinguished name is printed
+to C<stderr> unless the B<-q> option was given.
 
 =back
 
