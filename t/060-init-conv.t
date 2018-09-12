@@ -49,6 +49,10 @@ SKIP: {
 	    'otterly badgered' => qw(regpg en secret.asc);
 
 	works 'git init',   '' => qw(git init);
+	works 'git config name',
+	    '' => qw(git config user.name Testing123);
+	works 'git config email',
+	    '' => qw(git config user.email username@example.com);
 	works 'git add',    '' => qw(git add pubring.gpg secret.asc);
 	works 'git commit', '' => qw(git commit -m pubring);
 	works 'git log',    '' => qw(git log --patch);
