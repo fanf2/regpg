@@ -105,18 +105,18 @@ class ActionModule(ActionBase):
                 tmp = self._make_tmp_path()
             else:
                 tmp = self._make_tmp_path(remote_user)
+            self._connection._shell.tmpdir = tmp
             self._cleanup_remote_tmp = True
+            created_tmp = True
 
         try:
-            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars,
-                                                  follow=False, tmp=tmp)
+            dest_stat = self.remote_stat_compat(dest, task_vars, tmp)
 
             if (dest_stat['exists'] and dest_stat['isdir']
                     and not directory_prepended):
                 base = os.path.basename(src)
                 dest = os.path.join(dest, base)
-                dest_stat = self._execute_remote_stat(dest, all_vars=task_vars,
-                                                      follow=False, tmp=tmp)
+                dest_stat = self.remote_stat_compat(dest, task_vars, tmp)
 
         except Exception as e:
             result['failed'] = True
@@ -146,37 +146,51 @@ class ActionModule(ActionBase):
 
             # run the copy module
             new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                    follow=True,
-                ),
+                src=xfered,
+                dest=dest,
             )
-            result.update(self._execute_module(module_name='copy',
-                                               module_args=new_module_args,
-                                               task_vars=task_vars, tmp=tmp,
-                                               delete_remote_tmp=False))
+            result.update(self.install_cleartext(src, 'copy', new_module_args,
+                                                 task_vars, tmp))
 
         elif not result['changed']:
             # only check remote file if it is present
             new_module_args.update(
-                dict(
-                    src=None,
-                    original_basename=os.path.basename(src),
-                    follow=True,
-                ),
+                src=None,
             )
-            result.update(self._execute_module(module_name='file',
-                                               module_args=new_module_args,
-                                               task_vars=task_vars, tmp=tmp,
-                                               delete_remote_tmp=False))
+            result.update(self.install_cleartext(src, 'file', new_module_args,
+                                                 task_vars, tmp))
+
         if 'diff' not in result:
             result['diff'] = { 'before': {}, 'after': {} }
 
         result['diff']['before']['checksum'] = remote_checksum
         result['diff']['after']['checksum'] = local_checksum
 
-        self._remove_tmp_path(tmp)
+        if created_tmp:
+            self._remove_tmp_path(tmp)
 
         return result
+
+    def remote_stat_compat(self, dest, task_vars, tmp):
+        if ansible_version[:4] < '2.5.':
+            return self._execute_remote_stat(dest, all_vars=task_vars,
+                                             follow=False, tmp=tmp)
+        else:
+            return self._execute_remote_stat(dest, all_vars=task_vars,
+                                             follow=False)
+
+    def install_cleartext(self, src, module, args, task_vars, tmp):
+        args.update(follow=True)
+        if ansible_version[:4] < '2.6.':
+            args.update(original_basename=os.path.basename(src))
+        else:
+            args.update(_original_basename=os.path.basename(src))
+        if ansible_version[:4] < '2.5.':
+            return self._execute_module(module_name=module,
+                                        module_args=args,
+                                        task_vars=task_vars, tmp=tmp,
+                                        delete_remote_tmp=False)
+        else:
+            return self._execute_module(module_name=module,
+                                        module_args=args,
+                                        task_vars=task_vars)

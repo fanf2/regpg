@@ -87,26 +87,31 @@ sub test_playbook {
 
 	works "ansible $version install a file (check)",
 	    '' => qw(ansible-playbook --check --diff playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible will change';
 
 	works "ansible $version install a file",
 	    '' => qw(ansible-playbook playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible did change';
 	ok -f 'installed', 'file was installed';
 	is slurp('installed'), slurp('binary'), 'correct file contents';
 
 	works "ansible $version install a file (idempotent)",
 	    '' => qw(ansible-playbook playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=0}, 'ansible did not change';
 
 	chmod 0600, 'installed';
 
 	works "ansible $version install a file (check mode)",
 	    '' => qw(ansible-playbook --check playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 1';
 
 	works "ansible $version install a file (change mode)",
 	    '' => qw(ansible-playbook --diff playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 2';
 	if ($version ne 'stable-2.0') {
 		like $stdout, qr{\-\s+"mode": "0600",}, 'wrong mode';
@@ -117,20 +122,24 @@ sub test_playbook {
 
 	works "ansible $version install a file (check modified)",
 	    '' => qw(ansible-playbook --check playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 3';
 
 	works "ansible $version install a file (fix modification)",
 	    '' => qw(ansible-playbook playbook.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 4';
 
 	spew 'installed', 'garbage';
 
 	works "ansible $version role (check modified)",
 	    '' => qw(ansible-playbook --check role.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 5';
 
 	works "ansible $version role (fix modification)",
 	    '' => qw(ansible-playbook role.yml);
+	is $stderr, '', 'stderr quiet';
 	like $stdout, qr{changed=1}, 'ansible changed 6';
 }
 
@@ -150,6 +159,8 @@ for my $tag (qw(
 		stable-2.2
 		stable-2.3
 		stable-2.4
+		stable-2.5
+		stable-2.6
 		devel
 	   )) {
 	ok chdir($testansible), "chdir $testansible";
