@@ -109,7 +109,7 @@ fails 'de short synonym',
     $ciphertext => qw(regpg de);
 
 works 'gpg list packets',
-    '' => qw(gpg --list-packets --list-only secret.asc);
+    '' => qw(gpg --quiet --list-packets --list-only secret.asc);
 is $stderr, '', 'gpg stderr quiet';
 like $stdout, qr(mdc_method: \d+),
     'encrypted file has "modification detection code"';
