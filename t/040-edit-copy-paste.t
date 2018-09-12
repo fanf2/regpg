@@ -23,6 +23,11 @@ SKIP: {
 	is $stderr, '', 'regpg stderr quiet';
 	ok -p 'fifo', 'fifo exists';
 	is slurp('fifo'), 'foo bar zig', 'read cleartext from fifo';
+	# avoid racing
+	for my $i (0 .. 9) {
+		last if ! -e 'fifo';
+		select undef, undef, undef, 0.1;
+	}
 	ok ! -e 'fifo', 'fifo has been removed';
 }
 
