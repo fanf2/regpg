@@ -1,14 +1,14 @@
 regpg release notes and change summary
 ======================================
 
-2018-09-10 - regpg-0.105
+2018-09-12 - regpg-0.106
 ------------------------
 
-* genspkifp can now fetch remote certs (like gencsrcnf)
+* Compatibility with Ansible 2.5 and 2.6. Thanks to David Carter
+  for reporting that there were problems.
 
-
-2018-08-22 - regpg-0.104
-------------------------
+* Minor test portability and robustness improvements found when
+  running on Debian sid / unstable.
 
 * genspkifp generates SPKI fingerprints for HTTPS public key pinning (HPKP)
 

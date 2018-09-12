@@ -67,12 +67,12 @@ and its [GPG signature](https://dotat.at/prog/regpg/regpg.asc).
 
 Download the full source archives and GPG signatures:
 
-* <https://dotat.at/prog/regpg/regpg-0.105.tar.xz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.105.tar.xz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.105.tar.gz>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.105.tar.gz.asc))
-* <https://dotat.at/prog/regpg/regpg-0.105.zip>
-  ([sig](https://dotat.at/prog/regpg/regpg-0.105.zip.asc))
+* <https://dotat.at/prog/regpg/regpg-0.106.tar.xz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.106.tar.xz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.106.tar.gz>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.106.tar.gz.asc))
+* <https://dotat.at/prog/regpg/regpg-0.106.zip>
+  ([sig](https://dotat.at/prog/regpg/regpg-0.106.zip.asc))
 
 
 Documentation
@@ -132,18 +132,18 @@ To use `regpg` you need the following programs. I've listed the
 versions that I have tested.
 
 * `perl` - 5.20 - 5.22 - 5.26
-* `gnupg` - 1.4.18 - 2.0.26 - 2.1.11 - 2.2.1
+* `gnupg` - 1.4.18 - 2.0.26 - 2.1.11 - 2.2.10
 * `gnupg-agent` - 2.0.26 - 2.1.11 - 2.2.1
 * `pinentry-gtk2` 0.8.3 (or) `pinentry-tty` 0.9.7
 
 You only need the following programs if you use `regpg`'s helper
 subcommands.
 
-* `git` - 2.7 - 2.10 - 2.15
-* Ansible - 2.2 - 2.4
+* `git` - 2.7 - 2.10 - 2.15 - 2.19
+* Ansible - 2.0 ... 2.6
 * OpenSSH - 6.7 - 7.2 - 7.6
-* OpenSSL - 1.0.1 - 1.0.2 - 1.1.0
-* PuTTY - 0.68
+* OpenSSL - 1.0.1 - 1.0.2 - 1.1.0 - 1.1.1
+* PuTTY - 0.68 - 0.70
 * `xclip` - 0.12
 
 You only need the following to build from `git`.

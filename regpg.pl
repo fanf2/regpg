@@ -1786,7 +1786,7 @@ The F<gpg-preload.yml> playbook uses the F<gpg_d> filter like this:
 
 =head1 VERSION
 
-  This is regpg-0.105.X <https://dotat.at/prog/regpg/>
+  This is regpg-0.106 <https://dotat.at/prog/regpg/>
 
   Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
   at Cambridge University Information Services
