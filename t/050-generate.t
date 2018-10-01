@@ -167,17 +167,32 @@ fails 'gencsr four args',
 like $stderr, qr{usage:}, 'usage';
 
 works 'genpwd pipe',
-    '' => qw(regpg genpwd);
-like $stdout, $pgpmsg, 'genpwd output encrypted';
+    '' => qw(regpg genpwd -q);
+like $stdout, $pgpmsg, 'genpwd -q output encrypted';
 is $stderr, '', 'regpg stderr quiet';
 
 unlink 'pwd.asc';
 works 'genpwd file',
     '' => qw(regpg genpwd pwd.asc);
-is $stdout, '', 'regpg stdout quiet';
+like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
+my $hash = $stdout;
 is $stderr, '', 'regpg stderr quiet';
 ok -f 'pwd.asc', 'genpwd wrote file';
 like slurp('pwd.asc'), $pgpmsg, 'genpwd file encrypted';
+
+works 'decrypt pwd',
+    '' => qw(regpg decrypt pwd.asc);
+my $pwd = $stdout;
+chomp $pwd;
+sub ck {
+	return sprintf "%s\n", crypt $pwd, shift;
+}
+is $hash, (ck $hash), "crypt works first time";
+
+works 'genpwd file again',
+    '' => qw(regpg genpwd pwd.asc);
+like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
+is $stdout, (ck $stdout), "crypt works second time";
 
 done_testing;
 exit;
