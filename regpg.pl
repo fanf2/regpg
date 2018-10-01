@@ -286,7 +286,7 @@ sub random_bytes {
 }
 
 sub random_password {
-	return encode_base64 random_bytes 30;
+	return encode_base64 random_bytes 12;
 }
 
 sub random_serial {
@@ -1508,9 +1508,9 @@ B<puttygen>.
 If I<cryptfile.asc> already exists, decrypt it and print a SHA256
 (type C<$5$>) C<crypt(3)> hash of the password.
 
-Otherwise, generate a 40 character password, encrypt it, and store it
 in I<cryptfile.asc>. In B<-v> mode, also print a C<crypt(3)> hash of
 the password.
+Otherwise, generate a 16 character password, encrypt it, store it in
 
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
