@@ -942,8 +942,9 @@ sub genkey {
 }
 
 sub cryptpwd {
-	my $salt = substr random_password, 0, 16;
-	return printf "%s\n", crypt @_, '$5$'.$salt.'$';
+	my $pwd = shift; chomp $pwd;
+	my $salt = random_password;
+	return printf "%s\n", crypt $pwd, '$5$'.$salt.'$';
 }
 
 sub genpwd {
@@ -953,7 +954,7 @@ sub genpwd {
 	} else {
 		my $pwd = random_password;
 		pipespew $pwd, @gpg_en, recipients, getout;
-		cryptpwd $pwd if $opt{v};
+		cryptpwd $pwd unless $opt{q};
 	}
 	return 0;
 }
@@ -1158,7 +1159,7 @@ Do nothing, but show what would have been done.
 =item B<-q>
 
 Quiet mode.
-This affects the B<check>, B<conv>, B<genspkifp>, B<init>,
+This affects the B<check>, B<conv>, B<genpwd>, B<genspkifp>, B<init>,
 and B<shred> subcommands.
 
 =item B<-r>
@@ -1508,9 +1509,9 @@ B<puttygen>.
 If I<cryptfile.asc> already exists, decrypt it and print a SHA256
 (type C<$5$>) C<crypt(3)> hash of the password.
 
-in I<cryptfile.asc>. In B<-v> mode, also print a C<crypt(3)> hash of
-the password.
 Otherwise, generate a 16 character password, encrypt it, store it in
+I<cryptfile.asc>, and (unless the B<-q> option is given) print a
+C<crypt(3)> hash of the password.
 
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
