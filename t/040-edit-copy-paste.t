@@ -15,7 +15,7 @@ works 'create encrypted file',
     'foo bar zig' => qw(regpg encrypt file.asc);
 
 SKIP: {
-	skip 'cannot mkfifo', 6 if $halfarsed;
+	skip 'cannot mkfifo', 6 if $assbackwards;
 
 	works 'decrypt to fifo',
 	    '' => qw(regpg depipe file.asc fifo);

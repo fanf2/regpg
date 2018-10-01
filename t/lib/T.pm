@@ -18,7 +18,7 @@ our $work;
 our $testbin;
 our $testansible;
 our $pgpmsg;
-our $halfarsed;
+our $assbackwards;
 
 our $status;
 our $stdin;
@@ -34,7 +34,7 @@ our @EXPORT = qw(
 	$testbin
 	$testansible
 	$pgpmsg
-	$halfarsed
+	$assbackwards
 
 	$status
 	$stdin
@@ -78,9 +78,9 @@ BEGIN {
 	# gross hack for compatibility with home directories on the
 	# CIFS filesystem on Cambridge's PWF/MCS/DS Linux which does
 	# not support special files such as the agent socket
-	$halfarsed = -x "$dir/../Makefile";
+	$assbackwards = -x "$dir/../Makefile";
 
-	if ($halfarsed) {
+	if ($assbackwards) {
 		$gnupg = movehome $gnupg;
 		$rehome = movehome $rehome;
 	}
