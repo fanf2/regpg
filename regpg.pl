@@ -1304,7 +1304,7 @@ subcommands.
 
 =item B<regpg> B<encrypt> [[I<clearfile>] I<cryptfile.asc>]
 
-=item B<regpg> B<en> [[I<clearfile>] [<cryptfile.asc>]
+=item B<regpg> B<en> [[I<clearfile>] [I<cryptfile.asc>]
 
 Encrypt I<clearfile> to produce I<cryptfile.asc>.
 The encryption recipients are all the keys in the public key ring.
