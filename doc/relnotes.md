@@ -1,6 +1,17 @@
 regpg release notes and change summary
 ======================================
 
+2019-02-13 - regpg-1.7
+------------------------
+
+* Declare `regpg` to be stable.
+
+* Reduce length of passwords, so it is feasible to copy-type them into
+  a console.
+
+* Other minor `genpwd` improvements.
+
+
 2018-09-12 - regpg-0.106
 ------------------------
 
