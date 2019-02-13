@@ -161,7 +161,7 @@ You can clone or browse the repository from:
 
 * <https://dotat.at/cgi/git/regpg.git>
 * <https://github.com/fanf2/regpg.git>
-* <https://git.uis.cam.ac.uk/x/uis/git/regpg.git>
+* <https://gitlab.developers.cam.ac.uk/fanf2/regpg>
 
 
 Acknowledgments
