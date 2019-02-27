@@ -161,6 +161,7 @@ for my $tag (qw(
 		stable-2.4
 		stable-2.5
 		stable-2.6
+		stable-2.7
 		devel
 	   )) {
 	ok chdir($testansible), "chdir $testansible";
