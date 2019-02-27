@@ -132,7 +132,7 @@ To use `regpg` you need the following programs. I've listed the
 versions that I have tested.
 
 * `perl` - 5.20 - 5.22 - 5.26
-* `gnupg` - 1.4.18 - 2.0.26 - 2.1.11 - 2.2.10
+* `gnupg` - 1.4.18 - 1.4.21 - 2.0.26 - 2.1.11 - 2.1.18 - 2.2.10
 * `gnupg-agent` - 2.0.26 - 2.1.11 - 2.2.1
 * `pinentry-gtk2` 0.8.3 (or) `pinentry-tty` 0.9.7
 
