@@ -82,14 +82,28 @@ class ActionModule(ActionBase):
             base = os.path.basename(src)
             dest = os.path.join(dest, base)
 
-        # decrypt the src file locally & get ready to transfer
-        try:
-            cleartext = subprocess.check_output(
-                ['gpg', '--use-agent', '--batch', '--quiet', '--decrypt', src])
-        except subprocess.CalledProcessError as e:
-            result['failed'] = True
-            result['msg'] = 'gpg --decrypt '+src+' failed: '+e.output
-            return result
+        # decrypt the src file locally & get ready to transfer; prefer gpg1,
+        # if it is available, because it is more reliable than gpg2
+        gpg = 'gpg1'
+        # there is some risk of corruption here, if gpg writes to stderr without
+        # setting tis exit status, but subprocess.DEVNULL is not always available
+        stderr = subprocess.PIPE
+        tries = 3
+        while True:
+            try:
+                cleartext = subprocess.check_output(
+                    [gpg, '--use-agent', '--batch', '--quiet', '--decrypt', src],
+                    stderr=stderr)
+                break
+            except subprocess.CalledProcessError as e:
+                gpg = 'gpg'
+                stderr = None
+                tries -= 1
+                if tries > 0:
+                    continue
+                result['failed'] = True
+                result['msg'] = 'gpg --decrypt '+src+' failed: '+e.output
+                return result
 
         if cleartext == "":
             result['failed'] = True
