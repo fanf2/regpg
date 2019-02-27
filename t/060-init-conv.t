@@ -83,6 +83,8 @@ spew 'inventory', <<'INVENTORY';
 localhost ansible_connection=local
 INVENTORY
 
+unlink "$testbin/ansible", "$testbin/ansible-playbook";
+
 SKIP: {
 	skip 'ansible-revault', 18 unless canexec 'ansible-vault';
 
