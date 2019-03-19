@@ -80,18 +80,15 @@ spew 'role.yml', <<"YAML";
     - wombat
 YAML
 
-sub stderr_quiet_broken_python {
-	# https://github.com/ansible/ansible/issues/21982
-	return $stderr =~
-	    m{^(
-		Exception\s+ignored\s+in:\s+<function\s+
-		WeakValueDictionary\.__init__\.<locals>\.remove\s+at\s+\w+>\s+
-		Traceback\s+\(most\s+recent\s+call\s+last\):\s+
-		File\s+"/usr/lib/python3\.\d/weakref\.py",\s+
-		line\s+\d+,\s+in\s+remove\s+
-		TypeError:\s+'NoneType'\s+object\s+is\s+not\s+callable\s+
-	      )*$}x;
-}
+# https://github.com/ansible/ansible/issues/21982
+my $stderr_quiet_broken_python = qr{^(
+	Exception\s+ignored\s+in:\s+<function\s+
+	WeakValueDictionary\.__init__\.<locals>\.remove\s+at\s+\w+>\s+
+	Traceback\s+\(most\s+recent\s+call\s+last\):\s+
+	File\s+"/usr/lib/python3\.\d/weakref\.py",\s+
+	line\s+\d+,\s+in\s+remove\s+
+	TypeError:\s+'NoneType'\s+object\s+is\s+not\s+callable\s+
+)*$}x;
 
 sub test_playbook {
 	my $v = shift;
@@ -100,36 +97,37 @@ sub test_playbook {
 
 	works "ansible $v gpg-preload",
 	    '' => qw(ansible-playbook gpg-preload.yml);
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{ensure gpg agent is ready\W+ok:},
 	    "$v gpg_d filter worked";
 
 	works "ansible $v install a file (check)",
 	    '' => qw(ansible-playbook --check --diff playbook.yml);
-	ok stderr_quiet_broken_python(), "stderr quiet $v";
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v will change";
 
 	works "ansible $v install a file",
 	    '' => qw(ansible-playbook playbook.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v did change";
 	ok -f 'installed', 'file was installed';
 	is slurp('installed'), slurp('binary'), 'correct file contents';
 
 	works "ansible $v install a file (idempotent)",
 	    '' => qw(ansible-playbook playbook.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=0}, "ansible $v did not change";
 
 	chmod 0600, 'installed';
 
 	works "ansible $v install a file (check mode)",
 	    '' => qw(ansible-playbook --check playbook.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 1";
 
 	works "ansible $v install a file (change mode)",
 	    '' => qw(ansible-playbook --diff playbook.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 2";
 	if ($v ne 'stable-2.0') {
 		like $stdout, qr{\-\s+"mode": "0600",}, "wrong mode $v";
@@ -140,24 +138,24 @@ sub test_playbook {
 
 	works "ansible $v install a file (check modified)",
 	    '' => qw(ansible-playbook --check playbook.yml);
-	ok stderr_quiet_broken_python(), "stderr quiet $v";
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 3";
 
 	works "ansible $v install a file (fix modification)",
 	    '' => qw(ansible-playbook playbook.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 4";
 
 	spew 'installed', 'garbage';
 
 	works "ansible $v role (check modified)",
 	    '' => qw(ansible-playbook --check role.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 5";
 
 	works "ansible $v role (fix modification)",
 	    '' => qw(ansible-playbook role.yml);
-	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stderr, $stderr_quiet_broken_python, "stderr quiet $v";
 	like $stdout, qr{changed=1}, "ansible $v changed 6";
 }
 
@@ -167,7 +165,11 @@ unless (-d "$testansible/.git") {
 	exit;
 }
 
-spew "$testbin/gpg1", "#!/nonexistent";
+spew "$testbin/gpg1", <<END;
+#!/bin/sh
+echo gpg1 failed 1>&2
+exit 1
+END
 chmod 0755, "$testbin/gpg1";
 test_playbook "gpg1 broken";
 unlink "$testbin/gpg1";
