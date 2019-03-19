@@ -80,67 +80,85 @@ spew 'role.yml', <<"YAML";
     - wombat
 YAML
 
+sub stderr_quiet_broken_python {
+	# https://github.com/ansible/ansible/issues/21982
+	return $stderr =~
+	    m{^(
+		Exception\s+ignored\s+in:\s+<function\s+
+		WeakValueDictionary\.__init__\.<locals>\.remove\s+at\s+\w+>\s+
+		Traceback\s+\(most\s+recent\s+call\s+last\):\s+
+		File\s+"/usr/lib/python3\.\d/weakref\.py",\s+
+		line\s+\d+,\s+in\s+remove\s+
+		TypeError:\s+'NoneType'\s+object\s+is\s+not\s+callable\s+
+	      )*$}x;
+}
+
 sub test_playbook {
-	my $version = shift;
+	my $v = shift;
 
 	unlink 'installed';
 
-	works "ansible $version install a file (check)",
-	    '' => qw(ansible-playbook --check --diff playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible will change';
+	works "ansible $v gpg-preload",
+	    '' => qw(ansible-playbook gpg-preload.yml);
+	like $stdout, qr{ensure gpg agent is ready\W+ok:},
+	    "$v gpg_d filter worked";
 
-	works "ansible $version install a file",
+	works "ansible $v install a file (check)",
+	    '' => qw(ansible-playbook --check --diff playbook.yml);
+	ok stderr_quiet_broken_python(), "stderr quiet $v";
+	like $stdout, qr{changed=1}, "ansible $v will change";
+
+	works "ansible $v install a file",
 	    '' => qw(ansible-playbook playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible did change';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v did change";
 	ok -f 'installed', 'file was installed';
 	is slurp('installed'), slurp('binary'), 'correct file contents';
 
-	works "ansible $version install a file (idempotent)",
+	works "ansible $v install a file (idempotent)",
 	    '' => qw(ansible-playbook playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=0}, 'ansible did not change';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=0}, "ansible $v did not change";
 
 	chmod 0600, 'installed';
 
-	works "ansible $version install a file (check mode)",
+	works "ansible $v install a file (check mode)",
 	    '' => qw(ansible-playbook --check playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 1';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v changed 1";
 
-	works "ansible $version install a file (change mode)",
+	works "ansible $v install a file (change mode)",
 	    '' => qw(ansible-playbook --diff playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 2';
-	if ($version ne 'stable-2.0') {
-		like $stdout, qr{\-\s+"mode": "0600",}, 'wrong mode';
-		like $stdout, qr{\+\s+"mode": "0640",}, 'correct mode';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v changed 2";
+	if ($v ne 'stable-2.0') {
+		like $stdout, qr{\-\s+"mode": "0600",}, "wrong mode $v";
+		like $stdout, qr{\+\s+"mode": "0640",}, "correct mode $v";
 	}
 
 	spew 'installed', 'garbage';
 
-	works "ansible $version install a file (check modified)",
+	works "ansible $v install a file (check modified)",
 	    '' => qw(ansible-playbook --check playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 3';
+	ok stderr_quiet_broken_python(), "stderr quiet $v";
+	like $stdout, qr{changed=1}, "ansible $v changed 3";
 
-	works "ansible $version install a file (fix modification)",
+	works "ansible $v install a file (fix modification)",
 	    '' => qw(ansible-playbook playbook.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 4';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v changed 4";
 
 	spew 'installed', 'garbage';
 
-	works "ansible $version role (check modified)",
+	works "ansible $v role (check modified)",
 	    '' => qw(ansible-playbook --check role.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 5';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v changed 5";
 
-	works "ansible $version role (fix modification)",
+	works "ansible $v role (fix modification)",
 	    '' => qw(ansible-playbook role.yml);
-	is $stderr, '', 'stderr quiet';
-	like $stdout, qr{changed=1}, 'ansible changed 6';
+	ok stderr_quiet_broken_python(), 'stderr quiet';
+	like $stdout, qr{changed=1}, "ansible $v changed 6";
 }
 
 unless (-d "$testansible/.git") {
@@ -149,10 +167,26 @@ unless (-d "$testansible/.git") {
 	exit;
 }
 
+spew "$testbin/gpg1", "#!/nonexistent";
+chmod 0755, "$testbin/gpg1";
+test_playbook "gpg1 broken";
+unlink "$testbin/gpg1";
+
 $ENV{ANSIBLE_HOME} = $testansible;
 $ENV{PYTHONPATH} = "$testansible/lib:". ($ENV{PYTHONPATH} // "");
 
-for my $tag (qw(
+my @python;
+for my $pyv (qw{python2 python3}) {
+	for my $dir (split /:/, $ENV{PATH}) {
+		if (-x "$dir/$pyv") {
+			push @python, "$dir/$pyv";
+			last;
+		}
+	}
+}
+my @py = (undef);
+
+for my $tag (qw{
 		stable-2.0
 		v2.1.1.0-1
 		stable-2.1
@@ -163,7 +197,16 @@ for my $tag (qw(
 		stable-2.6
 		stable-2.7
 		devel
-	   )) {
+	   }) {
+
+	# do this before we switch to a noisy version
+	if ($tag =~ m{devel|stable-2\.[8-9]}) {
+		works 'suppress ansible warnings',
+		    '' => qw(ansible localhost -c local -m ini_file -a),
+		    "section=defaults option=interpreter_python ".
+		    "value=auto_silent dest=ansible.cfg";
+	}
+
 	ok chdir($testansible), "chdir $testansible";
 	works 'deinit submodules',
 	    '' => qw(git submodule deinit --all --force);
@@ -179,15 +222,29 @@ for my $tag (qw(
 		     => "$testbin/ansible";
 	symlink "$testansible/bin/ansible-playbook"
 		     => "$testbin/ansible-playbook";
+
 	my $version =
 	    $tag =~ m{stable-(\d+\.\d+)} ? "ansible $1." :
 	    $tag =~ m{v(\d+\.\d+\.\d+\.\d+)-\d} ? "ansible $1" :
 	    "ansible";
 	my $vere = quotemeta $version;
-	works "ansible $tag smoke test",
-	    '' => qw(ansible --version);
-	like $stdout, qr{$vere}, "ansible version matches $tag";
-	test_playbook $tag;
+
+	my @py = ('python');
+	if ($tag =~ m{devel|stable-2\.[4-9]}) {
+		@py = @python;
+	}
+	for my $py (@py) {
+		unlink "$testbin/python";
+		my $v = $tag;
+		if ($py ne 'python') {
+			symlink $py, "$testbin/python";
+			$v = "$tag ($py)";
+		}
+		works "ansible $v smoke test",
+		    '' => qw(ansible --version);
+		like $stdout, qr{$vere}, "ansible version matches $v";
+		test_playbook $v;
+	}
 }
 
 done_testing;
