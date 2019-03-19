@@ -10,7 +10,9 @@ try:
     # ansible-2.2 and later
     from ansible.module_utils._text import to_native
 except:
-    from ansible.utils.unicode import to_native
+    # no to_native() in earlier versions
+    def to_native(str):
+        return str
 
 def gpg_d(file):
     # prefer gpg1, if it is available, because it is more reliable than gpg2
