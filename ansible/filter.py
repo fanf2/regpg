@@ -6,6 +6,12 @@
 import ansible
 import subprocess
 
+try:
+    # ansible-2.2 and later
+    from ansible.module_utils._text import to_native
+except:
+    from ansible.utils.unicode import to_native
+
 def gpg_d(file):
     # prefer gpg1, if it is available, because it is more reliable than gpg2
     gpg = 'gpg1'
@@ -30,7 +36,7 @@ def gpg_d(file):
     if output == "":
         raise ansible.errors.AnsibleFilterError(
             'gpg --decrypt '+file+' produced no output')
-    return output
+    return to_native(output)
 
 class FilterModule(object):
     def filters(self):
