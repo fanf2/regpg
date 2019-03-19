@@ -27,14 +27,15 @@ def gpg_d(file):
                 [gpg, '--use-agent', '--batch', '--quiet', '--decrypt', file],
                 stderr=stderr)
             break
-        except subprocess.CalledProcessError as e:
-            gpg = 'gpg'
-            stderr = None
-            tries -= 1
-            if tries > 0:
-                continue
+        except Exception as e:
+            if isinstance(e, (OSError, subprocess.CalledProcessError)):
+                gpg = 'gpg'
+                stderr = None
+                tries -= 1
+                if tries > 0:
+                    continue
             raise ansible.errors.AnsibleFilterError(
-                'gpg --decrypt '+file+' failed: '+e.output)
+                'gpg --decrypt '+file+' failed: '+e)
     if output == "":
         raise ansible.errors.AnsibleFilterError(
             'gpg --decrypt '+file+' produced no output')

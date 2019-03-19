@@ -95,14 +95,15 @@ class ActionModule(ActionBase):
                     [gpg, '--use-agent', '--batch', '--quiet', '--decrypt', src],
                     stderr=stderr)
                 break
-            except subprocess.CalledProcessError as e:
-                gpg = 'gpg'
-                stderr = None
-                tries -= 1
-                if tries > 0:
-                    continue
+            except Exception as e:
+                if isinstance(e, (OSError, subprocess.CalledProcessError)):
+                    gpg = 'gpg'
+                    stderr = None
+                    tries -= 1
+                    if tries > 0:
+                        continue
                 result['failed'] = True
-                result['msg'] = 'gpg --decrypt '+src+' failed: '+e.output
+                result['msg'] = 'gpg --decrypt '+src+' failed: '+e
                 return result
 
         if cleartext == "":
