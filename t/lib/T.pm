@@ -99,6 +99,8 @@ BEGIN {
 	die "unknown gpg version"
 	    unless $gpgvers =~ s{^gpg [(]GnuPG[)] (\d\.\d)\..*}{$1}s;
 
+	# suppress warning from gpg-agent before setup runs
+	mkdir $gnupg;
 	# ensure the agent will not block on /dev/random
 	system qw(gpg-agent --daemon --quiet --debug-quick-random)
 	    if $gpgvers ge "2.1";

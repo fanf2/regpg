@@ -29,6 +29,7 @@ for my $gpg (qw(gpg gpg1 gpg2)) {
 	$version{$version} = 1;
 	print STDERR "testing with $path => $version";
 	unlink 't/bin/gpg';
+	mkdir 't/bin';
 	symlink $path => 't/bin/gpg'
 	    or die "symlink $path => t/bin/gpg: $!\n";
 	system 'prove';
