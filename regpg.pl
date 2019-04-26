@@ -348,7 +348,7 @@ sub self_keys {
 }
 
 sub clean_ids {
-	return map { s{^\d+\w/}{}r } @_;
+	return map { s{^\w+/}{}r } @_;
 }
 
 sub add_keys {

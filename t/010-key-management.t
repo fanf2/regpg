@@ -35,9 +35,12 @@ subtest 'list keys (one)' => sub {
 
 works 'import key two', '' => qw(regpg addkey), $k2;
 
+my $id1;
+my $id2;
 subtest 'list keys (both)' => sub {
 	checklist like => [ $k1, $k2 ],
 	    unlike => [ $kd ];
+	($id1,$id2) = $stdout =~ m{^pub +(\w+/\w+)}gm;
 };
 
 subtest 'list keys (error cases)' => sub {
@@ -51,6 +54,8 @@ subtest 'list keys (error cases)' => sub {
 
 gpg_batch_yes;
 works 'delete key one', '' => qw(regpg delkey), $k1;
+works 'add key one by id', '' => qw(regpg addkey), $id1;
+works 'delete key one by id', '' => qw(regpg delkey), $id1;
 unlink $gpgconf;
 
 subtest 'list keys (two)' => sub {
