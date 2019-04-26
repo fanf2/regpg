@@ -1,6 +1,24 @@
 regpg release notes and change summary
 ======================================
 
+2019-02-13 - regpg-1.8
+------------------------
+
+* Attempt to work around `gpg2` reliability problems. The Ansible
+  plugins will run `gpg1` if it is available (since it is more
+  reliable than `gpg2`) and re-run `gpg2` if it looks like there was a
+  spurious failure.
+
+* Python 3 compatibility for the Ansible plugins.
+
+* Compatibility with `gpg2` format key IDs. When listing key IDs,
+  `gpg` adds a prefix indicating the algorithm and key size, separated
+  from the ID by a slash. However, `gpg` does not accept key IDs in
+  this format, so `regpg` strips off the prefix to make it work.
+  Previously `regpg` only recognized `gpg1` prefixes like `4096R/`,
+  but now it also strips off `gpg2` prefixes like `rsa4096/`.
+
+
 2019-02-13 - regpg-1.7
 ------------------------
 
