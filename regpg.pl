@@ -868,7 +868,7 @@ sub gencrt {
 	# If we generate a CSR then `openssl x509 -req` drops the
 	# extensions when making a signed certificate. `openssl ca`
 	# requires too much faff with config files for our purposes.
-	pipespew $priv, qw(openssl req -new -x509 -key /dev/stdin),
+	pipespew $priv, qw(openssl req -new -x509 -sha256 -key /dev/stdin),
 	    random_serial, -days => $days, -config => $cnf, -out => $self;
 	if (@ARGV == 6) {
 		# The authorityKeyIdentifier will get the wrong value if
@@ -877,7 +877,7 @@ sub gencrt {
 		spewto $ext,
 		     "subjectKeyIdentifier = hash\n",
 		     "authorityKeyIdentifier = keyid:always, issuer:always\n";
-		pipespew $cakey, qw(openssl x509 -CAkey /dev/stdin),
+		pipespew $cakey, qw(openssl x509 -sha256 -CAkey /dev/stdin),
 		    random_serial, -days => $days, -CA => $cacrt,
 		    -extfile => $ext, -in => $self, -out => $signed;
 		unlink $self, $ext;
@@ -892,7 +892,7 @@ sub gencsr {
 	my $key = getkey $priv;
 	my @opt = (-config => $cnf);
 	push @opt, stdio -out => $req;
-	pipespew $key, qw(openssl req -new -key /dev/stdin), @opt;
+	pipespew $key, qw(openssl req -new -sha256 -key /dev/stdin), @opt;
 	vsystem qw(openssl req -text -in), $req
 	    if $opt{v} and $opt[-2] eq '-out';
 	return 0;
