@@ -115,14 +115,15 @@ Installing
 ----------
 
 For a simple one-file install you can copy the `regpg` script to a
-directory on your `$PATH`.
+directory on your `$PATH`. If you have `regpg.pl` but not bare
+`regpg` then you need to run `make`.
 
 You can run `make install` to install the script and man page to the
 standard places in your home directory, and `make uninstall` to remove
 them. See the start of the `Makefile` for variables you can set on the
 command line to adjust the install location. See
 [doc/contributing.md](https://dotat.at/prog/regpg/doc/contributing.html)
-for details about building from `git`.
+for more details about building from `git`.
 
 
 Dependencies
