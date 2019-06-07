@@ -109,6 +109,9 @@ The full process looks like this:
 get the gpg-agent working
 -------------------------
 
+If you are using `gpg` 2 then it starts the agent automatically on
+demand, so you should be able to skip this section.
+
 On my Debian workstation, `gpg-agent` is started automatically if it
 is installed. (The package name is `gnupg-agent`.)
 
