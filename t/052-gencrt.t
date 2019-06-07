@@ -57,6 +57,9 @@ like $stdout, qr{\s+X509v3\s+Authority\s+Key\s+Identifier:
 		 \s+serial:$ca_sn}x,
     'authority key id/sn same as subject key id/sn';
 
+like $stdout, qr{Signature Algorithm: sha256WithRSAEncryption},
+    'ca certificate uses SHA256';
+
 spew 'web.cnf', <<'END';
 [ req ]
 prompt = no
@@ -109,6 +112,9 @@ like $stdout, qr{CN ?= ?dotat[.]at}, 'openssl found CN';
 like $stdout, qr{DNS:www[.]dotat[.]at}, 'openssl found SAN';
 is $stderr, '', 'openssl stderr quiet';
 
+like $stdout, qr{Signature Algorithm: sha256WithRSAEncryption},
+    'certificate uses SHA256';
+
 like $stdout, qr{\s+X509v3\s+Authority\s+Key\s+Identifier:
 		 \s+keyid:$ca_id
 		 \s+DirName:[^\n]+
@@ -132,8 +138,13 @@ works 'genspkifp web.crt',
     '' => qw{regpg genspkifp web.crt};
 is $stdout, $fp, 'web.pem fp matches web.crt';
 like $stderr, qr{CN ?= ?dotat[.]at}, 'printed DN of crt';
+
 works 'generate csr',
     '' => qw{regpg gencsr web.pem.asc web.cnf web.csr};
+works 'openssl likes web.csr',
+    '' => qw(openssl req -in web.csr -text);
+like $stdout, qr{Signature Algorithm: sha256WithRSAEncryption},
+    'csr uses SHA256';
 works 'genspkifp web.csr',
     '' => qw{regpg genspkifp web.crt};
 is $stdout, $fp, 'web.pem fp matches web.csr';
