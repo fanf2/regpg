@@ -1,8 +1,21 @@
 regpg release notes and change summary
 ======================================
 
+2019-06-07 - regpg-1.9
+----------------------
+
+* Explicitly tell OpenSSL to use SHA-256.
+
+  I have not managed to find a version of OpenSSL that does not use
+  SHA-256 (I checked 1.0.1 and 1.1.0 and 1.1.1) so this is effectively
+  a no-op, but it might be useful for people stuck on ante-diluvian
+  versions.
+
+* Minor test suite fixes for RHEL 7.
+
+
 2019-02-13 - regpg-1.8
-------------------------
+----------------------
 
 * Attempt to work around `gpg2` reliability problems. The Ansible
   plugins will run `gpg1` if it is available (since it is more
@@ -20,7 +33,7 @@ regpg release notes and change summary
 
 
 2019-02-13 - regpg-1.7
-------------------------
+----------------------
 
 * Declare `regpg` to be stable.
 
