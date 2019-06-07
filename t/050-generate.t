@@ -110,14 +110,16 @@ ok -f 'ec.pub', 'genkey ecdsa wrote ssh public key';
 is slurp('ec.asc'), $ecdsa, 'genkey ecdsa priv key unchanged';
 like slurp('ec.pub'), qr{ecdsa-sha2-nistp256}, 'genkey ecdsa ssh public key OK';
 
-works 'genkey ed25519 ssh',
-    '' => qw(regpg genkey ed25519 ed.asc ed.pub);
-is $stdout, '', 'regpg stdout quiet';
-is $stderr, '', 'regpg stderr quiet';
-ok -f 'ed.asc', 'genkey ed25519 wrote ssh private key';
-ok -f 'ed.pub', 'genkey ed25519 wrote ssh public key';
-like slurp('ed.asc'), $pgpmsg, 'genkey ed25519 wrote encrypted ssh key';
-like slurp('ed.pub'), qr{ssh-ed25519}, 'genkey ed25519 ssh public key OK';
+if (canexec 'puttygen') {
+	works 'genkey ed25519 ssh',
+	    '' => qw(regpg genkey ed25519 ed.asc ed.pub);
+	is $stdout, '', 'regpg stdout quiet';
+	is $stderr, '', 'regpg stderr quiet';
+	ok -f 'ed.asc', 'genkey ed25519 wrote ssh private key';
+	ok -f 'ed.pub', 'genkey ed25519 wrote ssh public key';
+	like slurp('ed.asc'), $pgpmsg, 'genkey ed25519 wrote encrypted ssh key';
+	like slurp('ed.pub'), qr{ssh-ed25519}, 'genkey ed25519 ssh public key OK';
+}
 
 fails 'genkey one arg',
     '' => qw(regpg genkey one);
