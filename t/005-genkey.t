@@ -11,7 +11,9 @@ use T;
 ################################################################
 
 my @genkey = qw(gpg --gen-key --batch --quiet);
-push @genkey, '--quick-random' if $gpgvers lt "2.0";
+push @genkey,  ($gpgvers lt "2.0")
+    ? '--quick-random'
+    : '--debug-quick-random';
 
 for my $key (qw(one two)) {
 	works "generated key $key", <<"GENKEY" => @genkey;
