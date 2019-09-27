@@ -16,7 +16,9 @@ esac
 seddery() {
 	local version="$1"
 	shift
-	perl -pi -e 's{regpg-\d+(\.\d+|\.X)+}{'$version'}' "$@"
+	re='\d+(\.\d+|\.X)+'
+	perl -pi -e 's{regpg-'$re'}{'$version'}' "$@"
+	perl -pi -e 's{VERSION = "'$re'"}{'$version'}' "$@"
 	git commit -a -m $version
 }
 
@@ -24,7 +26,7 @@ fgrep $V doc/relnotes.md
 
 make clean all test
 
-seddery $V regpg.pl README.md
+seddery $V regpg.pl README.md lib/ReGPG/Login.pm
 git tag -s -m $V $V
 
 make release
