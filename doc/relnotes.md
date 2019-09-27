@@ -8,8 +8,8 @@ regpg release notes and change summary
   login credentials. It uses the storage layout that I have set up
   for the DNS systems at Cambridge.
 
-  Bugs: I have not yet fixed the Makefile to install it properly, or
-  written any tests.
+  Bugs: I have not yet fixed the Makefile to install it properly,
+  nor written any tests.
 
 
 2019-06-07 - regpg-1.9
