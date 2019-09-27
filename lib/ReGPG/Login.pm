@@ -10,7 +10,7 @@ use File::Slurp;
 use IPC::System::Simple qw(capturex);
 use YAML;
 
-our $VERSION = "1.00";
+our $regpg-1.10;
 
 our @EXPORT = qw(
 	read_login
@@ -113,7 +113,7 @@ If any are missing, C<read_login> will croak.
 
 =head1 VERSION
 
-  This is regpg-1.9.X <https://dotat.at/prog/regpg/>
+  This is regpg-1.10 <https://dotat.at/prog/regpg/>
 
   Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
   at Cambridge University Information Services

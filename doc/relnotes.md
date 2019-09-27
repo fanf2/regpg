@@ -1,6 +1,17 @@
 regpg release notes and change summary
 ======================================
 
+2019-09-27 - regpg-1.10
+-----------------------
+
+* Introduce ReGPG::Login, a Perl module to load partially-encrypted
+  login credentials. It uses the storage layout that I have set up
+  for the DNS systems at Cambridge.
+
+  Bugs: I have not yet fixed the Makefile to install it properly, or
+  written any tests.
+
+
 2019-06-07 - regpg-1.9
 ----------------------
 

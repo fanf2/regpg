@@ -67,12 +67,12 @@ and its [GPG signature](https://dotat.at/prog/regpg/regpg.asc).
 
 Download the full source archives and GPG signatures:
 
-* <https://dotat.at/prog/regpg/dist/regpg-1.9.tar.xz>
-  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.9.tar.xz.asc))
-* <https://dotat.at/prog/regpg/dist/regpg-1.9.tar.gz>
-  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.9.tar.gz.asc))
-* <https://dotat.at/prog/regpg/dist/regpg-1.9.zip>
-  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.9.zip.asc))
+* <https://dotat.at/prog/regpg/dist/regpg-1.10.tar.xz>
+  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.10.tar.xz.asc))
+* <https://dotat.at/prog/regpg/dist/regpg-1.10.tar.gz>
+  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.10.tar.gz.asc))
+* <https://dotat.at/prog/regpg/dist/regpg-1.10.zip>
+  ([sig](https://dotat.at/prog/regpg/dist/regpg-1.10.zip.asc))
 
 
 Documentation
