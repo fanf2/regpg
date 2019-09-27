@@ -1516,6 +1516,10 @@ C<crypt(3)> hash of the password.
 If I<cryptfile.asc> is C<-> or is omitted then the encrypted password
 is written to stdout.
 
+The C<ReGPG::Login(3pm)> module helps you to associate metadata such as
+username and login URL with an encrypted password. It uses a YAML file
+conventionally named like I<cryptfile.yml> alonside I<cryptfile.asc>.
+
 =item B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>|I<host>]
 
 Generate an X.509 subject public key information SHA-256 fingerprint,
@@ -1803,7 +1807,7 @@ discussions.
 
 =head1 SEE ALSO
 
-gpg(1), gpg-agent(1), ansible(1), git(1),
-openssl(1), puttygen(1) shred(1), ssh-keygen(1)
+gpg(1), gpg-agent(1), ansible(1), git(1), openssl(1),
+ReGPG::Login(3pm), puttygen(1) shred(1), ssh-keygen(1)
 
 =cut
