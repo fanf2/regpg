@@ -1,6 +1,10 @@
 regpg release notes and change summary
 ======================================
 
+
+* HTTP Basic authorization convenience helper in ReGPG::Login.
+
+
 2019-09-27 - regpg-1.10
 -----------------------
 

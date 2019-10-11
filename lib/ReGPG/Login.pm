@@ -8,6 +8,7 @@ use Exporter qw(import);
 use File::Basename;
 use File::Slurp;
 use IPC::System::Simple qw(capturex);
+use MIME::Base64;
 use YAML;
 
 our $regpg-1.10;
@@ -33,10 +34,22 @@ sub read_login {
 		}
 		chomp $login->{$k};
 	}
-	for (@_) {
-		croak "$yml: missing key $_\n"
-		    unless defined $login->{$_};
+	my $check = sub {
+		for (@_) {
+			croak "$yml: missing key $_\n"
+			    unless defined $login->{$_};
+		}
+	};
+	if (ref $_[-1]) {
+		my $opt = pop @_;
+		if (my $basic = $opt->{basic}) {
+			$check->(@$basic);
+			my $auth = join ':', @$login{@$basic};
+			$login->{authorization} =
+			    'Basic ' . encode_base64 $auth, '';
+		}
 	}
+	$check->(@_);
 	return $login;
 }
 
@@ -110,6 +123,27 @@ The key and decrypted contents are added to the top-level object.
 Any trailing arguments to C<read_login> are a list of keys that muct
 be present in the top-level object after adding the decrypted files.
 If any are missing, C<read_login> will croak.
+
+=head2 Login post-processing options
+
+The last argument to C<read_login> can be a hash ref containing options.
+
+=head3 basic
+
+The only option defined so far is C<basic>. The value of the option is
+an array ref containing username and password login field names. These
+field names are included in the check list. The corresponding login
+field values are used to create an HTTP Basic C<Authorization> header
+value.
+
+For example,
+
+	my $login = read_login "login.yml", qw(url),
+	    { basic => [qw[username password]] };
+	my $r = LWP::UserAgent->new()->post($login->{url},
+	    Authorization => $login->{authorization},
+	    ...
+	);
 
 =head1 VERSION
 
