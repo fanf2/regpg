@@ -19,38 +19,59 @@ our @EXPORT = qw(
 
 our @gpg_d = qw(gpg --use-agent --batch --quiet --decrypt);
 
-sub read_login {
-	my $yml = shift;
+sub check {
+	my $self = shift;
+	my $yml = $self->{filename};
+	for (@_) {
+		croak "$yml: missing field $_\n"
+		    unless defined $self->{$_};
+	}
+	return $self;
+}
+
+sub auth_basic {
+	my $self = shift;
+	return $self->{authorization}
+	    if $self->{authorization};
+	$self->check(@_);
+	my $auth = join ':', @$self{@_};
+	return $self->{authorization} =
+	    'Basic ' . encode_base64 $auth, '';
+}
+
+sub new {
+	my $class = shift;
+	my %opt = @_;
+	my $yml = $opt{filename};
 	my $dir = dirname $yml;
-	my $login = YAML::LoadFile $yml;
-	my $gpg_d = $login->{gpg_d};
+	my $self = YAML::LoadFile $yml;
+	my $gpg_d = $self->{gpg_d};
 	for my $k (keys %$gpg_d) {
 		my $asc = $dir.'/'.$gpg_d->{$k};
 		my $clear = $asc =~ s{\.asc$}{}r;
 		if (-f $clear) {
-			$login->{$k} = read_file $clear;
+			$self->{$k} = read_file $clear;
 		} else {
-			$login->{$k} = capturex @gpg_d, $asc;
+			$self->{$k} = capturex @gpg_d, $asc;
 		}
-		chomp $login->{$k};
+		chomp $self->{$k};
 	}
-	my $check = sub {
-		for (@_) {
-			croak "$yml: missing key $_\n"
-			    unless defined $login->{$_};
-		}
-	};
-	if (ref $_[-1]) {
-		my $opt = pop @_;
-		if (my $basic = $opt->{basic}) {
-			$check->(@$basic);
-			my $auth = join ':', @$login{@$basic};
-			$login->{authorization} =
-			    'Basic ' . encode_base64 $auth, '';
+	bless $self, $class;
+	$opt{auth_basic} //= $opt{basic};
+	for my $option (qw(auth_basic check)) {
+		if (my $args = $opt{$option}) {
+			$self->$option(@$args);
 		}
 	}
-	$check->(@_);
-	return $login;
+	return $self;
+}
+
+sub read_login {
+	my $yml = shift;
+	my $opt = ref $_[-1] ? pop @_ : {};
+	$opt->{filename} = $yml;
+	$opt->{check} = [@_];
+	return ReGPG::Login->new(%$opt);
 }
 
 1;
@@ -65,8 +86,15 @@ ReGPG::Login - load partially-encrypted login credentials
 
 	use ReGPG::Login;
 
+	# simple style
 	my $login = read_login "login.yml",
 		qw(username password url);
+
+	# object-oriented style
+	my $login = ReGPG::Login->new(
+		filename => "login.yml",
+		check => [qw(username password url)],
+	);
 
 =head1 DESCRIPTION
 
@@ -81,11 +109,11 @@ password or other secrets.
 
 =head2 YAML metadata format
 
-The YAML file contains a top-level object with keys for the non-secret
+The YAML file contains a top-level object with fields for the non-secret
 credentials whose values appear verbatim in the file.
 
-There is a C<gpg_d> sub-object which contains the keys for secret
-credentials. Each key's value is the name of an encrypted file
+There is a C<gpg_d> sub-object which contains the fields for secret
+credentials. Each fields's value is the name of an encrypted file
 (relative to the YAML file) which contains just the bare secret.
 
 There is one secret per file, so if a login needs multiple secrets
@@ -104,46 +132,94 @@ For example,
 
 =head2 Reading a login
 
-The C<read_login> subroutine loads the YAML file and the associated
+The C<ReGPG::Login> constructors load a YAML file and the associated
 secrets.
 
-Each key in the C<gpg_d> sub-object has a filename as its value,
+Each field in the C<gpg_d> sub-object has a filename as its value,
 conventionally ending in C<.asc> to indicate a gpg ASCII-armored
 encrypted file.
 
-For each filename, C<read_login> will load a decrypted version without
+For each filename, the constructor will load a decrypted version without
 a C<.asc> extension if that is present. Otherwise it decrypts the file
 using C<gpg --use-agent --batch --quiet --decrypt>. In either case any
 trailing newline is removed.
 
-The key and decrypted contents are added to the top-level object.
+The field with decrypted contents is added to the top-level login
+object.
 
-=head2 Checking a login
+The YAML filename is also saved in a C<filename> field in the login
+object.
 
-Any trailing arguments to C<read_login> are a list of keys that muct
-be present in the top-level object after adding the decrypted files.
-If any are missing, C<read_login> will croak.
+=head1 METHODS
 
-=head2 Login post-processing options
+=over
 
-The last argument to C<read_login> can be a hash ref containing options.
+=item ReGPG::Login->new(%opt)
 
-=head3 basic
+Object-oriented constructor. The options in C<%opt> are:
 
-The only option defined so far is C<basic>. The value of the option is
-an array ref containing username and password login field names. These
-field names are included in the check list. The corresponding login
-field values are used to create an HTTP Basic C<Authorization> header
-value.
+=over
+
+=item filename => "login.yml"
+
+The YAML file to load. (required)
+
+=item check => [@fields]
+
+Shortcut for calling C<$login-E<gt>check(@fields)>
+
+=item basic => [@fields]
+
+=item auth_basic => [@fields]
+
+Shortcut for calling C<$login-E<gt>auth_basic(@fields)>
+
+=back
+
+=item $login->check(@fields)
+
+Ensure the fields are present in the login. Croaks if any are missing.
+
+=item $login->auth_basic(@fields)
+
+The arguments are username and password login field names. The method
+checks that the fields are present, then uses the corresponding login
+field values to create an HTTP Basic C<Authorization> header value.
+This is stored in the C<authorization> field of the login object, and
+returned.
 
 For example,
 
-	my $login = read_login "login.yml", qw(url),
-	    { basic => [qw[username password]] };
+	my $login = ReGPG::Login->new(
+		filename => "login.yml",
+		check => [qw[url]],
+		basic => [qw[username password]]
+	);
 	my $r = LWP::UserAgent->new()->post($login->{url},
 	    Authorization => $login->{authorization},
 	    ...
 	);
+
+=back
+
+=head1 SUBROUTINES
+
+ReGPG::Login exports one subroutine.
+
+=over
+
+=item read_login $filename, @check, { ...opt... }
+
+The @check and/or hash ref arguments are optional.
+This is equivalent to
+
+	ReGPG::Login->new(
+		filename => $filename,
+		check => [@check],
+		...opt...
+	);
+
+=back
 
 =head1 VERSION
 
