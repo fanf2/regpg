@@ -57,7 +57,6 @@ sub new {
 		chomp $self->{$k};
 	}
 	bless $self, $class;
-	$opt{auth_basic} //= $opt{basic};
 	for my $option (qw(auth_basic check)) {
 		if (my $args = $opt{$option}) {
 			$self->$option(@$args);
@@ -68,10 +67,10 @@ sub new {
 
 sub read_login {
 	my $yml = shift;
-	my $opt = ref $_[-1] ? pop @_ : {};
-	$opt->{filename} = $yml;
-	$opt->{check} = [@_];
-	return ReGPG::Login->new(%$opt);
+	return ReGPG::Login->new(
+		filename => $yml,
+		check => [@_],
+	    );
 }
 
 1;
@@ -168,8 +167,6 @@ The YAML file to load. (required)
 
 Shortcut for calling C<$login-E<gt>check(@fields)>
 
-=item basic => [@fields]
-
 =item auth_basic => [@fields]
 
 Shortcut for calling C<$login-E<gt>auth_basic(@fields)>
@@ -192,8 +189,8 @@ For example,
 
 	my $login = ReGPG::Login->new(
 		filename => "login.yml",
-		check => [qw[url]],
-		basic => [qw[username password]]
+		check => [qw[ url ]],
+		auth_basic => [qw[ username password ]],
 	);
 	my $r = LWP::UserAgent->new()->post($login->{url},
 	    Authorization => $login->{authorization},
@@ -208,15 +205,14 @@ ReGPG::Login exports one subroutine.
 
 =over
 
-=item read_login $filename, @check, { ...opt... }
+=item read_login $filename, @check
 
-The @check and/or hash ref arguments are optional.
+A simplified constructor. The @check list is optional optional.
 This is equivalent to
 
 	ReGPG::Login->new(
 		filename => $filename,
 		check => [@check],
-		...opt...
 	);
 
 =back
