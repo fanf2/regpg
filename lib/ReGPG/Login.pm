@@ -45,7 +45,8 @@ sub new {
 	my $yml = $opt{filename};
 	my $dir = dirname $yml;
 	my $self = YAML::LoadFile $yml;
-	my $gpg_d = $self->{gpg_d};
+	$self->{filename} = $yml;
+	my $gpg_d = $self->{gpg_d} // {};
 	for my $k (keys %$gpg_d) {
 		my $asc = $dir.'/'.$gpg_d->{$k};
 		my $clear = $asc =~ s{\.asc$}{}r;
