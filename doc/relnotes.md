@@ -2,7 +2,16 @@ regpg release notes and change summary
 ======================================
 
 
-* HTTP Basic authorization convenience helper in ReGPG::Login.
+2019-12-19 - regpg-1.11
+-----------------------
+
+* ReGPG::Login supports object-oriented style as well as script style.
+
+* ReGPG::Login has a HTTP Basic authorization convenience helper.
+
+* A `regpg dnssec` subcommand that provides wrappers for the BIND
+  `dnssec-keygen` and `dnssec-settime` programs, to make it more
+  convenient to work with encrypted DNSSEC private keys.
 
 
 2019-09-27 - regpg-1.10
