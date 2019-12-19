@@ -141,8 +141,8 @@ sub vsystem {
 }
 
 sub vsystem_warn {
-	eval { vsystem @_ };
-	return $?;
+	eval { vsystem @_};
+	return $? >> 8;
 }
 
 sub canexec {
@@ -553,8 +553,9 @@ sub dnssec_settime {
 	spewto "$key.private", pipeslurp @gpg_de, "$key.private.asc"
 	    unless $inclear;
 	umask $umask;
-	vsystem_warn 'dnssec-settime', @ARGV;
-	return $inclear ? dnssec_encrypt $key : dnssec_shred $key;
+	my $status = vsystem_warn 'dnssec-settime', @ARGV;
+	$inclear ? dnssec_encrypt $key : dnssec_shred $key;
+	return $status;
 }
 
 ########################################################################
