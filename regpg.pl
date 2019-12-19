@@ -855,7 +855,7 @@ sub dnssec {
 	my $action = shift @ARGV;
 	my @action = qw(keygen recrypt settime);
 	if (grep { $action eq $_ } @action) {
-		$::{"dnssec_$action"}();
+		return $::{"dnssec_$action"}();
 	} else {
 		die "regpg dnssec action must be one of: @action\n";
 	}
