@@ -49,6 +49,7 @@ helpers:
 	regpg pbpaste [options] [cryptfile.asc]
 	regpg shred [options] <clearfile>...
 generators:
+	regpg dnssec [opts] <action> [flags] <dnskey>
 	regpg gencrt [opts] <days> [<cakey> <cacrt>] <priv> <cnf> <crt>
 	regpg gencsrcnf [options] [<certfile>|<hostname> [csr.cnf]]
 	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
@@ -495,7 +496,7 @@ sub shred_files {
 	} else {
 		vsystem 'rm', '-f', check_clear @_;
 	}
-	return;
+	return 0;
 }
 
 sub shred_some {
@@ -506,6 +507,54 @@ sub shred_some {
 		shred_files $_, qw(.asc .gpg) for @_;
 	}
 	return 0;
+}
+
+########################################################################
+#
+#  dnssec wrappers
+#
+
+sub dnssec_key {
+	return shift =~ s{(\.[0-9a-z.]*)?\s*$}{}r;
+}
+
+sub dnssec_encrypt {
+	my $key = shift;
+	my $oldhash = peekfile "$key.private.sha256";
+	my $newhash = safeslurp qw(openssl dgst -sha256), "$key.private";
+	$newhash =~ s{^.* }{};
+	return if $oldhash and $oldhash eq $newhash;
+	# overwrite without prompting
+	spewto "$key.private.asc", scalar pipeslurp
+	    @gpg_en, recipients, qw(--output -), "$key.private";
+	spewto "$key.private.sha256", $newhash;
+	return 0;
+}
+
+sub dnssec_shred {
+	my $key = shift;
+	dnssec_encrypt $key;
+	return shred_files "$key.private.asc", '.asc';
+}
+
+sub dnssec_keygen {
+	return dnssec_shred dnssec_key
+	    pipeslurp_quiet 'dnssec-keygen', @ARGV;
+}
+
+sub dnssec_recrypt {
+	return dnssec_encrypt dnssec_key @ARGV;
+}
+
+sub dnssec_settime {
+	my $key = dnssec_key $ARGV[-1];
+	my $inclear = -f "$key.private";
+	my $umask = umask 0077;
+	spewto "$key.private", pipeslurp @gpg_de, "$key.private.asc"
+	    unless $inclear;
+	umask $umask;
+	vsystem_warn 'dnssec-settime', @ARGV;
+	return $inclear ? dnssec_encrypt $key : dnssec_shred $key;
 }
 
 ########################################################################
@@ -800,6 +849,17 @@ sub edit {
 	return $status;
 }
 
+sub dnssec {
+	getargs min => 2;
+	my $action = shift @ARGV;
+	my @action = qw(keygen recrypt settime);
+	if (grep { $action eq $_ } @action) {
+		$::{"dnssec_$action"}();
+	} else {
+		die "regpg dnssec action must be one of: @action\n";
+	}
+}
+
 sub gencsrcnf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
@@ -1035,8 +1095,9 @@ $::{gencsrconf} = $::{gencsrcnf};
 usage unless @ARGV;
 my $subcommand = shift;
 if (grep { $subcommand eq $_ }
-	qw(add addkey addself check ck conv decrypt depipe
-	   del delkey edit en encrypt export exportkey
+	qw(add addkey addself check ck conv
+	   decrypt depipe del delkey dnssec
+	   edit en encrypt export exportkey
 	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd genspkifp
 	   --help help import importkey init ls lskeys
 	   pbcopy pbpaste re recrypt shred squeegee)) {
@@ -1092,6 +1153,8 @@ B<regpg> B<pbpaste> [I<options>] [I<cryptfile.asc>]
 B<regpg> B<shred> [I<options>] <I<clearfile>>...
 
 - generators:
+
+B<regpg> B<dnssec> [I<opts>] <I<action>> [I<flags>] <I<dnskey>>
 
 B<regpg> B<gencrt> [I<opts>] <I<days>> [<I<cakey>> <I<cacrt>>] <I<priv>> <I<cnf>> <I<crt>>
 
@@ -1411,10 +1474,52 @@ particularly handy for users of glass TTYs.
 =head2 Secret generators
 
 The following subcommands combine the core B<regpg> B<encrypt> /
-B<decrypt> subcommands with secret handling tools from OpenSSL and
-OpenSSH, etc.
+B<decrypt> subcommands with secret handling tools from BIND,
+OpenSSL, OpenSSH, etc.
 
 =over
+
+=item B<regpg> B<dnssec> [I<opts>] B<keygen> [I<flags>] <I<name>>
+
+Create a DNSSEC key using BIND's B<dnssec-keygen> utility, encrypt
+private key as per B<regpg> B<dnssec> B<recrypt>, then shred it.
+
+The I<opts> are B<regpg> options. The I<flags> and I<name> are passed
+to B<dnssec-keygen>.
+
+=item B<regpg> B<dnssec> [I<opts>] B<recrypt> <I<dnskey>>
+
+Re-encrypt a DNSSEC private key if necessary. The I<dnskey> can name
+any of the four files that this subcommand works with:
+
+=over
+
+=item C<K*.key> - the public key
+
+=item C<K*.private> - the private key cleartext, possibly modified
+
+=item C<K*.private.asc> - the encrypted private key
+
+=item C<K*.private.sha256> - fingerprint of decrypted key
+
+=back
+
+If the C<K*.private.sha256> file is missing or does not match the
+contents of the C<K*.private> file, then the C<K*.private> is
+encrypted and the C<K*.private.asc> file is overwritten.
+
+=item B<regpg> B<dnssec> [I<opts>] B<settime> [I<flags>] <I<dnskey>>
+
+Update the timing parameters on a DNSSEC key using BIND's
+B<dnssec-settime> utility.
+
+The private key is decrypted if necessary before running
+B<dnssec-settime>, then re-encrypted. The private key is shredded
+unless it was present un-encrypted before.
+
+The I<opts> are B<regpg> options. The I<flags> and I<dnskey> are
+passed to B<dnssec-settime>. The I<dnskey> can name any of the key
+files listed under B<regpg> B<dnssec> B<recrypt>.
 
 =item B<regpg> B<gencrt> <I<days>> [<I<cakey>> <I<cacrt>>] <I<priv>> <I<cnf>> <I<crt>>
 
