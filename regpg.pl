@@ -538,8 +538,8 @@ sub dnssec_shred {
 }
 
 sub dnssec_keygen {
-	return dnssec_shred dnssec_key
-	    pipeslurp_quiet 'dnssec-keygen', @ARGV;
+	print my $key = pipeslurp_quiet 'dnssec-keygen', @ARGV;
+	return dnssec_shred dnssec_key $key;
 }
 
 sub dnssec_recrypt {
