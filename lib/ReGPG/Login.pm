@@ -23,7 +23,7 @@ sub check {
 	my $self = shift;
 	my $yml = $self->{filename};
 	for (@_) {
-		croak "$yml: missing field $_\n"
+		croak "$yml: missing field '$_'\n"
 		    unless defined $self->{$_};
 	}
 	return $self;
