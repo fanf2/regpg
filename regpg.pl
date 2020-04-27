@@ -515,7 +515,7 @@ sub shred_some {
 #
 
 sub dnssec_key {
-	return shift =~ s{(\.[0-9a-z.]*)?\s*$}{}r;
+	return $_[-1] =~ s{(\.[0-9a-z.]*)?\s*$}{}r;
 }
 
 sub dnssec_encrypt {
@@ -532,8 +532,7 @@ sub dnssec_encrypt {
 }
 
 sub dnssec_shred {
-	my $key = shift;
-	dnssec_encrypt $key;
+	dnssec_encrypt my $key = shift;
 	return shred_files "$key.private.asc", '.asc';
 }
 
@@ -547,7 +546,7 @@ sub dnssec_recrypt {
 }
 
 sub dnssec_settime {
-	my $key = dnssec_key $ARGV[-1];
+	my $key = dnssec_key @ARGV;
 	my $inclear = -f "$key.private";
 	my $umask = umask 0077;
 	spewto "$key.private", pipeslurp @gpg_de, "$key.private.asc"
