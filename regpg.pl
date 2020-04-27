@@ -749,6 +749,8 @@ sub lskeys {
 	return 0;
 }
 
+#----------------------------------------------------------------------#
+
 sub for_files {
 	my ($zap,$sub) = @_;
 	getargs min => 0;
@@ -797,6 +799,8 @@ sub decrypt {
 		return 0;
 	}
 }
+
+#----------------------------------------------------------------------#
 
 sub depipe {
 	getargs min => 2, max => 2;
@@ -849,6 +853,8 @@ sub edit {
 	shred_files $tmp;
 	return $status;
 }
+
+#----------------------------------------------------------------------#
 
 sub dnssec {
 	getargs min => 2;
@@ -1046,6 +1052,8 @@ sub genspkifp {
 	openssl dgst -sha256 -binary |
 	openssl base64';
 }
+
+#----------------------------------------------------------------------#
 
 sub init {
 	getargs keymaker => 1, min => 0;
