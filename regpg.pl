@@ -53,6 +53,7 @@ generators:
 	regpg gencrt [opts] <days> [<cakey> <cacrt>] <priv> <cnf> <crt>
 	regpg gencsrcnf [options] [<certfile>|<hostname> [csr.cnf]]
 	regpg gencsr [options] <private.asc> <csr.cnf> [csr]
+	regpg gendnskey [options] <zone>
 	regpg genkey [options] <algorithm> <private.asc> [ssh.pub]
 	regpg genpwd [options] [cryptfile.asc]
 	regpg genspkifp [options] [priv|crt|csr|host]
@@ -866,6 +867,16 @@ sub dnssec {
 	}
 }
 
+sub gendnskey {
+	getargs min => 1, max => 1;
+	print my @found = map s{\.key$}{\n}r, glob "K@ARGV.+013+*.key";
+	return 0 if @found;
+	unshift @ARGV, qw(-L 86400 -a 13);
+	my $exit = dnssec_keygen;
+	unshift @ARGV, qw(-f KSK -Psync now);
+	return $exit || dnssec_keygen;
+}
+
 sub gencsrcnf {
 	# not really a keymaker - we just don't use the keyring
 	getargs keymaker => 1, min => 0, max => 2;
@@ -1106,7 +1117,8 @@ if (grep { $subcommand eq $_ }
 	qw(add addkey addself check ck conv
 	   decrypt depipe del delkey dnssec
 	   edit en encrypt export exportkey
-	   gencrt gencsrcnf gencsrconf gencsr genkey genpwd genspkifp
+	   gencrt gencsrcnf gencsrconf gencsr
+	   gendnskey genkey genpwd genspkifp
 	   --help help import importkey init ls lskeys
 	   pbcopy pbpaste re recrypt shred squeegee)) {
 	exit $::{$subcommand}();
@@ -1495,6 +1507,9 @@ private key as per B<regpg> B<dnssec> B<recrypt>, then shred it.
 The I<opts> are B<regpg> options. The I<flags> and I<name> are passed
 to B<dnssec-keygen>.
 
+Use the B<regpg> B<gendnskey> wrapper to generate keys for a zone with
+the recommended setup.
+
 =item B<regpg> B<dnssec> [I<opts>] B<recrypt> <I<dnskey>>
 
 Re-encrypt a DNSSEC private key if necessary. The I<dnskey> can name
@@ -1583,6 +1598,16 @@ If I<csr> is C<-> or is omitted then it is written to stdout.
 
 As well as being written to I<csr>, the CSR is printed in text form
 if you give the B<-v> option.
+
+=item B<regpg> B<gendnskey> [I<options>] <I<zone>>
+
+Create recommended DNSSEC keys for the I<zone> if they do not already
+exist, with a 24 hour TTL, using algorithm 13 (ECDSA P256 SHA-256),
+with separate ZSK and KSK, and with CDS and CDNSKEY records. This is a
+shortcut for:
+
+    $ regpg dnssec keygen -L 86400 -a 13 $zone
+    $ regpg dnssec keygen -L 86400 -a 13 -f KSK -Psync now $zone
 
 =item B<regpg> B<genkey> <I<algorithm>> <I<private.asc>> [I<ssh.pub>]
 
