@@ -523,7 +523,7 @@ sub dnssec_encrypt {
 	my $oldhash = peekfile "$key.private.sha256";
 	my $newhash = safeslurp qw(openssl dgst -sha256), "$key.private";
 	$newhash =~ s{^.* }{};
-	return if $oldhash and $oldhash eq $newhash;
+	return 0 if $oldhash and $oldhash eq $newhash;
 	# overwrite without prompting
 	spewto "$key.private.asc", scalar pipeslurp
 	    @gpg_en, recipients, qw(--output -), "$key.private";
