@@ -11,7 +11,7 @@ use IPC::System::Simple qw(capturex);
 use MIME::Base64;
 use YAML;
 
-our $regpg-1.11;
+our $VERSION = '1.11';
 
 our @EXPORT = qw(
 	read_login
@@ -75,8 +75,6 @@ sub read_login {
 }
 
 1;
-
-__END__
 
 =head1 NAME
 
