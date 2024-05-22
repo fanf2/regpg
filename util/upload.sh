@@ -5,8 +5,7 @@
 
 set -eux
 
-git push --tags dotat master
-git push --tags gitlab master
+git push --tags chiark master
 git push --tags github master
 
 rm -f regpg.asc
