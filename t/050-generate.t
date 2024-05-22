@@ -81,18 +81,22 @@ like $stderr, qr{usage:}, 'usage';
 works 'genkey rsa',
     '' => qw(regpg genkey rsa tls.pem.asc);
 is $stdout, '', 'regpg stdout quiet';
-like $stderr, qr{Generating}, 'regpg stderr noisy';
 ok -f 'tls.pem.asc', 'genkey rsa wrote file';
 like slurp('tls.pem.asc'), $pgpmsg, 'genkey rsa wrote encrypted file';
+
+works 'decrypt rsa key', '' => qw(regpg decrypt tls.pem.asc);
+like $stdout, qr{-----BEGIN( RSA)? PRIVATE KEY-----}, 'genkey made a private key';
 
 works 'genkey rsa ssh',
     '' => qw(regpg genkey rsa ssh.asc ssh.pub);
 is $stdout, '', 'regpg stdout quiet';
-like $stderr, qr{Generating}, 'regpg stderr noisy';
 ok -f 'ssh.asc', 'genkey rsa wrote ssh private key';
 ok -f 'ssh.pub', 'genkey rsa wrote ssh public key';
 like slurp('ssh.asc'), $pgpmsg, 'genkey rsa wrote encrypted ssh key';
 like slurp('ssh.pub'), qr{ssh-rsa}, 'genkey rsa ssh public key OK';
+
+works 'decrypt ssh key', '' => qw(regpg decrypt ssh.asc);
+like $stdout, qr{-----BEGIN( RSA)? PRIVATE KEY-----}, 'genkey made a private key';
 
 works 'genkey ecdsa',
     '' => qw(regpg genkey ecdsa ec.asc);
