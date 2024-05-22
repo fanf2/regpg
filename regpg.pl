@@ -1021,7 +1021,10 @@ sub genkey {
 sub cryptpwd {
 	my $pwd = shift; chomp $pwd;
 	my $salt = random_password;
-	return printf "%s\n", crypt $pwd, '$5$'.$salt.'$';
+	my $crypt = crypt $pwd, '$5$'.$salt.'$';
+	die "crypt(3) does not support SHA256\n"
+	    unless $crypt =~ m{^\$5\$};
+	return printf "%s\n", $crypt
 }
 
 sub genpwd {
@@ -1657,6 +1660,10 @@ is written to stdout.
 The C<ReGPG::Login(3pm)> module helps you to associate metadata such as
 username and login URL with an encrypted password. It uses a YAML file
 conventionally named like I<cryptfile.yml> alonside I<cryptfile.asc>.
+
+The B<regpg> B<genpwd> subcommand will create I<cryptfile.asc>, then
+report an error instead of printing the password hash when C<crypt(3)>
+lacks support for SHA256, such as on Mac OS X.
 
 =item B<regpg> B<genspkifp> [I<options>] [I<priv>|I<crt>|I<csr>|I<host>]
 

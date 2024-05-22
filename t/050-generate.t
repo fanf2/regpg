@@ -174,27 +174,36 @@ like $stdout, $pgpmsg, 'genpwd -q output encrypted';
 is $stderr, '', 'regpg stderr quiet';
 
 unlink 'pwd.asc';
-works 'genpwd file',
-    '' => qw(regpg genpwd pwd.asc);
-like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
-my $hash = $stdout;
-is $stderr, '', 'regpg stderr quiet';
-ok -f 'pwd.asc', 'genpwd wrote file';
-like slurp('pwd.asc'), $pgpmsg, 'genpwd file encrypted';
+run '' => qw(regpg genpwd pwd.asc);
+if ($stderr =~ m{crypt.3. does not support SHA256}) {
+	isnt $status, 0, 'regpg genpwd';
+	is $stdout, '', 'regpg stdout quiet';
 
-works 'decrypt pwd',
-    '' => qw(regpg decrypt pwd.asc);
-my $pwd = $stdout;
-chomp $pwd;
-sub ck {
-	return sprintf "%s\n", crypt $pwd, shift;
+	ok -f 'pwd.asc', 'genpwd wrote file';
+	like slurp('pwd.asc'), $pgpmsg, 'genpwd file encrypted';
+} else {
+	is $status, 0, 'regpg genpwd';
+	is $stderr, '', 'regpg stderr quiet';
+	like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
+	my $hash = $stdout;
+
+	ok -f 'pwd.asc', 'genpwd wrote file';
+	like slurp('pwd.asc'), $pgpmsg, 'genpwd file encrypted';
+
+	works 'decrypt pwd',
+	    '' => qw(regpg decrypt pwd.asc);
+	my $pwd = $stdout;
+	chomp $pwd;
+	sub ck {
+		return sprintf "%s\n", crypt $pwd, shift;
+	}
+	is $hash, (ck $hash), "crypt works first time";
+
+	works 'genpwd file again',
+	    '' => qw(regpg genpwd pwd.asc);
+	like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
+	is $stdout, (ck $stdout), "crypt works second time";
 }
-is $hash, (ck $hash), "crypt works first time";
-
-works 'genpwd file again',
-    '' => qw(regpg genpwd pwd.asc);
-like $stdout, qr{^\$5\$}, 'regpg stdout hashed pwd';
-is $stdout, (ck $stdout), "crypt works second time";
 
 done_testing;
 exit;
