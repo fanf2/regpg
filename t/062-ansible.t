@@ -9,6 +9,7 @@ use Test::More;
 
 use T;
 
+die "chdir $work: $!" unless chdir $work;
 unlink glob '*';
 works 'add', '' => qw(regpg add testing.example);
 
@@ -19,6 +20,7 @@ spew 'ansible.cfg', <<'ANSIBLE_CFG';
 [defaults]
 inventory = inventory
 action_plugins = /etc/ansible/plugins/action
+interpreter_python = auto_silent
 ANSIBLE_CFG
 spew 'inventory', <<'INVENTORY';
 localhost ansible_connection=local
@@ -44,10 +46,14 @@ like $stdout, qr{All assertions passed}, 'gpg_d filter worked';
 spew 'binary', pack "C*", 0..255;
 works 'encrypt binary', '' => qw(regpg en binary binary.asc);
 
-fails 'binary in a template',
-    '' => qw(ansible -m debug -a msg={{"binary.asc"|gpg_d}} localhost);
-like $stdout, qr{'ascii' codec can't decode byte},
-    'binary codec error';
+run '' => qw(ansible -m debug -a msg={{"binary.asc"|gpg_d}} localhost);
+if ($status == 0) {
+	like $stderr, qr{Non UTF-8 encoded data replaced},
+	    'binary corrupted';
+} else {
+	like $stdout, qr{'ascii' codec can't decode byte},
+	    'binary codec error';
+}
 
 my $cwd = getcwd;
 

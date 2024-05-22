@@ -187,7 +187,7 @@ class ActionModule(ActionBase):
         return result
 
     def remote_stat_compat(self, dest, task_vars, tmp):
-        if ansible_version[:4] < '2.5.':
+        if ansible_version[:4] < '2.5.' and ansible_version[3] == '.':
             return self._execute_remote_stat(dest, all_vars=task_vars,
                                              follow=False, tmp=tmp)
         else:
@@ -196,11 +196,11 @@ class ActionModule(ActionBase):
 
     def install_cleartext(self, src, module, args, task_vars, tmp):
         args.update(follow=True)
-        if ansible_version[:4] < '2.6.':
+        if ansible_version[:4] < '2.6.' and ansible_version[3] == '.':
             args.update(original_basename=os.path.basename(src))
         else:
             args.update(_original_basename=os.path.basename(src))
-        if ansible_version[:4] < '2.5.':
+        if ansible_version[:4] < '2.5.' and ansible_version[3] == '.':
             return self._execute_module(module_name=module,
                                         module_args=args,
                                         task_vars=task_vars, tmp=tmp,
