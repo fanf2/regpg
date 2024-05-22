@@ -1051,7 +1051,8 @@ sub genspkifp {
 		$pub = certslurp $fn, qw(openssl x509 -pubkey -noout);
 	} elsif ($fl eq "-----BEGIN PGP MESSAGE-----\n") {
 		$pub = safeslurp "@gpg_de $fn | openssl pkey -pubout";
-	} elsif ($fl eq "-----BEGIN RSA PRIVATE KEY-----\n") {
+	} elsif ($fl eq "-----BEGIN PRIVATE KEY-----\n" or
+		 $fl eq "-----BEGIN RSA PRIVATE KEY-----\n") {
 		$pub = safeslurp qw(openssl pkey -pubout -in), $fn;
 	} elsif ($fl =~ m{^-----BEGIN CERTIFICATE( REQUEST)?-----\s*$}) {
 		my @cmd = ('openssl', defined($1) ? 'req' : 'x509');
