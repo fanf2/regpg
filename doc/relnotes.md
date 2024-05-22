@@ -9,7 +9,7 @@ regpg release notes and change summary
   sensible parameters.
 
 * Fix `check`, `recrypt`, `shred` subcommands when filenames contain
-  spaces.
+  spaces. Thanks to Paul Haughton for the bug report.
 
 * Compatibility fixes for more recent versions of Ansible, OpenSSL,
   and GnuPG.

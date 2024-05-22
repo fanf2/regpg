@@ -170,9 +170,9 @@ Acknowledgments
 ---------------
 
 Thanks to Jon Warbrick who gave me the idea for `regpg`'s key
-management; and David Carter, Ben Harris, Ian Lewis, David McBride,
-[`mchubby`](https://github.com/mchubby), and Matthew Vernon for
-helpful bug reports and discussions.
+management; and David Carter, Ben Harris, Paul Haughton, Ian Lewis,
+David McBride, [`mchubby`](https://github.com/mchubby), and Matthew
+Vernon for helpful bug reports and discussions.
 
 
 ---------------------------------------------------------------------------
