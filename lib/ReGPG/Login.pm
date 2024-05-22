@@ -218,7 +218,7 @@ This is equivalent to
 
 =head1 VERSION
 
-  This is regpg-1.11 <https://dotat.at/prog/regpg/>
+  This is regpg-1.12 <https://dotat.at/prog/regpg/>
 
   Written by Tony Finch <fanf2@cam.ac.uk> <dot@dotat.at>
   at Cambridge University Information Services

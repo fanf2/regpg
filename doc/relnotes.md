@@ -2,6 +2,21 @@ regpg release notes and change summary
 ======================================
 
 
+2024-05-22 - regpg-1.12
+-----------------------
+
+* A `regpg gendnskey` subcommand that generates DNSSEC keys with
+  sensible parameters.
+
+* Fix `check`, `recrypt`, `shred` subcommands when filenames contain
+  spaces.
+
+* Compatibility fixes for more recent versions of Ansible, OpenSSL,
+  and GnuPG.
+
+* Accommodate lack of SHA256 support in Mac OS X `crypt(3)`
+
+
 2019-12-19 - regpg-1.11
 -----------------------
 
