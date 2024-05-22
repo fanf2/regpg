@@ -18,6 +18,7 @@ use strict;
 
 use Cwd qw(abs_path);
 use File::Basename;
+use File::Find;
 use File::Path;
 use File::Temp qw(mktemp tempfile);
 use Getopt::Std;
@@ -381,10 +382,13 @@ sub fingerprint {
 }
 
 sub find_all {
-	my @all = sort map { m{^([^\n]+)\n*$} }
-	    safeslurp q(find . -type f |
-		xargs grep -l '^-----BEGIN PGP MESSAGE-----$' || true);
-	return @all;
+	my @all;
+	find {	no_chdir => 1, wanted => sub {
+			push @all, $File::Find::name
+			    if (peekfile($File::Find::name) // '')
+			    =~ m{-----BEGIN PGP MESSAGE-----};
+	}, }, '.';
+	return sort @all;
 }
 
 sub recrypt_one {

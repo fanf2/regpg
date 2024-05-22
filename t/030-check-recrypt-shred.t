@@ -69,6 +69,16 @@ isnt -f 'file1', 'squeegee removed cleartext file1';
 
 unlink 'file2.asc';
 
+works 'create encrypted file with spaces',
+    'secret spaces' => qw(regpg encrypt), 'file with spaces.asc';
+works 'check',
+    '' => qw(regpg check);
+like $stdout, qr{file with spaces}, 'check lists file with spaces';
+is $stderr, '', 'check stderr quiet';
+
+unlink 'file with spaces.asc';
+
+
 gpg_batch_yes;
 works 'delete a key', '' => qw(regpg del), $k2;
 unlink $gpgconf;
