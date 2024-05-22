@@ -111,8 +111,8 @@ fails 'de short synonym',
 works 'gpg list packets',
     '' => qw(gpg --quiet --list-packets --list-only secret.asc);
 is $stderr, '', 'gpg stderr quiet';
-like $stdout, qr(mdc_method: \d+),
-    'encrypted file has "modification detection code"';
+like $stdout, qr(mdc_method: \d+|:aead encrypted packet:),
+    'encrypted file uses AEAD or has "modification detection code"';
 
 unlink 'secret.asc', 'secret', 'secout';
 
